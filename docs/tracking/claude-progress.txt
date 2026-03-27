@@ -9,7 +9,7 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F002: Event lifecycle management — implemented and validated
+- RS-F002: Event lifecycle management — implemented, code-reviewed, and merged to main
 - Plan: docs/plans/plan-rs-f002-event-lifecycle-management.md (approved)
 - Migration: supabase/migrations/00002_events.sql
 - Event library: apps/web/lib/events/ (types, schemas, queries, actions)
@@ -17,8 +17,10 @@ LATEST COMPLETED WORK
 - App navigation: apps/web/app/(app)/app-nav.tsx (Events link for leader roles)
 - Layout updated: apps/web/app/(app)/layout.tsx (nav integration)
 - Seed: supabase/seed.sql (event seed examples added)
+- Auth route fix: all redirect paths normalized to /sign-in and /sign-up throughout the codebase (P1 code review finding resolved)
+- PR #1 merged to main; feature branch codex/rs-f002-event-lifecycle deleted
 
-FILES CHANGED
+FILES CHANGED (RS-F002 + fix)
 - supabase/migrations/00002_events.sql (new)
 - apps/web/lib/events/types.ts (new)
 - apps/web/lib/events/schemas.ts (new)
@@ -38,6 +40,13 @@ FILES CHANGED
 - apps/web/app/(app)/events/_components/event-detail-card.tsx (new)
 - apps/web/app/(app)/app-nav.tsx (new)
 - apps/web/app/(app)/layout.tsx (modified — nav integration)
+- apps/web/app/(app)/dashboard/page.tsx (modified — auth path fix)
+- apps/web/app/(auth)/sign-in/page.tsx (modified — auth path fix)
+- apps/web/app/(auth)/sign-up/page.tsx (modified — auth path fix)
+- apps/web/app/page.tsx (modified — auth path fix)
+- apps/web/app/auth/callback/route.ts (modified — auth path fix)
+- apps/web/app/auth/sign-out/route.ts (modified — auth path fix)
+- apps/web/middleware.ts (modified — auth path fix)
 - supabase/seed.sql (modified — event seed examples)
 - docs/tracking/progress.md (updated)
 - docs/tracking/claude-progress.txt (this file)
@@ -48,7 +57,9 @@ TEST STATUS
 - npm run typecheck — passed
 - npm run lint — passed
 - npm run build — passed
-- Design-fidelity review — passed (5 issues found and fixed)
+- Design-fidelity review — passed (5 issues found and fixed in PR)
+- Code review — APPROVED (no blocking findings after P1 auth route fix)
+- Manual DB validation — pending a running Supabase instance (create/edit/transition/delete flows, role access verification)
 
 REVIEW FIXES
 - Status transition button: "Mark completed" changed from semantic-warning to brand-calm-600 (completing is operational, not a warning)
@@ -56,12 +67,19 @@ REVIEW FIXES
 - Loading skeletons: arbitrary pixel values replaced with canonical spacing tokens
 - Filter tabs: rounded-pill changed to rounded-200 (pill shape reserved for welcome moments, not leader dashboards)
 - Active nav indicator: added underline decoration for non-color accessibility alongside font-semibold + brand-calm-600
+- Auth route fix (P1): all redirect targets and PUBLIC_AUTH_PATHS normalized from /auth/sign-in to /sign-in throughout codebase
+
+KNOWN LIMITATIONS
+- Manual CRUD and role-access validation requires a running Supabase instance (not available in this environment)
+- Broad leader read access to all events is a pre-RS-F003 baseline — RS-F003 should tighten visibility to department-scoped
+- Downstream FK enforcement (departments, assignments, instructions) is deferred to RS-F003 and later features
+- Soft-delete cascade to downstream records is a planned RS-F003+ concern
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None (RS-F002 complete)
+- None (RS-F002 complete and merged)
 
 NEXT FEATURE
 - RS-F003 | Department and sub-team structure
@@ -78,7 +96,7 @@ BRANCH CONVENTION
 PLAN STATUS
 - Scaffolding plan: implemented
 - RS-F001 plan: implemented (plan file missing from disk, noted as documentation gap)
-- RS-F002 plan: implemented
+- RS-F002 plan: implemented and merged
 - No other approved feature plans yet
 
 EVENT ARCHITECTURAL DECISIONS (RS-F002)
@@ -117,3 +135,4 @@ CARRY-OVER EXECUTION NOTES
 - ESLint config ignores .next build output and next-env.d.ts
 - Pill-shaped CTAs reserved for welcome/promotional moments, not leader dashboards (design system rule)
 - Active nav states must include non-color indicators (underline, border, etc.) for accessibility
+- gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
