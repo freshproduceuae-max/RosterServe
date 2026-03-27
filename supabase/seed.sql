@@ -1,0 +1,32 @@
+-- RS-F001: Seed data for local development
+--
+-- IMPORTANT: This seed does NOT create auth.users rows. Supabase Auth manages
+-- user creation including password hashes and metadata. You cannot insert
+-- working email/password accounts via plain SQL.
+--
+-- Dev setup workflow:
+--   1. Start Supabase locally: npx supabase start
+--   2. Register test users via the sign-up form at http://localhost:3000/auth/sign-up
+--   3. Confirm each user via inbucket at http://localhost:54324
+--   4. Run this seed to assign non-volunteer roles:
+--      npx supabase db reset  (applies migrations + this seed)
+--      OR run the UPDATE statements below manually in Supabase Studio SQL editor
+--
+-- After sign-up, the handle_new_user trigger creates a profile with role = 'volunteer'.
+-- The statements below upgrade specific users to other roles for testing.
+-- Replace the email addresses with the ones you used during sign-up.
+
+-- Example: promote a user to super_admin
+-- UPDATE public.profiles
+-- SET role = 'super_admin'
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@example.com');
+
+-- Example: promote a user to dept_head
+-- UPDATE public.profiles
+-- SET role = 'dept_head'
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'depthead@example.com');
+
+-- Example: promote a user to sub_leader
+-- UPDATE public.profiles
+-- SET role = 'sub_leader'
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'subleader@example.com');

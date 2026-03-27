@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-warm-500: #F2C14E;
+  --color-brand-calm-600: #2F6FED;
+  --color-brand-support-500: #1FA39A;
+  --color-neutral-0: #FFFFFF;
+  --color-neutral-100: #F5F7FA;
+  --color-neutral-300: #D8DDE7;
+  --color-neutral-600: #667089;
+  --color-neutral-800: #384256;
+  --color-neutral-950: #1F2533;
+  --color-surface-warm: #FFF8E8;
+  --color-surface-cool: #F3F7FF;
+  --color-semantic-success: #229A5A;
+  --color-semantic-warning: #C98900;
+  --color-semantic-error: #D64545;
+  --color-semantic-info: #2F6FED;
+
+  --space-100: 8px;
+  --space-200: 16px;
+  --space-300: 24px;
+  --space-400: 32px;
+  --space-500: 48px;
+  --space-700: 96px;
+  --space-900: 160px;
+
+  --radius-200: 8px;
+  --radius-300: 12px;
+  --radius-pill: 9999px;
+
+  --motion-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-soft: 0 10px 30px rgba(31, 37, 51, 0.06);
+  --shadow-panel: 0 16px 48px rgba(31, 37, 51, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-950);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(242, 193, 78, 0.12), transparent 32%),
+    radial-gradient(circle at top right, rgba(47, 111, 237, 0.12), transparent 38%),
+    var(--color-neutral-100);
+  color: var(--color-neutral-950);
+  font-family: var(--font-body), sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+code,
+pre {
+  font-family: var(--font-mono), monospace;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background-color: rgba(47, 111, 237, 0.18);
+}

@@ -1,0 +1,45 @@
+ROSTERSERVE SESSION HANDOFF
+Last updated: 2026-03-27
+Project phase: Feature implementation
+Repo baseline: Runnable workspace with auth infrastructure; RS-F001 complete
+
+HANDOFF RULE
+- Replace this file with the latest durable handoff state.
+- Do not append a long diary.
+- Keep the "next required action" section precise enough for a fresh agent to continue immediately.
+
+LATEST COMPLETED WORK
+- RS-F001: Authentication and role access — implemented and validated
+- Plan: docs/plans/plan-rs-f001-authentication-and-role-access.md (approved)
+- Migration: supabase/migrations/00001_auth_profiles.sql
+- Auth library: apps/web/lib/auth/ (types, roles, schemas, session, actions, user-context)
+- Middleware: apps/web/middleware.ts (session refresh + route protection)
+- Auth UI: (auth)/sign-in, (auth)/sign-up pages with design-system-aligned styling
+- App shell: (app)/layout.tsx (primary auth gate + UserProvider)
+- Dashboard stub: (app)/dashboard/page.tsx (role-aware surface tint)
+- Auth routes: auth/callback (with error handling), auth/sign-out
+- Root page: server-side redirect to dashboard or sign-in
+- Seed: supabase/seed.sql (profile/role backfill instructions)
+- ESLint config: added .next and next-env.d.ts ignores
+
+BLOCKERS
+- None
+
+ACTIVE FEATURE
+- None (RS-F001 complete)
+
+NEXT FEATURE
+- RS-F002 | Event lifecycle management
+
+NEXT REQUIRED ACTION
+- Create the feature implementation plan for RS-F002
+- Draft docs/plans/plan-rs-f002-event-lifecycle-management.md
+- Do not begin RS-F002 implementation before the feature plan is reviewed and approved
+
+CANONICAL DOCS
+- Vision: VisionDocument_ChurchRosterApp.md
+- Design system: docs/design-system/design-system.md
+- PRD: docs/prd/prd.md
+- Feature registry: docs/features/feature-list.json
+- Progress tracker: docs/tracking/progress.md
+- Plan rules: docs/plans/README.md

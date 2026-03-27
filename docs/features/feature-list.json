@@ -1,0 +1,274 @@
+{
+  "projectName": "RosterServe",
+  "version": 1,
+  "generatedAt": "2026-03-27",
+  "sourcePrdPath": "docs/prd/prd.md",
+  "sourcePaths": {
+    "vision": "VisionDocument_ChurchRosterApp.md",
+    "designSystem": "docs/design-system/design-system.md",
+    "claude": "CLAUDE.md"
+  },
+  "repoBaseline": {
+    "status": "greenfield-docs-only",
+    "frontend": "Next.js + TypeScript + Tailwind CSS",
+    "backend": "Supabase",
+    "deployment": "Vercel"
+  },
+  "features": [
+    {
+      "id": "RS-F001",
+      "name": "Authentication and role access",
+      "category": "auth",
+      "description": "Establish email/password authentication, role-aware entry points, and scoped access control for all protected product surfaces.",
+      "order": 1,
+      "priority": "P0",
+      "dependsOn": [],
+      "ui": true,
+      "surface": ["auth", "admin", "leader", "volunteer"],
+      "steps": [
+        "Establish the authentication flow and session model for the supported role set.",
+        "Route authenticated users into role-appropriate entry experiences.",
+        "Enforce role-scoped access across protected views and data."
+      ],
+      "passes": true
+    },
+    {
+      "id": "RS-F002",
+      "name": "Event lifecycle management",
+      "category": "planning",
+      "description": "Create and manage the event or programme record that anchors every downstream planning workflow.",
+      "order": 2,
+      "priority": "P0",
+      "dependsOn": ["RS-F001"],
+      "ui": true,
+      "surface": ["admin", "leader"],
+      "steps": [
+        "Model event records and lifecycle states.",
+        "Create authorized event creation and editing flows.",
+        "Use the event state as the root context for downstream planning data."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F003",
+      "name": "Department and sub-team structure",
+      "category": "planning",
+      "description": "Model departments and sub-teams inside events so ownership and visibility follow the real church planning hierarchy.",
+      "order": 3,
+      "priority": "P0",
+      "dependsOn": ["RS-F001", "RS-F002"],
+      "ui": true,
+      "surface": ["admin", "leader"],
+      "steps": [
+        "Model departments and sub-teams beneath each event.",
+        "Assign ownership for department heads and sub-leaders inside the hierarchy.",
+        "Restrict structure management to authorized planning scopes."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F004",
+      "name": "Volunteer onboarding and profile setup",
+      "category": "onboarding",
+      "description": "Guide new volunteers through the minimum setup needed to participate in the rostering system.",
+      "order": 4,
+      "priority": "P0",
+      "dependsOn": ["RS-F001"],
+      "ui": true,
+      "surface": ["volunteer"],
+      "steps": [
+        "Gate new volunteer users into an onboarding path before the main dashboard.",
+        "Capture baseline profile details, interests, availability signals, and optional skill input.",
+        "Transition completed volunteers into the role-appropriate dashboard experience."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F005",
+      "name": "Availability and blockout management",
+      "category": "availability",
+      "description": "Allow volunteers to maintain service availability and make that information usable during roster planning.",
+      "order": 5,
+      "priority": "P0",
+      "dependsOn": ["RS-F001", "RS-F004"],
+      "ui": true,
+      "surface": ["volunteer", "leader"],
+      "steps": [
+        "Capture dated availability plus broader preference or blockout signals.",
+        "Make availability editable over time for volunteers.",
+        "Surface relevant availability inside leader planning views."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F006",
+      "name": "Interest request management",
+      "category": "interest",
+      "description": "Allow volunteers to express interest in serving areas and route those requests to the correct leader for review.",
+      "order": 6,
+      "priority": "P1",
+      "dependsOn": ["RS-F003", "RS-F004"],
+      "ui": true,
+      "surface": ["volunteer", "leader"],
+      "steps": [
+        "Let volunteers submit interest requests for departments or sub-teams.",
+        "Route each request to the appropriate reviewing leader.",
+        "Reflect request outcomes back to the volunteer and relevant planning views."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F007",
+      "name": "Skill profile and approval",
+      "category": "skills",
+      "description": "Capture department-linked volunteer skills and require leader approval before those skills affect planning.",
+      "order": 7,
+      "priority": "P0",
+      "dependsOn": ["RS-F003", "RS-F004"],
+      "ui": true,
+      "surface": ["volunteer", "leader"],
+      "steps": [
+        "Define department-linked skills and the volunteer skill submission flow.",
+        "Add leader approval and rejection handling for submitted skills.",
+        "Ensure only approved skills feed planning logic."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F008",
+      "name": "Roster planning and assignment management",
+      "category": "rostering",
+      "description": "Give leaders structured control over assigning volunteers into events, departments, and sub-teams.",
+      "order": 8,
+      "priority": "P0",
+      "dependsOn": ["RS-F002", "RS-F003", "RS-F005", "RS-F007"],
+      "ui": true,
+      "surface": ["leader"],
+      "steps": [
+        "Create assignment records tied to event structure and volunteer context.",
+        "Expose relevant planning context while leaders assign or adjust rosters.",
+        "Treat removal and reassignment as controlled high-impact actions."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F009",
+      "name": "Skill-gap detection and planning signals",
+      "category": "rostering",
+      "description": "Surface leader-visible staffing or skill coverage risk before the event occurs.",
+      "order": 9,
+      "priority": "P0",
+      "dependsOn": ["RS-F007", "RS-F008"],
+      "ui": true,
+      "surface": ["leader"],
+      "steps": [
+        "Define required skill coverage rules for planning scopes.",
+        "Compare coverage against approved skills and current roster state.",
+        "Surface actionable gap signals in leader planning views."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F010",
+      "name": "Personalized weekly dashboard",
+      "category": "dashboard",
+      "description": "Provide each role with a weekly operational dashboard that shows only the context they need.",
+      "order": 10,
+      "priority": "P0",
+      "dependsOn": ["RS-F001", "RS-F008", "RS-F009"],
+      "ui": true,
+      "surface": ["admin", "leader", "volunteer"],
+      "steps": [
+        "Build role-specific weekly dashboard states.",
+        "Populate dashboards with scoped assignments, planning health, and relevant context.",
+        "Reflect assignment and planning state changes quickly enough for weekly coordination."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F011",
+      "name": "Instructions and media sharing",
+      "category": "content",
+      "description": "Let leaders publish event-specific guidance, notes, and attachments to the right audience.",
+      "order": 11,
+      "priority": "P1",
+      "dependsOn": ["RS-F002", "RS-F003", "RS-F008"],
+      "ui": true,
+      "surface": ["leader", "volunteer"],
+      "steps": [
+        "Create the instruction publishing flow tied to event, department, or sub-team context.",
+        "Support attachment of images and documents.",
+        "Restrict visibility to the intended recipients."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F012",
+      "name": "Assignment response workflow",
+      "category": "response",
+      "description": "Close the loop between assignment creation and volunteer acknowledgement with controlled status changes.",
+      "order": 12,
+      "priority": "P0",
+      "dependsOn": ["RS-F008", "RS-F010"],
+      "ui": true,
+      "surface": ["leader", "volunteer"],
+      "steps": [
+        "Provide accept and decline actions from assignment-driven experiences.",
+        "Require confirmation on decline and enforce controlled assignment status progression.",
+        "Reflect response outcomes back into leader and volunteer weekly views."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F013",
+      "name": "Notifications and scheduled alerts",
+      "category": "notifications",
+      "description": "Notify volunteers and leaders when assignment state changes and send pre-event operational alerts.",
+      "order": 13,
+      "priority": "P1",
+      "dependsOn": ["RS-F008", "RS-F012"],
+      "ui": true,
+      "surface": ["leader", "volunteer"],
+      "steps": [
+        "Trigger notifications for assignment creation and response changes.",
+        "Schedule and send the required 2-day and 5-day leader alerts.",
+        "Prevent stale or invalid notification delivery."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F014",
+      "name": "Admin oversight, soft delete, and approval controls",
+      "category": "administration",
+      "description": "Route destructive actions through soft delete and admin review so operational safety is preserved.",
+      "order": 14,
+      "priority": "P0",
+      "dependsOn": ["RS-F001", "RS-F002", "RS-F003"],
+      "ui": true,
+      "surface": ["admin", "leader"],
+      "steps": [
+        "Route destructive changes through a soft-delete state.",
+        "Create the admin review path for permanent removal decisions.",
+        "Keep inactive records out of normal operations while preserving review visibility."
+      ],
+      "passes": false
+    },
+    {
+      "id": "RS-F015",
+      "name": "Error handling and support escalation",
+      "category": "reliability",
+      "description": "Make failures understandable and recoverable with calm messaging, clear next steps, and support escalation paths.",
+      "order": 15,
+      "priority": "P2",
+      "dependsOn": ["RS-F010", "RS-F012", "RS-F013"],
+      "ui": true,
+      "surface": ["admin", "leader", "volunteer"],
+      "steps": [
+        "Define calm, actionable error states across core user flows.",
+        "Add leader contact and bug-report escalation paths where required.",
+        "Prevent failure states from leaking protected data or breaking scope rules."
+      ],
+      "passes": false
+    }
+  ]
+}
