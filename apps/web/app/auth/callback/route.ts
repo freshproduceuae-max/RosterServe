@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey || !code) {
     // Missing code or config — redirect to sign-in with a friendly error
     return NextResponse.redirect(
-      `${siteUrl}/auth/sign-in?error=confirmation_failed`
+      `${siteUrl}/sign-in?error=confirmation_failed`
     );
   }
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   if (error) {
     // Expired or invalid code — redirect with friendly error
     return NextResponse.redirect(
-      `${siteUrl}/auth/sign-in?error=confirmation_failed`
+      `${siteUrl}/sign-in?error=confirmation_failed`
     );
   }
 

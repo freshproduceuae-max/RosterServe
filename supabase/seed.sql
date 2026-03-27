@@ -30,3 +30,24 @@
 -- UPDATE public.profiles
 -- SET role = 'sub_leader'
 -- WHERE id = (SELECT id FROM auth.users WHERE email = 'subleader@example.com');
+
+-- RS-F002: Example event seed data
+-- Run these after creating a super_admin user via the steps above.
+-- Replace the email with your actual super_admin user's email.
+
+-- INSERT INTO public.events (title, event_type, event_date, created_by)
+-- VALUES (
+--   'Sunday Service — April 6',
+--   'regular',
+--   '2026-04-06',
+--   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
+-- );
+
+-- INSERT INTO public.events (title, event_type, event_date, status, created_by)
+-- VALUES (
+--   'Easter Special Service',
+--   'special_day',
+--   '2026-04-20',
+--   'published',
+--   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
+-- );

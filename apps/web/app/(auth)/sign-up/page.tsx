@@ -41,7 +41,7 @@ export default function SignUpPage() {
           </p>
         </div>
         <Link
-          href="/auth/sign-in"
+          href="/sign-in"
           className="mt-200 text-body-sm text-brand-support-500 hover:underline"
         >
           Back to sign in
@@ -131,7 +131,7 @@ export default function SignUpPage() {
       <p className="text-center text-body-sm text-neutral-600">
         Already have an account?{" "}
         <Link
-          href="/auth/sign-in"
+          href="/sign-in"
           className="text-brand-calm-600 hover:underline"
         >
           Sign in

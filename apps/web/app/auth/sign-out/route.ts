@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const response = NextResponse.redirect(`${siteUrl}/auth/sign-in`, {
+  const response = NextResponse.redirect(`${siteUrl}/sign-in`, {
     status: 303,
   });
 
