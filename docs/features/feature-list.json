@@ -47,7 +47,7 @@
         "Create authorized event creation and editing flows.",
         "Use the event state as the root context for downstream planning data."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F003",

@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-27
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth infrastructure; RS-F001 complete
+Repo baseline: Runnable workspace with auth + event infrastructure; RS-F001 and RS-F002 complete
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,32 +9,96 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F001: Authentication and role access — implemented and validated
-- Plan: docs/plans/plan-rs-f001-authentication-and-role-access.md (approved)
-- Migration: supabase/migrations/00001_auth_profiles.sql
-- Auth library: apps/web/lib/auth/ (types, roles, schemas, session, actions, user-context)
-- Middleware: apps/web/middleware.ts (session refresh + route protection)
-- Auth UI: (auth)/sign-in, (auth)/sign-up pages with design-system-aligned styling
-- App shell: (app)/layout.tsx (primary auth gate + UserProvider)
-- Dashboard stub: (app)/dashboard/page.tsx (role-aware surface tint)
-- Auth routes: auth/callback (with error handling), auth/sign-out
-- Root page: server-side redirect to dashboard or sign-in
-- Seed: supabase/seed.sql (profile/role backfill instructions)
-- ESLint config: added .next and next-env.d.ts ignores
+- RS-F002: Event lifecycle management — implemented and validated
+- Plan: docs/plans/plan-rs-f002-event-lifecycle-management.md (approved)
+- Migration: supabase/migrations/00002_events.sql
+- Event library: apps/web/lib/events/ (types, schemas, queries, actions)
+- Event UI: apps/web/app/(app)/events/ (list, detail, create, edit pages + components)
+- App navigation: apps/web/app/(app)/app-nav.tsx (Events link for leader roles)
+- Layout updated: apps/web/app/(app)/layout.tsx (nav integration)
+- Seed: supabase/seed.sql (event seed examples added)
+
+FILES CHANGED
+- supabase/migrations/00002_events.sql (new)
+- apps/web/lib/events/types.ts (new)
+- apps/web/lib/events/schemas.ts (new)
+- apps/web/lib/events/queries.ts (new)
+- apps/web/lib/events/actions.ts (new)
+- apps/web/app/(app)/events/page.tsx (new)
+- apps/web/app/(app)/events/loading.tsx (new)
+- apps/web/app/(app)/events/new/page.tsx (new)
+- apps/web/app/(app)/events/[id]/page.tsx (new)
+- apps/web/app/(app)/events/[id]/loading.tsx (new)
+- apps/web/app/(app)/events/[id]/edit/page.tsx (new)
+- apps/web/app/(app)/events/_components/event-status-badge.tsx (new)
+- apps/web/app/(app)/events/_components/status-transition-modal.tsx (new)
+- apps/web/app/(app)/events/_components/event-form.tsx (new)
+- apps/web/app/(app)/events/_components/event-empty-state.tsx (new)
+- apps/web/app/(app)/events/_components/event-list-table.tsx (new)
+- apps/web/app/(app)/events/_components/event-detail-card.tsx (new)
+- apps/web/app/(app)/app-nav.tsx (new)
+- apps/web/app/(app)/layout.tsx (modified — nav integration)
+- supabase/seed.sql (modified — event seed examples)
+- docs/tracking/progress.md (updated)
+- docs/tracking/claude-progress.txt (this file)
+- docs/features/feature-list.json (RS-F002 passes: true)
+- docs/plans/plan-rs-f002-event-lifecycle-management.md (new, approved)
+
+TEST STATUS
+- npm run typecheck — passed
+- npm run lint — passed
+- npm run build — passed
+- Design-fidelity review — passed (5 issues found and fixed)
+
+REVIEW FIXES
+- Status transition button: "Mark completed" changed from semantic-warning to brand-calm-600 (completing is operational, not a warning)
+- Empty state card: bg-surface-cool changed to bg-neutral-0 (cards use neutral-0, not tinted surfaces)
+- Loading skeletons: arbitrary pixel values replaced with canonical spacing tokens
+- Filter tabs: rounded-pill changed to rounded-200 (pill shape reserved for welcome moments, not leader dashboards)
+- Active nav indicator: added underline decoration for non-color accessibility alongside font-semibold + brand-calm-600
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None (RS-F001 complete)
+- None (RS-F002 complete)
 
 NEXT FEATURE
-- RS-F002 | Event lifecycle management
+- RS-F003 | Department and sub-team structure
 
 NEXT REQUIRED ACTION
-- Create the feature implementation plan for RS-F002
-- Draft docs/plans/plan-rs-f002-event-lifecycle-management.md
-- Do not begin RS-F002 implementation before the feature plan is reviewed and approved
+- Create the feature implementation plan for RS-F003
+- Draft docs/plans/plan-rs-f003-department-and-sub-team-structure.md
+- Do not begin RS-F003 implementation before the feature plan is reviewed and approved
+
+BRANCH CONVENTION
+- Use codex/<feature-id>-<short-slug>
+- Next feature branch: codex/rs-f003-department-sub-team
+
+PLAN STATUS
+- Scaffolding plan: implemented
+- RS-F001 plan: implemented (plan file missing from disk, noted as documentation gap)
+- RS-F002 plan: implemented
+- No other approved feature plans yet
+
+EVENT ARCHITECTURAL DECISIONS (RS-F002)
+- Event type enum: Postgres enum event_type with 3 values (regular, ad_hoc, special_day)
+- Event status enum: Postgres enum event_status with 3 values (draft, published, completed)
+- Status transitions: enforced at database level via BEFORE UPDATE trigger. Valid: draft->published, draft->completed, published->completed. No backward transitions.
+- Authorization model: super_admin creates/edits/deletes events. dept_head and sub_leader have read-only access to all active events (pre-RS-F003 baseline — visibility should be tightened to department-scoped when RS-F003 introduces ownership). Volunteers have no direct event access.
+- Soft-delete: deleted_at column, same pattern as profiles. No hard DELETE via RLS.
+- RLS policies: 5 policies (super_admin read all including deleted, leaders read active, super_admin insert, super_admin update)
+- Server actions: createEvent, updateEvent, transitionEventStatus, softDeleteEvent — all with Zod validation and role checks
+- URL structure: /events (list), /events/new (create), /events/[id] (detail), /events/[id]/edit (edit)
+- Page-level authorization: /events and /events/[id] enforce isLeaderRole(); /events/new and /events/[id]/edit enforce hasMinimumRole(super_admin) with server-side redirect
+- Navigation: AppNav client component with active state underline indicator
+
+CARRY-OVER PRODUCT NOTES
+- Event and programme are treated as the same planning unit in v1
+- Broad leader read access to all events is a pre-RS-F003 baseline; RS-F003 should tighten visibility to department-scoped
+- Downstream FK verifiability: RS-F002 establishes the canonical event root; full FK enforcement deferred to RS-F003+
+- Availability should support dated availability plus broader preferences/blockouts
+- Notification delivery remains implementation-neutral between the documented options
 
 CANONICAL DOCS
 - Vision: VisionDocument_ChurchRosterApp.md
@@ -43,3 +107,13 @@ CANONICAL DOCS
 - Feature registry: docs/features/feature-list.json
 - Progress tracker: docs/tracking/progress.md
 - Plan rules: docs/plans/README.md
+
+CARRY-OVER EXECUTION NOTES
+- Follow the canonical design system for all UI work
+- Keep feature execution aligned to the registry order unless an approved plan justifies a dependency-safe exception
+- Update progress.md when feature status changes
+- Update this file at the end of every implementation or review session
+- Mark a feature as passed only when its validation is genuinely satisfied
+- ESLint config ignores .next build output and next-env.d.ts
+- Pill-shaped CTAs reserved for welcome/promotional moments, not leader dashboards (design system rule)
+- Active nav states must include non-color indicators (underline, border, etc.) for accessibility

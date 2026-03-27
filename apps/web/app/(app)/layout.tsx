@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionWithProfile } from "@/lib/auth/session";
+import { isLeaderRole } from "@/lib/auth/roles";
 import { UserProvider } from "@/lib/auth/user-context";
+import { AppNav } from "./app-nav";
 
 export default async function AppLayout({
   children,
@@ -14,14 +17,19 @@ export default async function AppLayout({
     redirect("/auth/sign-in");
   }
 
+  const showEventsLink = isLeaderRole(session.profile.role);
+
   return (
     <UserProvider session={session}>
       <div className="min-h-screen bg-neutral-100">
         <header className="border-b border-neutral-300 bg-neutral-0">
           <div className="mx-auto flex max-w-shell items-center justify-between px-300 py-200 sm:px-500">
-            <span className="font-display text-h3 text-neutral-950">
-              RosterServe
-            </span>
+            <div className="flex items-center gap-400">
+              <Link href="/dashboard" className="font-display text-h3 text-neutral-950">
+                RosterServe
+              </Link>
+              {showEventsLink && <AppNav />}
+            </div>
             <form action="/auth/sign-out" method="POST">
               <button
                 type="submit"
