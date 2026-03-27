@@ -11,7 +11,7 @@ export default async function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSessionWithProfile();
-  if (!session) redirect("/auth/sign-in");
+  if (!session) redirect("/sign-in");
   if (!hasMinimumRole(session.profile.role, "super_admin")) {
     const { id } = await params;
     redirect(`/events/${id}`);

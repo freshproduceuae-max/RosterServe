@@ -6,7 +6,7 @@ import { EventForm } from "../_components/event-form";
 
 export default async function NewEventPage() {
   const session = await getSessionWithProfile();
-  if (!session) redirect("/auth/sign-in");
+  if (!session) redirect("/sign-in");
   if (!hasMinimumRole(session.profile.role, "super_admin")) redirect("/events");
 
   return (

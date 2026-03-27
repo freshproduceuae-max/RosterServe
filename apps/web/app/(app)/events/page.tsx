@@ -13,7 +13,7 @@ export default async function EventsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const session = await getSessionWithProfile();
-  if (!session) redirect("/auth/sign-in");
+  if (!session) redirect("/sign-in");
   if (!isLeaderRole(session.profile.role)) redirect("/dashboard");
 
   const params = await searchParams;

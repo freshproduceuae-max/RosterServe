@@ -14,7 +14,7 @@ export default async function AppLayout({
 
   // Primary auth gate — defense in depth behind middleware
   if (!session) {
-    redirect("/auth/sign-in");
+    redirect("/sign-in");
   }
 
   const showEventsLink = isLeaderRole(session.profile.role);

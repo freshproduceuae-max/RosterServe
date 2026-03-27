@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_AUTH_PATHS = ["/auth/sign-in", "/auth/sign-up", "/auth/callback"];
+const PUBLIC_AUTH_PATHS = ["/sign-in", "/sign-up", "/auth/callback"];
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
   // Unauthenticated user trying to access protected route
   if (!user && !isPublicAuthPath && pathname !== "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/sign-in";
+    url.pathname = "/sign-in";
     return NextResponse.redirect(url);
   }
 

@@ -11,7 +11,7 @@ export default async function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSessionWithProfile();
-  if (!session) redirect("/auth/sign-in");
+  if (!session) redirect("/sign-in");
   if (!isLeaderRole(session.profile.role)) redirect("/dashboard");
 
   const { id } = await params;
