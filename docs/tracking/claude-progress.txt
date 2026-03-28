@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event infrastructure; RS-F001 and RS-F002 complete
+Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,112 +9,102 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F002: Event lifecycle management — implemented, code-reviewed, and merged to main
-- Plan: docs/plans/plan-rs-f002-event-lifecycle-management.md (approved)
-- Migration: supabase/migrations/00002_events.sql
-- Event library: apps/web/lib/events/ (types, schemas, queries, actions)
-- Event UI: apps/web/app/(app)/events/ (list, detail, create, edit pages + components)
-- App navigation: apps/web/app/(app)/app-nav.tsx (Events link for leader roles)
-- Layout updated: apps/web/app/(app)/layout.tsx (nav integration)
-- Seed: supabase/seed.sql (event seed examples added)
-- Auth route fix: all redirect paths normalized to /sign-in and /sign-up throughout the codebase (P1 code review finding resolved)
-- PR #1 merged to main; feature branch codex/rs-f002-event-lifecycle deleted
+- RS-F003: Department and sub-team structure — implemented, design-fidelity reviewed (3 P2 fixes applied), and ready for PR merge
+- Plan: docs/plans/plan-rs-f003-department-and-sub-team-structure.md (approved)
+- Migration: supabase/migrations/00003_departments.sql
+- Department library: apps/web/lib/departments/ (types, schemas, queries, actions)
+- Department UI: apps/web/app/(app)/events/[id]/departments/ (pages + components)
+- Event detail page updated: adds DepartmentListSection below EventDetailCard
+- Events queries reviewed: no changes needed — RLS handles visibility scoping correctly
+- Seed: supabase/seed.sql (RS-F003 department/sub-team seed examples added)
+- PR #2 open on branch codex/rs-f003-department-sub-team (plan doc committed; implementation added in this session)
 
-FILES CHANGED (RS-F002 + fix)
-- supabase/migrations/00002_events.sql (new)
-- apps/web/lib/events/types.ts (new)
-- apps/web/lib/events/schemas.ts (new)
-- apps/web/lib/events/queries.ts (new)
-- apps/web/lib/events/actions.ts (new)
-- apps/web/app/(app)/events/page.tsx (new)
-- apps/web/app/(app)/events/loading.tsx (new)
-- apps/web/app/(app)/events/new/page.tsx (new)
-- apps/web/app/(app)/events/[id]/page.tsx (new)
-- apps/web/app/(app)/events/[id]/loading.tsx (new)
-- apps/web/app/(app)/events/[id]/edit/page.tsx (new)
-- apps/web/app/(app)/events/_components/event-status-badge.tsx (new)
-- apps/web/app/(app)/events/_components/status-transition-modal.tsx (new)
-- apps/web/app/(app)/events/_components/event-form.tsx (new)
-- apps/web/app/(app)/events/_components/event-empty-state.tsx (new)
-- apps/web/app/(app)/events/_components/event-list-table.tsx (new)
-- apps/web/app/(app)/events/_components/event-detail-card.tsx (new)
-- apps/web/app/(app)/app-nav.tsx (new)
-- apps/web/app/(app)/layout.tsx (modified — nav integration)
-- apps/web/app/(app)/dashboard/page.tsx (modified — auth path fix)
-- apps/web/app/(auth)/sign-in/page.tsx (modified — auth path fix)
-- apps/web/app/(auth)/sign-up/page.tsx (modified — auth path fix)
-- apps/web/app/page.tsx (modified — auth path fix)
-- apps/web/app/auth/callback/route.ts (modified — auth path fix)
-- apps/web/app/auth/sign-out/route.ts (modified — auth path fix)
-- apps/web/middleware.ts (modified — auth path fix)
-- supabase/seed.sql (modified — event seed examples)
+FILES CHANGED (RS-F003)
+- supabase/migrations/00003_departments.sql (new)
+- apps/web/lib/departments/types.ts (new)
+- apps/web/lib/departments/schemas.ts (new)
+- apps/web/lib/departments/queries.ts (new)
+- apps/web/lib/departments/actions.ts (new)
+- apps/web/app/(app)/events/[id]/departments/new/page.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/page.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/edit/page.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/new/page.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/[subTeamId]/edit/page.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/department-empty-state.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/sub-team-empty-state.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/delete-confirm-modal.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/department-form.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/sub-team-form.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/department-list-section.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/sub-team-list-section.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx (new)
+- apps/web/app/(app)/events/[id]/page.tsx (modified — adds DepartmentListSection)
+- apps/web/lib/events/queries.ts (modified — RS-F003 review comment added; no logic changes)
+- supabase/seed.sql (modified — RS-F003 seed examples)
+- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (new, approved)
 - docs/tracking/progress.md (updated)
 - docs/tracking/claude-progress.txt (this file)
-- docs/features/feature-list.json (RS-F002 passes: true)
-- docs/plans/plan-rs-f002-event-lifecycle-management.md (new, approved)
+- docs/features/feature-list.json (RS-F003 passes: true — pending merge)
 
 TEST STATUS
 - npm run typecheck — passed
 - npm run lint — passed
 - npm run build — passed
-- Design-fidelity review — passed (5 issues found and fixed in PR)
-- Code review — APPROVED (no blocking findings after P1 auth route fix)
-- Manual DB validation — pending a running Supabase instance (create/edit/transition/delete flows, role access verification)
+- Design-fidelity review — passed (3 P2 issues found and fixed: back-link underline, delete modal label, section heading font)
+- Code review — pending (PR #2)
+- Manual DB validation — pending a running Supabase instance
 
-REVIEW FIXES
-- Status transition button: "Mark completed" changed from semantic-warning to brand-calm-600 (completing is operational, not a warning)
-- Empty state card: bg-surface-cool changed to bg-neutral-0 (cards use neutral-0, not tinted surfaces)
-- Loading skeletons: arbitrary pixel values replaced with canonical spacing tokens
-- Filter tabs: rounded-pill changed to rounded-200 (pill shape reserved for welcome moments, not leader dashboards)
-- Active nav indicator: added underline decoration for non-color accessibility alongside font-semibold + brand-calm-600
-- Auth route fix (P1): all redirect targets and PUBLIC_AUTH_PATHS normalized from /auth/sign-in to /sign-in throughout codebase
+DESIGN FIXES APPLIED (RS-F003)
+- Back-links: added hover:underline to all back-link anchors (non-color accessibility)
+- Delete modal confirm button: changed from "Delete" to "Delete {entityName}" (clear verb + object)
+- Section headings in dense leader lists: changed from font-display to font-semibold (Space Grotesk reserved for singular focus moments, not dense operational lists)
 
 KNOWN LIMITATIONS
 - Manual CRUD and role-access validation requires a running Supabase instance (not available in this environment)
-- Broad leader read access to all events is a pre-RS-F003 baseline — RS-F003 should tighten visibility to department-scoped
-- Downstream FK enforcement (departments, assignments, instructions) is deferred to RS-F003 and later features
-- Soft-delete cascade to downstream records is a planned RS-F003+ concern
+- Events RLS visibility cutover: dept_head/sub_leader see no events until super_admin assigns ownership — correct behavior, documented in seed.sql
+- Downstream FK enforcement (assignments, instructions) deferred to RS-F008+
+- Sub-leader management rights deferred to RS-F008+ (read-only in RS-F003 by design)
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None (RS-F002 complete and merged)
+- RS-F003 (implementation complete; awaiting PR review and merge)
 
 NEXT FEATURE
-- RS-F003 | Department and sub-team structure
+- RS-F004 | Volunteer onboarding and profile setup
 
 NEXT REQUIRED ACTION
-- Create the feature implementation plan for RS-F003
-- Draft docs/plans/plan-rs-f003-department-and-sub-team-structure.md
-- Do not begin RS-F003 implementation before the feature plan is reviewed and approved
+- Merge PR #2 after review approval
+- Create the feature implementation plan for RS-F004
+- Draft docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md
+- Do not begin RS-F004 implementation before the feature plan is reviewed and approved
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- Next feature branch: codex/rs-f003-department-sub-team
+- Next feature branch: codex/rs-f004-volunteer-onboarding
 
 PLAN STATUS
 - Scaffolding plan: implemented
 - RS-F001 plan: implemented (plan file missing from disk, noted as documentation gap)
 - RS-F002 plan: implemented and merged
+- RS-F003 plan: implemented, PR #2 open
 - No other approved feature plans yet
 
-EVENT ARCHITECTURAL DECISIONS (RS-F002)
-- Event type enum: Postgres enum event_type with 3 values (regular, ad_hoc, special_day)
-- Event status enum: Postgres enum event_status with 3 values (draft, published, completed)
-- Status transitions: enforced at database level via BEFORE UPDATE trigger. Valid: draft->published, draft->completed, published->completed. No backward transitions.
-- Authorization model: super_admin creates/edits/deletes events. dept_head and sub_leader have read-only access to all active events (pre-RS-F003 baseline — visibility should be tightened to department-scoped when RS-F003 introduces ownership). Volunteers have no direct event access.
-- Soft-delete: deleted_at column, same pattern as profiles. No hard DELETE via RLS.
-- RLS policies: 5 policies (super_admin read all including deleted, leaders read active, super_admin insert, super_admin update)
-- Server actions: createEvent, updateEvent, transitionEventStatus, softDeleteEvent — all with Zod validation and role checks
-- URL structure: /events (list), /events/new (create), /events/[id] (detail), /events/[id]/edit (edit)
-- Page-level authorization: /events and /events/[id] enforce isLeaderRole(); /events/new and /events/[id]/edit enforce hasMinimumRole(super_admin) with server-side redirect
-- Navigation: AppNav client component with active state underline indicator
+DEPARTMENT/SUB-TEAM ARCHITECTURAL DECISIONS (RS-F003)
+- Hierarchy: event → department → sub-team (flat, no deeper nesting in v1)
+- Owner assignment: department.owner_id references a dept_head profile; sub_team.owner_id references a sub_leader profile; both nullable (may be assigned after creation)
+- Sub-leader rights in RS-F003: read-only. "Manage the structures they are responsible for" deferred to RS-F008+.
+- Department management: super_admin only for create/edit/delete departments
+- Sub-team management: super_admin OR owning dept_head (ownership verified server-side in actions before mutation)
+- Cascade soft-delete: enforced at three layers — action (cascade sub_teams on dept delete), RLS (dept_head sub_team SELECT joins departments with deleted_at IS NULL guard), query (getDepartmentsByEventId filters sub_teams.deleted_at IS NULL)
+- Events RLS: pre-RS-F003 "Leaders can read active events" policy dropped; replaced with dept_head policy (events with owned dept) and sub_leader policy (events with owned sub_team)
+- getProfilesByRole() query: simple role-filtered SELECT; no pagination at church scale
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
-- Broad leader read access to all events is a pre-RS-F003 baseline; RS-F003 should tighten visibility to department-scoped
-- Downstream FK verifiability: RS-F002 establishes the canonical event root; full FK enforcement deferred to RS-F003+
+- Broad leader read access to all events is now closed — visibility follows ownership from RS-F003 onwards
+- Downstream FK verifiability: RS-F003 establishes dept/sub-team roots; full FK enforcement deferred to RS-F006/RS-F008+
 - Availability should support dated availability plus broader preferences/blockouts
 - Notification delivery remains implementation-neutral between the documented options
 
@@ -134,5 +124,6 @@ CARRY-OVER EXECUTION NOTES
 - Mark a feature as passed only when its validation is genuinely satisfied
 - ESLint config ignores .next build output and next-env.d.ts
 - Pill-shaped CTAs reserved for welcome/promotional moments, not leader dashboards (design system rule)
-- Active nav states must include non-color indicators (underline, border, etc.) for accessibility
+- Active/hover states must include non-color indicators (underline, border, etc.) for accessibility — applies to back-links and nav elements
+- font-display (Space Grotesk) must be used sparingly — not for section headings inside dense leader operational lists
 - gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
