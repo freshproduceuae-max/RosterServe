@@ -76,28 +76,18 @@ export async function saveVolunteerInterests(
 
   const supabase = await createSupabaseServerClient();
 
-  // Delete all existing interests for this volunteer
-  const { error: deleteError } = await supabase
-    .from("volunteer_interests")
-    .delete()
-    .eq("volunteer_id", session.user.id);
+  // Atomic replace: delete + insert run in one PostgreSQL transaction inside
+  // replace_volunteer_interests(). An insert failure rolls back the delete,
+  // so the volunteer's previous selections are never lost on error.
+  // The function's INSERT policy also rejects department IDs that are not
+  // active and on a published event.
+  const { error } = await supabase.rpc("replace_volunteer_interests", {
+    p_volunteer_id: session.user.id,
+    p_department_ids: parsed.data.department_ids,
+  });
 
-  if (deleteError) {
+  if (error) {
     return { error: "Could not save your interests. Please try again." };
-  }
-
-  // Insert new set (may be empty if the user selected nothing)
-  if (parsed.data.department_ids.length > 0) {
-    const { error: insertError } = await supabase.from("volunteer_interests").insert(
-      parsed.data.department_ids.map((department_id) => ({
-        volunteer_id: session.user.id,
-        department_id,
-      }))
-    );
-
-    if (insertError) {
-      return { error: "Could not save your interests. Please try again." };
-    }
   }
 
   return { success: true };
