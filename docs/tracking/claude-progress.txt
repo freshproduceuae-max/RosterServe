@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-28
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main; RS-F004 plan approved and merged via PR #3
+Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001–RS-F003 complete and merged to main; RS-F004 implemented on branch codex/rs-f004-volunteer-onboarding, PR #4 open
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,50 +9,68 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F003 plan file: status updated to Implemented; deviations section added (00004_leader_profile_read.sql and verifyOwnerRole() were not in original plan)
-- RS-F001 plan file: confirmed missing from disk — decision made to leave as known gap; no retroactive reconstruction needed
-- RS-F004 plan: drafted, Codex-reviewed (addendums applied), approved, merged to main via PR #3
+- RS-F004: full implementation on branch codex/rs-f004-volunteer-onboarding
+- Migration 00005_onboarding.sql: three additive tables (availability_preferences, volunteer_interests, volunteer_skills)
+- Lib layer: lib/onboarding/{types,schemas,queries,actions}.ts
+- UI: (onboarding)/layout.tsx, onboarding/page.tsx, _components/{step-indicator,availability-step,interests-step,skills-step,onboarding-flow}.tsx
+- (app)/layout.tsx: volunteer onboarding gate added
+- supabase/seed.sql: RS-F004 commented examples added
+- typecheck, lint, build all pass
+- PR #4 opened against main
 
-FILES CHANGED (this session, all merged to main)
-- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (modified — status: Implemented, deviations section)
-- docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md (new — status: Approved, merged via PR #3)
-- docs/tracking/progress.md (RS-F004: approved, next up: implementation)
-- docs/tracking/claude-progress.txt (this file)
+FILES CHANGED (this session, on branch codex/rs-f004-volunteer-onboarding)
+- supabase/migrations/00005_onboarding.sql (new)
+- apps/web/lib/onboarding/types.ts (new)
+- apps/web/lib/onboarding/schemas.ts (new)
+- apps/web/lib/onboarding/queries.ts (new)
+- apps/web/lib/onboarding/actions.ts (new)
+- apps/web/app/(onboarding)/layout.tsx (new)
+- apps/web/app/(onboarding)/onboarding/page.tsx (new)
+- apps/web/app/(onboarding)/onboarding/_components/step-indicator.tsx (new)
+- apps/web/app/(onboarding)/onboarding/_components/availability-step.tsx (new)
+- apps/web/app/(onboarding)/onboarding/_components/interests-step.tsx (new)
+- apps/web/app/(onboarding)/onboarding/_components/skills-step.tsx (new)
+- apps/web/app/(onboarding)/onboarding/_components/onboarding-flow.tsx (new)
+- apps/web/app/(app)/layout.tsx (modified — volunteer onboarding gate)
+- supabase/seed.sql (modified — RS-F004 examples)
+- docs/tracking/progress.md (modified — RS-F004: in_review)
 
 TEST STATUS
-- RS-F004: plan approved — no implementation yet, passes = false
-- All RS-F003 checks remain valid (prior session)
+- RS-F004: typecheck/lint/build pass; manual validation not yet run (PR #4 is pre-merge)
+- All RS-F001–RS-F003 checks remain valid (prior sessions)
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required; future agents read code directly
-- No background agents or team tasks were created this session
+- RS-F004 manual validation checklist is in PR #4 description; must pass before marking RS-F004 as `passed`
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None (RS-F004 plan approved; implementation not yet started)
+- RS-F004 | Volunteer onboarding and profile setup — PR #4 open, awaiting review + approval + merge
 
 NEXT FEATURE
-- RS-F004 | Volunteer onboarding and profile setup
+- RS-F005 | Availability and blockout management (depends on RS-F001, RS-F004)
 
 NEXT REQUIRED ACTION
-- Create branch codex/rs-f004-volunteer-onboarding
-- Implement RS-F004 following docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md exactly
-- Re-read the approved plan at the start of the next session before writing any code
+- User reviews PR #4: https://github.com/freshproduceuae-max/RosterServe/pull/4
+- After approval, merge PR #4
+- Run manual validation checklist (see PR description) — npx supabase db reset, then 11 manual checks
+- When all pass: update progress.md (RS-F004: passed), feature-list.json (passes: true), then start RS-F005 plan
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- RS-F004 branch: codex/rs-f004-volunteer-onboarding
+- RS-F005 branch: codex/rs-f005-availability-blockouts
 
 PLAN STATUS
 - Scaffolding plan: implemented
-- RS-F001 plan: implemented (plan file missing from disk — known gap, no action required)
+- RS-F001 plan: implemented (plan file missing from disk — known gap)
 - RS-F002 plan: implemented and merged
 - RS-F003 plan: implemented and merged
-- RS-F004 plan: approved (implementation not started)
+- RS-F004 plan: implemented; PR #4 in review
+- RS-F005 plan: not started
 
-RS-F004 ARCHITECTURAL DECISIONS (from approved plan)
+RS-F004 ARCHITECTURAL DECISIONS (from approved plan + Codex addendums)
 - Gate location: (app)/layout.tsx adds one redirect for volunteer + !onboarding_complete → /onboarding; middleware stays thin
 - Onboarding route group: (onboarding)/ with its own minimal layout — no nav bar, warm-surface wrapper; layout gate ejects non-volunteers and already-onboarded users back to /dashboard
 - Three steps: (1) availability preferences — general days/times only, NOT dated blockouts (RS-F005); (2) department interests — FK to departments rows, skippable if none exist; (3) skills — free text, status=pending, approval deferred to RS-F007
@@ -60,13 +78,13 @@ RS-F004 ARCHITECTURAL DECISIONS (from approved plan)
 - saveVolunteerSkills is APPEND-ONLY with dedupe — does not replace on re-submit (Codex addendum)
 - getActiveDepartmentsForInterests and getOnboardingState must filter departments.deleted_at IS NULL at query layer — stale interest rows from soft-deleted depts are invisible at UI layer (Codex addendum)
 - completeOnboarding() sets profiles.onboarding_complete = true then redirects to /dashboard; must be idempotent
-- Migration 00005_onboarding.sql: three new tables (availability_preferences, volunteer_interests, volunteer_skills); purely additive, no existing tables altered
+- Migration 00005_onboarding.sql: three new tables; purely additive, no existing tables altered
 - availability_preferences: UNIQUE on volunteer_id (one row per volunteer, upserted)
 - volunteer_interests: UNIQUE (volunteer_id, department_id); no status column — that is RS-F006
 - volunteer_skills: status column exists from day one (pending/approved/rejected) so RS-F007 can drive it without a migration
 - Downstream contracts: RS-F005 extends availability with dated blockouts table; RS-F006 adds status/routing to interests; RS-F007 adds approval workflow UI on top of existing skills table
 - Existing volunteers (onboarding_complete=false): gated on first sign-in after deployment — intentional, tested explicitly (validation check #2)
-- Design: onboarding is one of the explicit exceptions for font-display and pill CTAs per design-system.md; use brand-warm-500 and bg-surface-warm throughout
+- Redirect-loop safety: (app)/layout.tsx gates incomplete volunteers out; (onboarding)/layout.tsx gates complete/non-volunteer back — no bounce (Codex addendum)
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
