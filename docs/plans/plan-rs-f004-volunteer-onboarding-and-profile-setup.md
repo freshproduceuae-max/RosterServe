@@ -1,6 +1,6 @@
 # Plan: RS-F004 - Volunteer Onboarding And Profile Setup
 
-Status: In Review
+Status: Approved
 Feature: RS-F004
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -105,7 +105,7 @@ This means both directions are gated: `(app)` routes eject un-onboarded voluntee
 
 - `saveAvailabilityPreferences(formData)` — upserts one `availability_preferences` row for the current user
 - `saveVolunteerInterests(departmentIds)` — replaces the volunteer's `volunteer_interests` rows (delete-insert within a transaction)
-- `saveVolunteerSkills(skillNames)` — inserts new `volunteer_skills` rows (pending) for any names not already present; ignores duplicates
+- `saveVolunteerSkills(skillNames)` — **append-only with dedupe**: inserts new `volunteer_skills` rows (pending) for any names not already present in a non-deleted row for this volunteer; does not delete previously saved skills on re-submit. This means a volunteer who saves Step 3, closes, and resumes will accumulate skills across submissions rather than having their prior entries replaced. Skills already saved appear pre-filled and cannot be re-added as duplicates.
 - `completeOnboarding()` — sets `profiles.onboarding_complete = true` for the current user, then redirects to `/dashboard`
 
 Each action verifies `role === 'volunteer'` before writing. No other role may write to these tables via these actions.
@@ -113,7 +113,8 @@ Each action verifies `role === 'volunteer'` before writing. No other role may wr
 ### Queries (`apps/web/lib/onboarding/queries.ts`)
 
 - `getOnboardingState(userId)` — returns existing `availability_preferences`, `volunteer_interests`, and `volunteer_skills` rows for pre-filling if the volunteer resumes onboarding
-- `getActiveDepartmentsForInterests()` — returns active (non-deleted) departments across all active events, with event title for context; used to populate the interests step selector; returns empty array if none exist
+- `getActiveDepartmentsForInterests()` — returns active (non-deleted) departments across all active events, with event title for context; used to populate the interests step selector; returns empty array if none exist. Must filter `departments.deleted_at IS NULL`.
+- `getOnboardingState(userId)` — returns existing rows across all three tables for pre-fill. For `volunteer_interests`, must JOIN to `departments` and filter `departments.deleted_at IS NULL` — stale interest rows pointing to soft-deleted departments must not appear in the pre-fill list. The underlying rows are not deleted (FK is still valid) but they must be invisible to the volunteer at the UI layer.
 
 ### UI Structure
 
@@ -297,15 +298,18 @@ Step progression:
 
 ### Manual checks
 1. Sign up as a new volunteer → should be redirected to `/onboarding` on first sign-in
-2. Sign in as super_admin → should go directly to `/dashboard`, never see `/onboarding`
-3. Sign in as dept_head → should go directly to `/dashboard`, never see `/onboarding`
-4. Navigate directly to `/onboarding` as a super_admin → should redirect to `/dashboard`
-5. Complete Step 1 (availability), close browser, reopen → should return to `/onboarding` with Step 1 data pre-filled
-6. Complete all steps → should land on `/dashboard` with no further redirect to `/onboarding`
-7. Sign out and sign back in as the now-onboarded volunteer → should go directly to `/dashboard`
-8. Complete onboarding with no departments available (interests step empty) → skip should work, onboarding should complete
-9. Submit skills step with no skills entered → should complete without error (skills are optional)
-10. Mobile layout check — single-column, checkboxes usable on small screen
+2. **Rollout path (existing volunteer):** Use a pre-existing volunteer account that has `onboarding_complete = false` (i.e., registered before this feature shipped) → sign in → should be gated to `/onboarding` via the `(app)/layout.tsx` guard, not just the onboarding layout. This is the primary rollout-sensitive path.
+3. Sign in as super_admin → should go directly to `/dashboard`, never see `/onboarding`
+4. Sign in as dept_head → should go directly to `/dashboard`, never see `/onboarding`
+5. Navigate directly to `/onboarding` as a super_admin → should redirect to `/dashboard`
+6. Complete Step 1 (availability), close browser, reopen → should return to `/onboarding` with Step 1 data pre-filled
+7. **Step 3 resume:** Save skills on Step 3, close browser, reopen → previously saved skills appear pre-filled; submitting additional skills appends rather than replaces.
+8. Complete all steps → should land on `/dashboard` with no further redirect to `/onboarding`
+9. Sign out and sign back in as the now-onboarded volunteer → should go directly to `/dashboard`
+10. Complete onboarding with no departments available (interests step empty) → skip should work, onboarding should complete
+11. **Deleted department in interests:** Express interest in a department, then soft-delete that department as super_admin, then resume onboarding → stale interest should not appear in the pre-fill list.
+12. Submit skills step with no skills entered → should complete without error (skills are optional)
+13. Mobile layout check — single-column, checkboxes usable on small screen
 
 ## Documentation Updates
 
