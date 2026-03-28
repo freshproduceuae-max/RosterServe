@@ -84,3 +84,44 @@
 --   'AV Team',
 --   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
 -- );
+
+-- RS-F004: Example onboarding seed data
+-- Run these after creating a volunteer user via sign-up and confirming via inbucket.
+-- Replace the email with your actual volunteer user's email.
+-- Note: the onboarding flow runs automatically when a volunteer signs in.
+-- These examples let you manually inspect or reset the onboarding tables.
+
+-- Example: view a volunteer's availability preferences
+-- SELECT * FROM public.availability_preferences
+-- WHERE volunteer_id = (SELECT id FROM auth.users WHERE email = 'volunteer@example.com');
+
+-- Example: reset a volunteer's onboarding to re-test the gate
+-- UPDATE public.profiles
+-- SET onboarding_complete = false
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'volunteer@example.com');
+
+-- Example: seed availability preferences directly (bypasses the onboarding UI)
+-- INSERT INTO public.availability_preferences (volunteer_id, preferred_days, preferred_times)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   ARRAY['sunday', 'saturday'],
+--   ARRAY['morning']
+-- )
+-- ON CONFLICT (volunteer_id) DO UPDATE
+--   SET preferred_days  = EXCLUDED.preferred_days,
+--       preferred_times = EXCLUDED.preferred_times;
+
+-- Example: seed a department interest for a volunteer
+-- INSERT INTO public.volunteer_interests (volunteer_id, department_id)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team')
+-- )
+-- ON CONFLICT DO NOTHING;
+
+-- Example: seed a skill for a volunteer (status = 'pending' until RS-F007 approval)
+-- INSERT INTO public.volunteer_skills (volunteer_id, name)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   'Acoustic Guitar'
+-- );
