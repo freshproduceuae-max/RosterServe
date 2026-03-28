@@ -251,6 +251,57 @@ CREATE POLICY "Dept heads can update sub teams in their departments"
   );
 
 -- ============================================================
+-- OWNER ROLE ENFORCEMENT TRIGGERS
+-- Enforce that departments.owner_id must reference a dept_head profile
+-- and sub_teams.owner_id must reference a sub_leader profile.
+-- This guards the ownership invariant at the database level beyond the UI.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.enforce_department_owner_role()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.owner_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = NEW.owner_id AND role = 'dept_head' AND deleted_at IS NULL
+    ) THEN
+      RAISE EXCEPTION 'Department owner must be a user with role dept_head';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER enforce_department_owner_role
+  BEFORE INSERT OR UPDATE ON public.departments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_department_owner_role();
+
+CREATE OR REPLACE FUNCTION public.enforce_sub_team_owner_role()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.owner_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = NEW.owner_id AND role = 'sub_leader' AND deleted_at IS NULL
+    ) THEN
+      RAISE EXCEPTION 'Sub-team owner must be a user with role sub_leader';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER enforce_sub_team_owner_role
+  BEFORE INSERT OR UPDATE ON public.sub_teams
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_sub_team_owner_role();
+
+-- ============================================================
 -- EVENTS RLS: REPLACE BROAD LEADER POLICY WITH SCOPED POLICIES
 --
 -- The "Leaders can read active events" policy from 00002_events.sql

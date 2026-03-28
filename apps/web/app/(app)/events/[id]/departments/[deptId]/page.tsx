@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
-import { getDepartmentById, getProfilesByRole } from "@/lib/departments/queries";
+import { getDepartmentById, getOwnerDisplayNames } from "@/lib/departments/queries";
 import { DepartmentDetailCard } from "./_components/department-detail-card";
 
 export default async function DepartmentDetailPage({
@@ -24,14 +24,12 @@ export default async function DepartmentDetailPage({
     department.owner_id === session.profile.id;
   const canManage = isSuperAdmin || isDeptHeadOwner;
 
-  const [deptHeadProfiles, subLeaderProfiles] = await Promise.all([
-    getProfilesByRole("dept_head"),
-    getProfilesByRole("sub_leader"),
-  ]);
-
-  const ownerNames = Object.fromEntries(
-    [...deptHeadProfiles, ...subLeaderProfiles].map((p) => [p.id, p.display_name])
-  );
+  // Collect only the owner IDs actually present on this department and its sub-teams
+  const ownerIds = [
+    department.owner_id,
+    ...department.sub_teams.map((st) => st.owner_id),
+  ].filter((id): id is string => id !== null);
+  const ownerNames = await getOwnerDisplayNames(ownerIds);
 
   return (
     <div className="flex flex-col gap-400">

@@ -3,7 +3,7 @@
 Status: Canonical tracker
 Last updated: 2026-03-28
 Current phase: Feature implementation
-Current build stage: RS-F003 implemented; ready for RS-F004 planning
+Current build stage: RS-F003 implemented; in code review
 
 ## Execution Gate
 
@@ -28,12 +28,12 @@ For this repo state:
 - RS-F002 plan created and approved
 - RS-F002 implemented and validated (typecheck, lint, build pass; design-fidelity review pass)
 - RS-F003 plan created and approved
-- RS-F003 implemented and validated (typecheck, lint, build pass; design-fidelity review pass)
+- RS-F003 implemented (typecheck, lint, build pass; design-fidelity review pass; code review in progress)
 
 ## Next Up
 
-- Create the feature implementation plan for `RS-F004`
-- Begin feature implementation only after the `RS-F004` plan is approved
+- Complete RS-F003 code review, apply fixes, and confirm manual DB/RLS validation
+- Create the feature implementation plan for `RS-F004` only after RS-F003 is merged
 
 ## Status Legend
 
@@ -49,7 +49,7 @@ Update rule:
 |---|---|---|---|---|
 | 1 | RS-F001 | Authentication and role access | P0 | passed |
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
-| 3 | RS-F003 | Department and sub-team structure | P0 | passed |
+| 3 | RS-F003 | Department and sub-team structure | P0 | in_review |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | not_started |
 | 5 | RS-F005 | Availability and blockout management | P0 | not_started |
 | 6 | RS-F006 | Interest request management | P1 | not_started |

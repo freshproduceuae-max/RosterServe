@@ -13,6 +13,23 @@ import {
 
 export type DepartmentActionResult = { error: string } | { success: true } | undefined;
 
+// Verify that the given profile exists and has the expected role.
+// Called before any owner_id write to enforce the ownership invariant
+// server-side (in addition to the database-level trigger).
+async function verifyOwnerRole(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  ownerId: string,
+  expectedRole: "dept_head" | "sub_leader"
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", ownerId)
+    .is("deleted_at", null)
+    .single();
+  return data?.role === expectedRole;
+}
+
 // ============================================================
 // DEPARTMENT ACTIONS (super_admin only)
 // ============================================================
@@ -38,6 +55,14 @@ export async function createDepartment(
   }
 
   const supabase = await createSupabaseServerClient();
+
+  if (parsed.data.ownerId) {
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "dept_head");
+    if (!validOwner) {
+      return { error: "The selected owner must be a Department Head." };
+    }
+  }
+
   const { data, error } = await supabase
     .from("departments")
     .insert({
@@ -88,6 +113,13 @@ export async function updateDepartment(
 
   if (fetchError || !existing) {
     return { error: "Department not found." };
+  }
+
+  if (parsed.data.ownerId) {
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "dept_head");
+    if (!validOwner) {
+      return { error: "The selected owner must be a Department Head." };
+    }
   }
 
   const { error } = await supabase
@@ -220,6 +252,13 @@ export async function createSubTeam(
 
   if (!dept) return { error: "Department not found." };
 
+  if (parsed.data.ownerId) {
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "sub_leader");
+    if (!validOwner) {
+      return { error: "The selected owner must be a Sub-Leader." };
+    }
+  }
+
   const { error } = await supabase.from("sub_teams").insert({
     department_id: parsed.data.departmentId,
     name: parsed.data.name,
@@ -279,6 +318,13 @@ export async function updateSubTeam(
     );
     if (!owns) {
       return { error: "You do not have permission to manage this department." };
+    }
+  }
+
+  if (parsed.data.ownerId) {
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "sub_leader");
+    if (!validOwner) {
+      return { error: "The selected owner must be a Sub-Leader." };
     }
   }
 

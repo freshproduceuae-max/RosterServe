@@ -91,3 +91,26 @@ export async function getProfilesByRole(
   if (error || !data) return [];
   return data as OwnerProfile[];
 }
+
+// Fetch display names for a specific set of profile IDs.
+// Available to all leader roles — used for owner display in detail views,
+// not for building owner-selection dropdowns.
+export async function getOwnerDisplayNames(
+  ids: string[]
+): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+
+  const session = await getSessionWithProfile();
+  if (!session || !isLeaderRole(session.profile.role)) return {};
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", ids)
+    .is("deleted_at", null);
+
+  if (!data) return {};
+  return Object.fromEntries(data.map((p) => [p.id, p.display_name as string]));
+}

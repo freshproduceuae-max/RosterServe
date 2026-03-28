@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
 import { getEventById } from "@/lib/events/queries";
-import { getDepartmentsByEventId, getProfilesByRole } from "@/lib/departments/queries";
+import { getDepartmentsByEventId, getOwnerDisplayNames } from "@/lib/departments/queries";
 import { EventDetailCard } from "../_components/event-detail-card";
 import { DepartmentListSection } from "./departments/_components/department-list-section";
 
@@ -25,11 +25,11 @@ export default async function EventDetailPage({
 
   const isSuperAdmin = hasMinimumRole(session.profile.role, "super_admin");
 
-  // Build owner display name map for dept heads
-  const deptHeadProfiles = await getProfilesByRole("dept_head");
-  const ownerNames = Object.fromEntries(
-    deptHeadProfiles.map((p) => [p.id, p.display_name])
-  );
+  // Build owner display name map from the actual owner IDs present in this event's departments
+  const ownerIds = departments
+    .map((d) => d.owner_id)
+    .filter((id): id is string => id !== null);
+  const ownerNames = await getOwnerDisplayNames(ownerIds);
 
   return (
     <div className="flex flex-col gap-400">
