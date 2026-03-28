@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 Current phase: Feature implementation
-Current build stage: RS-F002 implemented; ready for RS-F003 planning
+Current build stage: RS-F003 implemented; ready for RS-F004 planning
 
 ## Execution Gate
 
@@ -27,11 +27,13 @@ For this repo state:
 - RS-F001 implemented and validated (typecheck, lint, build pass; design-fidelity review pass)
 - RS-F002 plan created and approved
 - RS-F002 implemented and validated (typecheck, lint, build pass; design-fidelity review pass)
+- RS-F003 plan created and approved
+- RS-F003 implemented and validated (typecheck, lint, build pass; design-fidelity review pass)
 
 ## Next Up
 
-- Create the feature implementation plan for `RS-F003`
-- Begin feature implementation only after the `RS-F003` plan is approved
+- Create the feature implementation plan for `RS-F004`
+- Begin feature implementation only after the `RS-F004` plan is approved
 
 ## Status Legend
 
@@ -47,7 +49,7 @@ Update rule:
 |---|---|---|---|---|
 | 1 | RS-F001 | Authentication and role access | P0 | passed |
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
-| 3 | RS-F003 | Department and sub-team structure | P0 | not_started |
+| 3 | RS-F003 | Department and sub-team structure | P0 | passed |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | not_started |
 | 5 | RS-F005 | Availability and blockout management | P0 | not_started |
 | 6 | RS-F006 | Interest request management | P1 | not_started |
@@ -67,3 +69,5 @@ Update rule:
 - The design system in `docs/design-system/design-system.md` is the UI source of truth for all future implementation and review.
 - The repo has moved past greenfield: scaffolding and RS-F001 auth infrastructure are in place. Architecture direction is defined by the canonical docs and the live codebase.
 - The one-time scaffolding phase is complete and the project now contains a runnable app and backend setup baseline.
+- RS-F003: Sub-leaders are read-only in this feature slice. "Manage the structures they are responsible for" deferred to RS-F008+ where sub-leaders act within their sub-team context.
+- RS-F003: Events RLS visibility cutover — the pre-RS-F003 broad leader event-read policy was replaced with ownership-scoped policies. dept_head/sub_leader see no events until super_admin assigns department/sub-team ownership.

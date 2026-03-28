@@ -51,3 +51,36 @@
 --   'published',
 --   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
 -- );
+
+-- RS-F003: Example department and sub-team seed data
+-- Run these after creating users and an event via the steps above.
+-- This example assigns ownership so the RS-F003 visibility model can be verified:
+-- after seeding, depthead@example.com should see the event; subleader@example.com
+-- should see the event via their sub-team; volunteer@example.com should not.
+
+-- Step 1: create a department owned by the dept_head user
+-- INSERT INTO public.departments (event_id, name, owner_id, created_by)
+-- VALUES (
+--   (SELECT id FROM public.events WHERE title = 'Sunday Service — April 6'),
+--   'Worship Team',
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com'),
+--   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
+-- );
+
+-- Step 2: create a sub-team owned by the sub_leader user
+-- INSERT INTO public.sub_teams (department_id, name, owner_id, created_by)
+-- VALUES (
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team'),
+--   'Guitars',
+--   (SELECT id FROM auth.users WHERE email = 'subleader@example.com'),
+--   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
+-- );
+
+-- Step 3: create a second department with no owner assigned
+-- (verifies "invisible until assigned" behavior for dept_head role)
+-- INSERT INTO public.departments (event_id, name, created_by)
+-- VALUES (
+--   (SELECT id FROM public.events WHERE title = 'Sunday Service — April 6'),
+--   'AV Team',
+--   (SELECT id FROM auth.users WHERE email = 'admin@example.com')
+-- );
