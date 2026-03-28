@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-28
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main
+Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main; RS-F004 plan approved
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,92 +9,69 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F003: Department and sub-team structure — implemented, reviewed (2 rounds), all findings resolved, merged to main via PR #2
-- Round 1 review (design-fidelity): 3 P2 fixes — back-link underline, delete modal label, section heading font
-- Round 2 review (code review): 2 findings resolved
-  - P1: Added server-side verifyOwnerRole() and DB-level BEFORE INSERT/UPDATE triggers enforcing dept_head owns departments, sub_leader owns sub-teams
-  - P2: Added 00004_leader_profile_read.sql (profiles RLS for leader roles) + getOwnerDisplayNames() query; fixed owner display in detail views for sub_leader callers
-  - P2: Tracking docs corrected — RS-F003 now correctly marked passed after merge
+- RS-F003 wrap-up gap resolved: plan file status updated to Implemented; deviations section added documenting 00004_leader_profile_read.sql and verifyOwnerRole() additions
+- RS-F004 plan drafted and approved: docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md
+- RS-F001 plan file: confirmed missing from disk (documented gap); decision: do not retroactively reconstruct — future agents read code directly, not prior plan files. No action required.
 
-FILES CHANGED (RS-F003, all merged)
-- supabase/migrations/00003_departments.sql (new — departments + sub_teams tables, owner role triggers, RLS, updated events RLS)
-- supabase/migrations/00004_leader_profile_read.sql (new — profiles SELECT policy for leader roles)
-- apps/web/lib/departments/types.ts (new)
-- apps/web/lib/departments/schemas.ts (new)
-- apps/web/lib/departments/queries.ts (new — includes getOwnerDisplayNames)
-- apps/web/lib/departments/actions.ts (new — includes verifyOwnerRole + verifyDeptHeadOwnership)
-- apps/web/app/(app)/events/[id]/departments/new/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/[deptId]/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/[deptId]/edit/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/new/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/[subTeamId]/edit/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/ (8 components, all new)
-- apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx (new)
-- apps/web/app/(app)/events/[id]/page.tsx (modified — DepartmentListSection + getOwnerDisplayNames)
-- apps/web/lib/events/queries.ts (modified — RS-F003 review comment)
-- supabase/seed.sql (modified — RS-F003 seed examples)
-- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (new, approved)
-- docs/tracking/progress.md (updated)
+FILES CHANGED (this session, all merged to main)
+- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (modified — status: Implemented, deviations section added)
+- docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md (new — status: Approved)
+- docs/tracking/progress.md (updated — RS-F004 approved, next up: RS-F004 implementation)
 - docs/tracking/claude-progress.txt (this file)
-- docs/features/feature-list.json (RS-F003 passes: true)
 
 TEST STATUS
-- npm run typecheck — passed
-- npm run lint — passed
-- npm run build — passed
-- Design-fidelity review — passed (3 P2 fixes applied)
-- Code review (round 2) — APPROVED
-- Manual DB/RLS validation — pending a running Supabase instance
+- RS-F004 plan: approved by user, no implementation yet
+- All RS-F003 checks remain valid (last session)
 
 KNOWN LIMITATIONS
-- Manual CRUD and role-access validation requires a running Supabase instance (not available in this environment)
-- Events RLS visibility cutover: dept_head/sub_leader see no events until super_admin assigns department/sub-team ownership — correct behavior, documented in seed.sql
-- Downstream FK enforcement (assignments, instructions) deferred to RS-F008+
-- Sub-leader management rights deferred to RS-F008+ (read-only in RS-F003 by design)
+- GitHub push is pending (network was unavailable at wrap-up time); main is ahead of origin/main by 3 commits. Run `git push` when connectivity is restored.
+- No background agents or team tasks were created this session — nothing to clean up.
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None (RS-F003 complete and merged)
+- RS-F004 plan approved; implementation not yet started
 
 NEXT FEATURE
 - RS-F004 | Volunteer onboarding and profile setup
 
 NEXT REQUIRED ACTION
-- Create the feature implementation plan for RS-F004
-- Draft docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md
-- Do not begin RS-F004 implementation before the feature plan is reviewed and approved
+- Create branch codex/rs-f004-volunteer-onboarding
+- Implement RS-F004 following docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md exactly
+- Do not begin implementation without re-reading the approved plan first
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- Next feature branch: codex/rs-f004-volunteer-onboarding
+- RS-F004 branch: codex/rs-f004-volunteer-onboarding
 
 PLAN STATUS
 - Scaffolding plan: implemented
-- RS-F001 plan: implemented (plan file missing from disk, noted as documentation gap)
+- RS-F001 plan: implemented (plan file missing from disk — known gap, no action required)
 - RS-F002 plan: implemented and merged
 - RS-F003 plan: implemented and merged
-- No other approved feature plans yet
+- RS-F004 plan: approved (implementation not started)
 
-DEPARTMENT/SUB-TEAM ARCHITECTURAL DECISIONS (RS-F003)
-- Hierarchy: event → department → sub-team (flat, no deeper nesting in v1)
-- Owner assignment: department.owner_id references a dept_head profile; sub_team.owner_id references a sub_leader profile; both nullable (may be assigned after creation)
-- Owner role invariant enforced at two layers: server-side verifyOwnerRole() in actions + BEFORE INSERT/UPDATE DB triggers in 00003_departments.sql
-- Sub-leader rights in RS-F003: read-only. "Manage the structures they are responsible for" deferred to RS-F008+.
-- Department management: super_admin only for create/edit/delete
-- Sub-team management: super_admin OR owning dept_head (ownership verified server-side before mutation)
-- Cascade soft-delete: enforced at three layers — action (cascade sub_teams on dept delete), RLS (dept_head sub_team SELECT joins departments with deleted_at IS NULL guard), query (getDepartmentsByEventId filters sub_teams.deleted_at IS NULL)
-- Events RLS: pre-RS-F003 "Leaders can read active events" policy dropped; replaced with dept_head policy (events with owned dept) and sub_leader policy (events with owned sub_team)
-- Profile visibility: 00004_leader_profile_read.sql adds a policy allowing dept_head/sub_leader to read other leader-role profiles (needed for owner dropdowns and display names)
-- getOwnerDisplayNames(ids): targeted query for display purposes, available to all leader roles; getProfilesByRole(role): for owner-selection dropdowns, restricted to super_admin and dept_head callers
+RS-F004 ARCHITECTURAL DECISIONS (from approved plan)
+- Gate location: (app)/layout.tsx adds one redirect for volunteer + !onboarding_complete → /onboarding; keeps middleware thin
+- Onboarding route group: (onboarding)/ with its own minimal layout — no nav bar, warm-surface wrapper; layout gate ejects non-volunteers and already-onboarded users back to /dashboard
+- Three steps: (1) availability preferences — general days/times only, NOT dated blockouts (that is RS-F005); (2) department interests — FK to departments rows, skippable if none exist; (3) skills — free text, status=pending, approval deferred to RS-F007
+- Step data saved incrementally per step (server action per step); partial data persists on browser close
+- completeOnboarding() sets profiles.onboarding_complete = true then redirects to /dashboard
+- Migration 00005_onboarding.sql: three new tables (availability_preferences, volunteer_interests, volunteer_skills); purely additive, no existing tables altered
+- availability_preferences: UNIQUE on volunteer_id (one row per volunteer, upserted)
+- volunteer_interests: UNIQUE (volunteer_id, department_id); no status column — that is RS-F006
+- volunteer_skills: status column exists from day one (pending/approved/rejected) so RS-F007 can drive it without a migration
+- Downstream contracts: RS-F005 extends availability with dated blockouts table; RS-F006 adds status/routing to interests; RS-F007 adds approval workflow UI on top of existing skills table
+- Existing volunteers: all have onboarding_complete=false — they will be gated on first sign-in after deployment. Intentional, tested explicitly.
+- Design: onboarding is one of the explicit exceptions for font-display and pill CTAs per design-system.md; use brand-warm-500 and bg-surface-warm throughout
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
-- Broad leader read access to all events is now closed — visibility follows ownership from RS-F003 onwards
-- Downstream FK verifiability: RS-F003 establishes dept/sub-team roots; full FK enforcement deferred to RS-F006/RS-F008+
-- Availability should support dated availability plus broader preferences/blockouts
-- Notification delivery remains implementation-neutral between the documented options
+- Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
+- Availability should support dated availability plus broader preferences/blockouts (RS-F005 extends RS-F004 foundation)
+- Notification delivery remains implementation-neutral between documented options
+- RS-F001 plan file is missing from disk — this is a known gap, not a blocker
 
 CANONICAL DOCS
 - Vision: VisionDocument_ChurchRosterApp.md
@@ -111,9 +88,9 @@ CARRY-OVER EXECUTION NOTES
 - Update this file at the end of every implementation or review session
 - Mark a feature as passed only when its validation is genuinely satisfied
 - ESLint config ignores .next build output and next-env.d.ts
-- Pill-shaped CTAs reserved for welcome/promotional moments, not leader dashboards (design system rule)
-- Active/hover states must include non-color indicators (underline, border, etc.) for accessibility — applies to back-links and nav elements
-- font-display (Space Grotesk) must be used sparingly — not for section headings inside dense leader operational lists
+- Pill-shaped CTAs reserved for welcome/promotional moments (onboarding qualifies); not for leader dashboards
+- Active/hover states must include non-color indicators (underline, border, etc.) for accessibility
+- font-display (Space Grotesk) must be used sparingly — onboarding heading qualifies; section headings inside dense leader lists do not
 - gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
-- Owner role invariants must be enforced at both server-action and DB-trigger layers — UI dropdowns alone are not sufficient
+- Owner role invariants must be enforced at both server-action and DB-trigger layers
 - getOwnerDisplayNames(ids) is the correct query for display; getProfilesByRole() is for owner-selection forms only
