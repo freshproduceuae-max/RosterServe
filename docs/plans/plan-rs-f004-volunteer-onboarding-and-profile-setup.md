@@ -1,6 +1,6 @@
 # Plan: RS-F004 - Volunteer Onboarding And Profile Setup
 
-Status: Approved
+Status: In Review
 Feature: RS-F004
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
