@@ -64,7 +64,7 @@
         "Assign ownership for department heads and sub-leaders inside the hierarchy.",
         "Restrict structure management to authorized planning scopes."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F004",

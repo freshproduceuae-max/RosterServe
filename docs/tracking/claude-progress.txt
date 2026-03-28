@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-28
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete
+Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,59 +9,46 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F003: Department and sub-team structure — implemented, design-fidelity reviewed (3 P2 fixes applied), and ready for PR merge
-- Plan: docs/plans/plan-rs-f003-department-and-sub-team-structure.md (approved)
-- Migration: supabase/migrations/00003_departments.sql
-- Department library: apps/web/lib/departments/ (types, schemas, queries, actions)
-- Department UI: apps/web/app/(app)/events/[id]/departments/ (pages + components)
-- Event detail page updated: adds DepartmentListSection below EventDetailCard
-- Events queries reviewed: no changes needed — RLS handles visibility scoping correctly
-- Seed: supabase/seed.sql (RS-F003 department/sub-team seed examples added)
-- PR #2 open on branch codex/rs-f003-department-sub-team (plan doc committed; implementation added in this session)
+- RS-F003: Department and sub-team structure — implemented, reviewed (2 rounds), all findings resolved, merged to main via PR #2
+- Round 1 review (design-fidelity): 3 P2 fixes — back-link underline, delete modal label, section heading font
+- Round 2 review (code review): 2 findings resolved
+  - P1: Added server-side verifyOwnerRole() and DB-level BEFORE INSERT/UPDATE triggers enforcing dept_head owns departments, sub_leader owns sub-teams
+  - P2: Added 00004_leader_profile_read.sql (profiles RLS for leader roles) + getOwnerDisplayNames() query; fixed owner display in detail views for sub_leader callers
+  - P2: Tracking docs corrected — RS-F003 now correctly marked passed after merge
 
-FILES CHANGED (RS-F003)
-- supabase/migrations/00003_departments.sql (new)
+FILES CHANGED (RS-F003, all merged)
+- supabase/migrations/00003_departments.sql (new — departments + sub_teams tables, owner role triggers, RLS, updated events RLS)
+- supabase/migrations/00004_leader_profile_read.sql (new — profiles SELECT policy for leader roles)
 - apps/web/lib/departments/types.ts (new)
 - apps/web/lib/departments/schemas.ts (new)
-- apps/web/lib/departments/queries.ts (new)
-- apps/web/lib/departments/actions.ts (new)
+- apps/web/lib/departments/queries.ts (new — includes getOwnerDisplayNames)
+- apps/web/lib/departments/actions.ts (new — includes verifyOwnerRole + verifyDeptHeadOwnership)
 - apps/web/app/(app)/events/[id]/departments/new/page.tsx (new)
 - apps/web/app/(app)/events/[id]/departments/[deptId]/page.tsx (new)
 - apps/web/app/(app)/events/[id]/departments/[deptId]/edit/page.tsx (new)
 - apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/new/page.tsx (new)
 - apps/web/app/(app)/events/[id]/departments/[deptId]/sub-teams/[subTeamId]/edit/page.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/department-empty-state.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/sub-team-empty-state.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/delete-confirm-modal.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/department-form.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/sub-team-form.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/department-list-section.tsx (new)
-- apps/web/app/(app)/events/[id]/departments/_components/sub-team-list-section.tsx (new)
+- apps/web/app/(app)/events/[id]/departments/_components/ (8 components, all new)
 - apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx (new)
-- apps/web/app/(app)/events/[id]/page.tsx (modified — adds DepartmentListSection)
-- apps/web/lib/events/queries.ts (modified — RS-F003 review comment added; no logic changes)
+- apps/web/app/(app)/events/[id]/page.tsx (modified — DepartmentListSection + getOwnerDisplayNames)
+- apps/web/lib/events/queries.ts (modified — RS-F003 review comment)
 - supabase/seed.sql (modified — RS-F003 seed examples)
 - docs/plans/plan-rs-f003-department-and-sub-team-structure.md (new, approved)
 - docs/tracking/progress.md (updated)
 - docs/tracking/claude-progress.txt (this file)
-- docs/features/feature-list.json (RS-F003 passes: true — pending merge)
+- docs/features/feature-list.json (RS-F003 passes: true)
 
 TEST STATUS
 - npm run typecheck — passed
 - npm run lint — passed
 - npm run build — passed
-- Design-fidelity review — passed (3 P2 issues found and fixed: back-link underline, delete modal label, section heading font)
-- Code review — pending (PR #2)
-- Manual DB validation — pending a running Supabase instance
-
-DESIGN FIXES APPLIED (RS-F003)
-- Back-links: added hover:underline to all back-link anchors (non-color accessibility)
-- Delete modal confirm button: changed from "Delete" to "Delete {entityName}" (clear verb + object)
-- Section headings in dense leader lists: changed from font-display to font-semibold (Space Grotesk reserved for singular focus moments, not dense operational lists)
+- Design-fidelity review — passed (3 P2 fixes applied)
+- Code review (round 2) — APPROVED
+- Manual DB/RLS validation — pending a running Supabase instance
 
 KNOWN LIMITATIONS
 - Manual CRUD and role-access validation requires a running Supabase instance (not available in this environment)
-- Events RLS visibility cutover: dept_head/sub_leader see no events until super_admin assigns ownership — correct behavior, documented in seed.sql
+- Events RLS visibility cutover: dept_head/sub_leader see no events until super_admin assigns department/sub-team ownership — correct behavior, documented in seed.sql
 - Downstream FK enforcement (assignments, instructions) deferred to RS-F008+
 - Sub-leader management rights deferred to RS-F008+ (read-only in RS-F003 by design)
 
@@ -69,13 +56,12 @@ BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F003 (implementation complete; awaiting PR review and merge)
+- None (RS-F003 complete and merged)
 
 NEXT FEATURE
 - RS-F004 | Volunteer onboarding and profile setup
 
 NEXT REQUIRED ACTION
-- Merge PR #2 after review approval
 - Create the feature implementation plan for RS-F004
 - Draft docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md
 - Do not begin RS-F004 implementation before the feature plan is reviewed and approved
@@ -88,18 +74,20 @@ PLAN STATUS
 - Scaffolding plan: implemented
 - RS-F001 plan: implemented (plan file missing from disk, noted as documentation gap)
 - RS-F002 plan: implemented and merged
-- RS-F003 plan: implemented, PR #2 open
+- RS-F003 plan: implemented and merged
 - No other approved feature plans yet
 
 DEPARTMENT/SUB-TEAM ARCHITECTURAL DECISIONS (RS-F003)
 - Hierarchy: event → department → sub-team (flat, no deeper nesting in v1)
 - Owner assignment: department.owner_id references a dept_head profile; sub_team.owner_id references a sub_leader profile; both nullable (may be assigned after creation)
+- Owner role invariant enforced at two layers: server-side verifyOwnerRole() in actions + BEFORE INSERT/UPDATE DB triggers in 00003_departments.sql
 - Sub-leader rights in RS-F003: read-only. "Manage the structures they are responsible for" deferred to RS-F008+.
-- Department management: super_admin only for create/edit/delete departments
-- Sub-team management: super_admin OR owning dept_head (ownership verified server-side in actions before mutation)
+- Department management: super_admin only for create/edit/delete
+- Sub-team management: super_admin OR owning dept_head (ownership verified server-side before mutation)
 - Cascade soft-delete: enforced at three layers — action (cascade sub_teams on dept delete), RLS (dept_head sub_team SELECT joins departments with deleted_at IS NULL guard), query (getDepartmentsByEventId filters sub_teams.deleted_at IS NULL)
 - Events RLS: pre-RS-F003 "Leaders can read active events" policy dropped; replaced with dept_head policy (events with owned dept) and sub_leader policy (events with owned sub_team)
-- getProfilesByRole() query: simple role-filtered SELECT; no pagination at church scale
+- Profile visibility: 00004_leader_profile_read.sql adds a policy allowing dept_head/sub_leader to read other leader-role profiles (needed for owner dropdowns and display names)
+- getOwnerDisplayNames(ids): targeted query for display purposes, available to all leader roles; getProfilesByRole(role): for owner-selection dropdowns, restricted to super_admin and dept_head callers
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
@@ -127,3 +115,5 @@ CARRY-OVER EXECUTION NOTES
 - Active/hover states must include non-color indicators (underline, border, etc.) for accessibility — applies to back-links and nav elements
 - font-display (Space Grotesk) must be used sparingly — not for section headings inside dense leader operational lists
 - gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
+- Owner role invariants must be enforced at both server-action and DB-trigger layers — UI dropdowns alone are not sufficient
+- getOwnerDisplayNames(ids) is the correct query for display; getProfilesByRole() is for owner-selection forms only
