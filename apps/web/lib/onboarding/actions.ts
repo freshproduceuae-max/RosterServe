@@ -104,9 +104,76 @@ export async function saveVolunteerInterests(
 }
 
 // ============================================================
-// STEP 3: SKILLS + COMPLETE ONBOARDING
+// STEP 3 HELPER: PERSIST SKILLS (shared by save and finish)
 // Append-only with dedupe: inserts only skills not already present
 // (case-insensitive). Does NOT replace on re-submit.
+// ============================================================
+
+async function persistSkills(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  skills: string[]
+): Promise<{ error: string } | null> {
+  if (skills.length === 0) return null;
+
+  const { data: existing } = await supabase
+    .from("volunteer_skills")
+    .select("name")
+    .eq("volunteer_id", userId)
+    .is("deleted_at", null);
+
+  const existingNames = new Set(
+    (existing ?? []).map((s) => (s.name as string).toLowerCase())
+  );
+
+  const newSkills = skills.filter((s) => !existingNames.has(s.toLowerCase()));
+
+  if (newSkills.length > 0) {
+    const { error } = await supabase.from("volunteer_skills").insert(
+      newSkills.map((name) => ({
+        volunteer_id: userId,
+        name,
+        status: "pending",
+      }))
+    );
+    if (error) return { error: "Could not save your skills. Please try again." };
+  }
+
+  return null;
+}
+
+// ============================================================
+// STEP 3A: SAVE SKILLS ONLY (incremental save, no redirect)
+// Allows partial persistence before onboarding completion.
+// Supports the "close browser mid-step and resume" requirement.
+// ============================================================
+
+export async function saveVolunteerSkills(
+  _prev: OnboardingActionResult,
+  formData: FormData
+): Promise<OnboardingActionResult> {
+  const session = await getSessionWithProfile();
+  if (!session || session.profile.role !== "volunteer") {
+    return { error: "You do not have permission to complete this action." };
+  }
+
+  const rawSkills = formData
+    .getAll("skill")
+    .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    .map((s) => s.trim());
+
+  const parsed = volunteerSkillsSchema.safeParse({ skills: rawSkills });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createSupabaseServerClient();
+  const saveError = await persistSkills(supabase, session.user.id, parsed.data.skills);
+  if (saveError) return saveError;
+
+  return { success: true };
+}
+
+// ============================================================
+// STEP 3B: FINISH ONBOARDING (saves skills + marks complete)
 // Sets onboarding_complete = true (idempotent) then redirects.
 // ============================================================
 
@@ -125,42 +192,12 @@ export async function finishOnboarding(
     .map((s) => s.trim());
 
   const parsed = volunteerSkillsSchema.safeParse({ skills: rawSkills });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createSupabaseServerClient();
 
-  if (parsed.data.skills.length > 0) {
-    const { data: existing } = await supabase
-      .from("volunteer_skills")
-      .select("name")
-      .eq("volunteer_id", session.user.id)
-      .is("deleted_at", null);
-
-    const existingNames = new Set(
-      (existing ?? []).map((s) => (s.name as string).toLowerCase())
-    );
-
-    const newSkills = parsed.data.skills.filter(
-      (s) => !existingNames.has(s.toLowerCase())
-    );
-
-    if (newSkills.length > 0) {
-      const { error: skillsError } = await supabase.from("volunteer_skills").insert(
-        newSkills.map((name) => ({
-          volunteer_id: session.user.id,
-          name,
-          status: "pending",
-        }))
-      );
-
-      if (skillsError) {
-        return { error: "Could not save your skills. Please try again." };
-      }
-    }
-  }
+  const saveError = await persistSkills(supabase, session.user.id, parsed.data.skills);
+  if (saveError) return saveError;
 
   // Set onboarding_complete = true (idempotent — safe to call multiple times)
   const { error: profileError } = await supabase

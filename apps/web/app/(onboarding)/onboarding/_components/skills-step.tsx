@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { finishOnboarding } from "@/lib/onboarding/actions";
+import { saveVolunteerSkills, finishOnboarding } from "@/lib/onboarding/actions";
 import type { VolunteerSkill } from "@/lib/onboarding/types";
 import { StepIndicator } from "./step-indicator";
 
@@ -10,7 +10,15 @@ interface SkillsStepProps {
 }
 
 export function SkillsStep({ existing }: SkillsStepProps) {
-  const [state, formAction, isPending] = useActionState(finishOnboarding, undefined);
+  // Two independent action states: one for intermediate save, one for completion.
+  const [saveState, saveFormAction, isSavePending] = useActionState(
+    saveVolunteerSkills,
+    undefined
+  );
+  const [finishState, finishFormAction, isFinishPending] = useActionState(
+    finishOnboarding,
+    undefined
+  );
 
   const [skills, setSkills] = useState<string[]>(
     existing.filter((s) => s.status === "pending").map((s) => s.name)
@@ -41,17 +49,22 @@ export function SkillsStep({ existing }: SkillsStepProps) {
         What are your skills?
       </h1>
       <p className="mb-500 text-body text-neutral-600">
-        Add any skills you&apos;d like to be known for. A leader will review them. You can
-        always update this later.
+        Add any skills you&apos;d like to be known for. A leader will review them. You
+        can always update this later.
       </p>
 
-      <form action={formAction} className="flex flex-col gap-500">
-        {/* Hidden inputs carry skill values to the server action */}
+      {/*
+        Single form — both submit buttons share the same skill inputs.
+        "Save skills" uses formAction to call saveVolunteerSkills (no redirect).
+        "Complete setup" uses the form's action to call finishOnboarding (redirects).
+      */}
+      <form action={finishFormAction} className="flex flex-col gap-500">
+        {/* Hidden inputs carry skill values to whichever server action runs */}
         {skills.map((skill) => (
           <input key={skill} type="hidden" name="skill" value={skill} />
         ))}
 
-        {/* Skill input + Add */}
+        {/* Skill text input + Add */}
         <div className="flex gap-200">
           <input
             type="text"
@@ -99,17 +112,39 @@ export function SkillsStep({ existing }: SkillsStepProps) {
           </ul>
         )}
 
-        {state && "error" in state && (
-          <p className="text-body-sm text-semantic-error">{state.error}</p>
+        {/* Inline error and save confirmation */}
+        {saveState && "error" in saveState && (
+          <p className="text-body-sm text-semantic-error">{saveState.error}</p>
+        )}
+        {saveState && "success" in saveState && (
+          <p className="text-body-sm text-semantic-success">
+            Skills saved — they&apos;ll be here if you close the browser and come back.
+          </p>
+        )}
+        {finishState && "error" in finishState && (
+          <p className="text-body-sm text-semantic-error">{finishState.error}</p>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-pill bg-brand-warm-500 px-500 py-200 text-body font-semibold text-neutral-950 transition-colors duration-fast hover:bg-brand-warm-500/90 disabled:opacity-50"
-        >
-          {isPending ? "Setting up your profile…" : "Complete setup"}
-        </button>
+        <div className="flex flex-col gap-200">
+          {/* Intermediate save — persists skills without completing onboarding */}
+          <button
+            type="submit"
+            formAction={saveFormAction}
+            disabled={isSavePending || isFinishPending}
+            className="rounded-200 border border-neutral-300 bg-neutral-0 px-500 py-200 text-body font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100 disabled:opacity-50"
+          >
+            {isSavePending ? "Saving…" : "Save skills"}
+          </button>
+
+          {/* Final completion — saves any remaining skills and marks onboarding done */}
+          <button
+            type="submit"
+            disabled={isSavePending || isFinishPending}
+            className="rounded-pill bg-brand-warm-500 px-500 py-200 text-body font-semibold text-neutral-950 transition-colors duration-fast hover:bg-brand-warm-500/90 disabled:opacity-50"
+          >
+            {isFinishPending ? "Setting up your profile…" : "Complete setup"}
+          </button>
+        </div>
       </form>
     </div>
   );

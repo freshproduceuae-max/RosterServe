@@ -156,3 +156,36 @@ CREATE POLICY "Super admins can read all skills"
       WHERE p.id = auth.uid() AND p.role = 'super_admin'
     )
   );
+
+-- ============================================================
+-- RLS ADDITIONS: VOLUNTEER READ ACCESS FOR ONBOARDING
+-- The interests step reads departments (and their parent event titles)
+-- so volunteers can select serving areas. Without these policies the
+-- step always returns an empty list and cannot be used.
+--
+-- Department policy: active (non-deleted) departments only.
+-- Events policy: published, non-deleted events only — this simultaneously
+-- gates the inner join in getActiveDepartmentsForInterests so that only
+-- departments from published events appear in the interests list.
+-- ============================================================
+
+CREATE POLICY "Volunteers can read active departments for onboarding"
+  ON public.departments FOR SELECT
+  USING (
+    deleted_at IS NULL
+    AND EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = auth.uid() AND p.role = 'volunteer'
+    )
+  );
+
+CREATE POLICY "Volunteers can read published events for onboarding context"
+  ON public.events FOR SELECT
+  USING (
+    deleted_at IS NULL
+    AND status = 'published'
+    AND EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = auth.uid() AND p.role = 'volunteer'
+    )
+  );
