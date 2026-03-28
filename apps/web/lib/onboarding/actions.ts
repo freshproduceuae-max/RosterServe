@@ -116,6 +116,16 @@ async function persistSkills(
 ): Promise<{ error: string } | null> {
   if (skills.length === 0) return null;
 
+  // Dedupe within the submitted batch (case-insensitive) before hitting the DB.
+  // Prevents inserting both "Guitar" and "guitar" from a single submission.
+  const seenInBatch = new Set<string>();
+  const batchDeduped = skills.filter((s) => {
+    const lower = s.toLowerCase();
+    if (seenInBatch.has(lower)) return false;
+    seenInBatch.add(lower);
+    return true;
+  });
+
   const { data: existing } = await supabase
     .from("volunteer_skills")
     .select("name")
@@ -126,7 +136,7 @@ async function persistSkills(
     (existing ?? []).map((s) => (s.name as string).toLowerCase())
   );
 
-  const newSkills = skills.filter((s) => !existingNames.has(s.toLowerCase()));
+  const newSkills = batchDeduped.filter((s) => !existingNames.has(s.toLowerCase()));
 
   if (newSkills.length > 0) {
     const { error } = await supabase.from("volunteer_skills").insert(

@@ -27,7 +27,7 @@ export function SkillsStep({ existing }: SkillsStepProps) {
 
   function addSkill() {
     const trimmed = input.trim();
-    if (trimmed && !skills.includes(trimmed)) {
+    if (trimmed && !skills.some((s) => s.toLowerCase() === trimmed.toLowerCase())) {
       setSkills([...skills, trimmed]);
     }
     setInput("");
