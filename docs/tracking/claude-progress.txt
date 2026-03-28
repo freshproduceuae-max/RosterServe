@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-28
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main; RS-F004 plan approved
+Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001, RS-F002, RS-F003 complete and merged to main; RS-F004 plan approved and merged via PR #3
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,29 +9,29 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F003 wrap-up gap resolved: plan file status updated to Implemented; deviations section added documenting 00004_leader_profile_read.sql and verifyOwnerRole() additions
-- RS-F004 plan drafted and approved: docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md
-- RS-F001 plan file: confirmed missing from disk (documented gap); decision: do not retroactively reconstruct — future agents read code directly, not prior plan files. No action required.
+- RS-F003 plan file: status updated to Implemented; deviations section added (00004_leader_profile_read.sql and verifyOwnerRole() were not in original plan)
+- RS-F001 plan file: confirmed missing from disk — decision made to leave as known gap; no retroactive reconstruction needed
+- RS-F004 plan: drafted, Codex-reviewed (addendums applied), approved, merged to main via PR #3
 
 FILES CHANGED (this session, all merged to main)
-- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (modified — status: Implemented, deviations section added)
-- docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md (new — status: Approved)
-- docs/tracking/progress.md (updated — RS-F004 approved, next up: RS-F004 implementation)
+- docs/plans/plan-rs-f003-department-and-sub-team-structure.md (modified — status: Implemented, deviations section)
+- docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md (new — status: Approved, merged via PR #3)
+- docs/tracking/progress.md (RS-F004: approved, next up: implementation)
 - docs/tracking/claude-progress.txt (this file)
 
 TEST STATUS
-- RS-F004 plan: approved by user, no implementation yet
-- All RS-F003 checks remain valid (last session)
+- RS-F004: plan approved — no implementation yet, passes = false
+- All RS-F003 checks remain valid (prior session)
 
 KNOWN LIMITATIONS
-- GitHub push is pending (network was unavailable at wrap-up time); main is ahead of origin/main by 3 commits. Run `git push` when connectivity is restored.
-- No background agents or team tasks were created this session — nothing to clean up.
+- RS-F001 plan file is missing from disk — known gap, no action required; future agents read code directly
+- No background agents or team tasks were created this session
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F004 plan approved; implementation not yet started
+- None (RS-F004 plan approved; implementation not yet started)
 
 NEXT FEATURE
 - RS-F004 | Volunteer onboarding and profile setup
@@ -39,7 +39,7 @@ NEXT FEATURE
 NEXT REQUIRED ACTION
 - Create branch codex/rs-f004-volunteer-onboarding
 - Implement RS-F004 following docs/plans/plan-rs-f004-volunteer-onboarding-and-profile-setup.md exactly
-- Do not begin implementation without re-reading the approved plan first
+- Re-read the approved plan at the start of the next session before writing any code
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
@@ -53,17 +53,19 @@ PLAN STATUS
 - RS-F004 plan: approved (implementation not started)
 
 RS-F004 ARCHITECTURAL DECISIONS (from approved plan)
-- Gate location: (app)/layout.tsx adds one redirect for volunteer + !onboarding_complete → /onboarding; keeps middleware thin
+- Gate location: (app)/layout.tsx adds one redirect for volunteer + !onboarding_complete → /onboarding; middleware stays thin
 - Onboarding route group: (onboarding)/ with its own minimal layout — no nav bar, warm-surface wrapper; layout gate ejects non-volunteers and already-onboarded users back to /dashboard
-- Three steps: (1) availability preferences — general days/times only, NOT dated blockouts (that is RS-F005); (2) department interests — FK to departments rows, skippable if none exist; (3) skills — free text, status=pending, approval deferred to RS-F007
+- Three steps: (1) availability preferences — general days/times only, NOT dated blockouts (RS-F005); (2) department interests — FK to departments rows, skippable if none exist; (3) skills — free text, status=pending, approval deferred to RS-F007
 - Step data saved incrementally per step (server action per step); partial data persists on browser close
-- completeOnboarding() sets profiles.onboarding_complete = true then redirects to /dashboard
+- saveVolunteerSkills is APPEND-ONLY with dedupe — does not replace on re-submit (Codex addendum)
+- getActiveDepartmentsForInterests and getOnboardingState must filter departments.deleted_at IS NULL at query layer — stale interest rows from soft-deleted depts are invisible at UI layer (Codex addendum)
+- completeOnboarding() sets profiles.onboarding_complete = true then redirects to /dashboard; must be idempotent
 - Migration 00005_onboarding.sql: three new tables (availability_preferences, volunteer_interests, volunteer_skills); purely additive, no existing tables altered
 - availability_preferences: UNIQUE on volunteer_id (one row per volunteer, upserted)
 - volunteer_interests: UNIQUE (volunteer_id, department_id); no status column — that is RS-F006
 - volunteer_skills: status column exists from day one (pending/approved/rejected) so RS-F007 can drive it without a migration
 - Downstream contracts: RS-F005 extends availability with dated blockouts table; RS-F006 adds status/routing to interests; RS-F007 adds approval workflow UI on top of existing skills table
-- Existing volunteers: all have onboarding_complete=false — they will be gated on first sign-in after deployment. Intentional, tested explicitly.
+- Existing volunteers (onboarding_complete=false): gated on first sign-in after deployment — intentional, tested explicitly (validation check #2)
 - Design: onboarding is one of the explicit exceptions for font-display and pill CTAs per design-system.md; use brand-warm-500 and bg-surface-warm throughout
 
 CARRY-OVER PRODUCT NOTES
@@ -71,7 +73,6 @@ CARRY-OVER PRODUCT NOTES
 - Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
 - Availability should support dated availability plus broader preferences/blockouts (RS-F005 extends RS-F004 foundation)
 - Notification delivery remains implementation-neutral between documented options
-- RS-F001 plan file is missing from disk — this is a known gap, not a blocker
 
 CANONICAL DOCS
 - Vision: VisionDocument_ChurchRosterApp.md
@@ -90,7 +91,8 @@ CARRY-OVER EXECUTION NOTES
 - ESLint config ignores .next build output and next-env.d.ts
 - Pill-shaped CTAs reserved for welcome/promotional moments (onboarding qualifies); not for leader dashboards
 - Active/hover states must include non-color indicators (underline, border, etc.) for accessibility
-- font-display (Space Grotesk) must be used sparingly — onboarding heading qualifies; section headings inside dense leader lists do not
+- font-display (Space Grotesk) must be used sparingly — onboarding heading qualifies; dense leader list headings do not
 - gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
 - Owner role invariants must be enforced at both server-action and DB-trigger layers
 - getOwnerDisplayNames(ids) is the correct query for display; getProfilesByRole() is for owner-selection forms only
+- Do not commit directly to main — always branch, PR, Codex review, approval, then merge
