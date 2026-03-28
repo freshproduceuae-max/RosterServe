@@ -1,6 +1,6 @@
 # Plan: RS-F003 - Department And Sub-Team Structure
 
-Status: Approved
+Status: Implemented
 Feature: RS-F003
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -389,4 +389,12 @@ These scenarios must be explicitly tested:
 - `docs/tracking/progress.md` — mark RS-F003 as passed
 - `docs/tracking/claude-progress.txt` — add RS-F003 completion details including events RLS change and sub-leader read-only decision
 - `docs/features/feature-list.json` — set RS-F003 `passes` to `true`
+
+## Deviations From Original Plan
+
+Two additions were made during code review that were not in the original plan:
+
+1. **`supabase/migrations/00004_leader_profile_read.sql` (added)** — The original plan did not include a separate profiles RLS fix. During implementation it was discovered that `dept_head` and `sub_leader` could not read other profiles (the 00001 RLS only allows self-read + super_admin full-read), which broke owner dropdowns and display names. A separate migration was added to grant leader roles SELECT access to other leader-role profiles. This is safe for v1 because the profiles table contains no contact fields.
+
+2. **`verifyOwnerRole()` server-side guard + DB BEFORE INSERT/UPDATE triggers (added)** — The original plan relied on UI dropdowns filtered by role. Code review (P1 finding) identified this as insufficient. Both a server-action guard (`verifyOwnerRole()`) and database-level BEFORE INSERT/UPDATE triggers were added to the `departments` and `sub_teams` tables to enforce the owner-role invariant at two independent layers.
 - `supabase/seed.sql` — add commented department and sub-team seed examples with ownership assigned
