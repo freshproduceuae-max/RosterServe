@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { isLeaderRole } from "@/lib/auth/roles";
 import { UserProvider } from "@/lib/auth/user-context";
 import { AppNav } from "./app-nav";
 
@@ -22,8 +21,6 @@ export default async function AppLayout({
     redirect("/onboarding");
   }
 
-  const showEventsLink = isLeaderRole(session.profile.role);
-
   return (
     <UserProvider session={session}>
       <div className="min-h-screen bg-neutral-100">
@@ -33,7 +30,7 @@ export default async function AppLayout({
               <Link href="/dashboard" className="font-display text-h3 text-neutral-950">
                 RosterServe
               </Link>
-              {showEventsLink && <AppNav />}
+              <AppNav role={session.profile.role} />
             </div>
             <form action="/auth/sign-out" method="POST">
               <button
