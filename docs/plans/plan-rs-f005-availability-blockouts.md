@@ -1,6 +1,6 @@
 # Plan: RS-F005 - Availability And Blockout Management
 
-Status: In Review
+Status: Approved
 Feature: RS-F005
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -105,7 +105,7 @@ No UPDATE policy for reason/date changes — volunteers soft-delete and re-creat
 
 **actions.ts**
 - `addBlockout(formData)` — validates with `addBlockoutSchema`, verifies caller is a volunteer, inserts row; returns `{ success: true }` or `{ error: string }`
-- `removeBlockout(blockoutId)` — verifies caller owns the row (re-fetch before delete), deletes; returns `{ success: true }` or `{ error: string }`
+- `removeBlockout(blockoutId)` — verifies caller owns the row and it is not already soft-deleted; sets `deleted_at = now()`; returns `{ success: true }` or `{ error: string }`
 
 ### Route Structure
 
