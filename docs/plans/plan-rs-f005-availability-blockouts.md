@@ -1,6 +1,6 @@
 # Plan: RS-F005 - Availability And Blockout Management
 
-Status: Draft
+Status: In Review
 Feature: RS-F005
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -62,26 +62,32 @@ This scope uses `volunteer_interests` as the available membership signal. When R
 | `date` | date NOT NULL | the blocked-out date |
 | `reason` | text | optional, nullable, `char_length(reason) <= 200` |
 | `created_at` | timestamptz | DEFAULT now() |
+| `deleted_at` | timestamptz | nullable — soft-delete timestamp |
 
 Constraints:
-- UNIQUE (`volunteer_id`, `date`) — one blockout per volunteer per date
+- Partial unique index on (`volunteer_id`, `date`) WHERE `deleted_at IS NULL` — one active blockout per volunteer per date; soft-deleted rows do not block a re-add of the same date
 - Index on `volunteer_id`
 - Index on `date`
 
-**Delete behavior:** Hard delete (no `deleted_at` column). This is consistent with `volunteer_interests`, which also uses hard DELETE for volunteer self-service removals. Availability blockout removal is low-impact, reversible (the volunteer can re-add the date), and does not require an audit trail or admin approval path. This is a deliberate deviation from the soft-delete guardrail that applies to planning-critical structural entities (events, departments, sub-teams).
+**Delete behavior:** Soft-delete. Volunteer "removing" a blockout sets `deleted_at = now()` on the row. All normal queries filter `deleted_at IS NULL`. This satisfies the project-wide soft-delete guardrail. Permanent purge of soft-deleted blockout rows is deferred to RS-F014 (Admin oversight, soft delete, and approval controls), consistent with all other soft-deleted entities in the system. No admin approval is required for the volunteer's initial self-service soft-delete action — the approval gate applies only to the permanent hard purge step in RS-F014.
+
+**Confirmation UX:** The remove action is gated by a simple inline confirmation (a "Confirm remove?" state on the row itself) before the soft-delete is applied. A full modal is not required given the low impact of the action, but the two-step confirm satisfies the confirmation guardrail.
 
 ### RLS Design
 
-Four policies on `availability_blockouts`:
+Policies on `availability_blockouts`:
 
-1. **Volunteers read own blockouts**: `SELECT` WHERE `volunteer_id = auth.uid()`
+1. **Volunteers read own active blockouts**: `SELECT` WHERE `volunteer_id = auth.uid() AND deleted_at IS NULL`
 2. **Volunteers insert own blockouts**: `INSERT` WHERE `volunteer_id = auth.uid()`
-3. **Volunteers delete own blockouts**: `DELETE` WHERE `volunteer_id = auth.uid()`
-4. **Super admins read all blockouts**: `SELECT` (role check via profiles subquery)
-5. **Dept heads read in-scope blockouts**: `SELECT` WHERE `volunteer_id IN (SELECT vi.volunteer_id FROM volunteer_interests vi JOIN departments d ON d.id = vi.department_id WHERE d.owner_id = auth.uid() AND d.deleted_at IS NULL)`
-6. **Sub leaders read in-scope blockouts**: `SELECT` WHERE `volunteer_id IN (SELECT vi.volunteer_id FROM volunteer_interests vi JOIN departments d ON d.id = vi.department_id JOIN sub_teams st ON st.department_id = d.id WHERE st.owner_id = auth.uid() AND st.deleted_at IS NULL)`
+3. **Volunteers soft-delete own blockouts**: `UPDATE` WHERE `volunteer_id = auth.uid()` (used to set `deleted_at`)
+4. **Super admins read all blockouts**: `SELECT` (role check via profiles subquery; includes soft-deleted rows)
+5. **Dept heads read in-scope blockouts**: `SELECT` WHERE `deleted_at IS NULL AND volunteer_id IN (SELECT vi.volunteer_id FROM volunteer_interests vi JOIN departments d ON d.id = vi.department_id WHERE d.owner_id = auth.uid() AND d.deleted_at IS NULL)`
+6. **Sub leaders read in-scope blockouts**: `SELECT` WHERE `deleted_at IS NULL AND volunteer_id IN (SELECT vi.volunteer_id FROM volunteer_interests vi JOIN departments d ON d.id = vi.department_id JOIN sub_teams st ON st.department_id = d.id WHERE st.owner_id = auth.uid() AND st.deleted_at IS NULL)`
 
-No UPDATE policy — volunteers delete and re-create if they need to change a date or reason.
+Also required — **new policy on `profiles` table** (added in migration 00007):
+7. **Leaders can read in-scope volunteer profiles**: `SELECT` on `profiles` WHERE `role = 'volunteer' AND deleted_at IS NULL` AND caller is a dept_head or sub_leader with a volunteer in their scope (via `volunteer_interests` + department/sub-team ownership). The existing `00004` policy only exposes leader-role profiles to other leaders; volunteer profiles are not currently visible to leaders. This policy is required for `getBlockoutsForScope()` and `getVolunteersInScope()` to return volunteer display names.
+
+No UPDATE policy for reason/date changes — volunteers soft-delete and re-create if they need to change a blockout.
 
 ### Lib Layer (`apps/web/lib/availability/`)
 
@@ -93,9 +99,9 @@ No UPDATE policy — volunteers delete and re-create if they need to change a da
 - `addBlockoutSchema` — Zod: `{ date: z.string().date(), reason: z.string().max(200).optional() }`
 
 **queries.ts**
-- `getMyBlockouts(userId)` — SELECT own blockouts ordered by date ASC, returns `AvailabilityBlockout[]`
-- `getBlockoutsForScope()` — called by leader; returns `BlockoutWithVolunteer[]` for all volunteers in the caller's scope (uses the RLS policies above — the query just SELECTs all readable rows and joins profiles for display_name)
-- `getVolunteersInScope()` — for the leader view header/summary; returns distinct volunteers in scope with their department context (name, department name)
+- `getMyBlockouts(userId)` — SELECT own blockouts WHERE `deleted_at IS NULL`, ordered by date ASC, returns `AvailabilityBlockout[]`
+- `getBlockoutsForScope()` — called by leader; SELECTs all readable rows (RLS scopes to in-scope volunteers automatically) WHERE `deleted_at IS NULL`; joins `profiles` for `display_name` — **requires the new in-scope volunteer profile read policy added in migration 00007**, otherwise `display_name` would be null for all volunteer rows
+- `getVolunteersInScope()` — returns distinct volunteer profiles readable by the caller; relies on same new profile policy
 
 **actions.ts**
 - `addBlockout(formData)` — validates with `addBlockoutSchema`, verifies caller is a volunteer, inserts row; returns `{ success: true }` or `{ error: string }`
@@ -126,7 +132,11 @@ Follows the same pattern as `(app)/dashboard/` — one page.tsx that fetches the
 
 ### Navigation
 
-Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders based on `isLeaderRole()`. The Availability link should appear for both volunteers and leaders since both have a meaningful view.
+The current `(app)/layout.tsx` only renders `<AppNav />` when `isLeaderRole()` is true, so volunteers currently see no nav links beyond the wordmark. Two files must change together:
+
+1. **`(app)/layout.tsx`**: Remove the `showEventsLink &&` gate around `<AppNav />`. Render `<AppNav role={session.profile.role} />` for all authenticated roles in the app shell. Pass the role as a prop so AppNav can conditionally show role-appropriate links.
+
+2. **`app-nav.tsx`**: Accept a `role` prop. Render "Availability" link for all roles. Render "Events" link only for leader roles (`isLeaderRole(role)`). This keeps the Events area leader-only while giving volunteers access to their Availability page through the shared header.
 
 ## Files To Create Or Modify
 
@@ -143,7 +153,8 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 | `apps/web/app/(app)/availability/_components/add-blockout-form.tsx` | Create | Add blockout form |
 | `apps/web/app/(app)/availability/_components/leader-availability-view.tsx` | Create | Leader scoped read view |
 | `apps/web/app/(app)/availability/_components/volunteer-blockout-card.tsx` | Create | Per-volunteer blockout display |
-| `apps/web/app/(app)/app-nav.tsx` | Modify | Add Availability nav link |
+| `apps/web/app/(app)/app-nav.tsx` | Modify | Accept role prop; show Availability for all roles, Events for leaders only |
+| `apps/web/app/(app)/layout.tsx` | Modify | Render AppNav for all roles (not leader-only); pass role prop |
 | `supabase/seed.sql` | Modify | RS-F005 blockout examples |
 | `docs/tracking/progress.md` | Modify | Mark RS-F005 passed on completion |
 | `docs/tracking/claude-progress.txt` | Modify | Session handoff update |
@@ -157,6 +168,7 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 - No new roles
 - No existing RLS policies changed
 - Six new RLS policies on `availability_blockouts`
+- One new RLS policy on `profiles` (added in migration 00007): leaders can read volunteer profiles within their interest-based scope. The existing `00004_leader_profile_read.sql` policy only exposes leader-role profiles to other leaders; volunteer profile display names are not currently accessible to leaders. This new policy is required for leader availability queries that join profiles for display_name.
 - The dept_head and sub_leader read policies introduce the first cross-entity volunteer-read pattern (leader sees volunteer data scoped by department interest). This is intentional and bounded.
 
 **Leader visibility boundary:** Leaders see blockouts only for volunteers who have expressed interest in their owned departments/sub-teams. Volunteers who have not yet expressed any interests are invisible to leaders in this view. This is the correct v1 behavior — a volunteer with no interests has not yet entered the leader's planning scope.
@@ -170,10 +182,10 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 ## Implementation Steps
 
 1. Create `supabase/migrations/00007_availability_blockouts.sql`:
-   - Create `availability_blockouts` table with all columns, constraints, and indexes
+   - Create `availability_blockouts` table with all columns (including `deleted_at`), constraints, and indexes; use a partial unique index `(volunteer_id, date) WHERE deleted_at IS NULL`
    - Enable RLS
-   - Create all six RLS policies (volunteer own CRUD, super_admin read-all, dept_head scoped read, sub_leader scoped read)
-   - No functions or triggers needed for this migration
+   - Create the six RLS policies on `availability_blockouts` (volunteer own read/insert/update-for-soft-delete, super_admin read-all, dept_head scoped read, sub_leader scoped read); all leader and volunteer read policies filter `deleted_at IS NULL`; super_admin policy reads all including soft-deleted rows
+   - Create one additional RLS policy on `profiles`: leaders can read volunteer profiles where the volunteer has expressed interest in the leader's owned department or sub-team (mirrors the scope logic of the blockout read policies); this is an additive policy alongside the existing `00004` policy
 
 2. Create `apps/web/lib/availability/types.ts`:
    - `AvailabilityBlockout` type (maps DB row)
@@ -188,8 +200,8 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
    - `getVolunteersInScope()`: SELECT distinct volunteer profiles that are in-scope for the current leader (via `volunteer_interests` + departments/sub-teams ownership); returns `{ id, display_name, department_name }[]`
 
 5. Create `apps/web/lib/availability/actions.ts`:
-   - `addBlockout(formData)`: validate with `addBlockoutSchema`; verify caller role is `volunteer` via `getSessionWithProfile()`; insert row; on UNIQUE violation return friendly error ("You already have a blockout on this date"); return `{ success: true }` or `{ error: string }`
-   - `removeBlockout(blockoutId)`: fetch blockout by id; verify `volunteer_id = caller uid`; delete; return `{ success: true }` or `{ error: string }`
+   - `addBlockout(formData)`: validate with `addBlockoutSchema`; verify caller role is `volunteer` via `getSessionWithProfile()`; insert row; on partial-unique violation (active blockout already exists for that date) return friendly error ("You already have a blockout on this date"); return `{ success: true }` or `{ error: string }`
+   - `removeBlockout(blockoutId)`: fetch blockout by id; verify `volunteer_id = caller uid` AND `deleted_at IS NULL`; UPDATE `deleted_at = now()`; return `{ success: true }` or `{ error: string }`
 
 6. Create `apps/web/app/(app)/availability/_components/add-blockout-form.tsx`:
    - Client component; `useActionState` with `addBlockout`
@@ -200,9 +212,9 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 
 7. Create `apps/web/app/(app)/availability/_components/blockout-list.tsx`:
    - Client component; receives `AvailabilityBlockout[]` as props
-   - Renders each blockout as a row: formatted date, optional reason, remove button
-   - Remove button calls `removeBlockout` server action via form action; shows loading state
-   - Empty state: warm, helpful copy ("No blockouts recorded — add a date below when you can't serve.")
+   - Renders each blockout as a row: formatted date, optional reason, remove control
+   - Remove control is two-step: initial "Remove" ghost button → inline confirmation state ("Remove this blockout?" with Confirm / Cancel) → on confirm calls `removeBlockout` server action; shows loading state during action
+   - Empty state: warm, helpful copy ("No blockouts yet — add a date below when you can't serve.")
 
 8. Create `apps/web/app/(app)/availability/_components/volunteer-availability-view.tsx`:
    - Client component; receives initial blockouts, preferred days/times from RS-F004 as props
@@ -226,15 +238,20 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
     - Else: `redirect('/dashboard')`
 
 12. Modify `apps/web/app/(app)/app-nav.tsx`:
-    - Read the existing nav structure
-    - Add "Availability" link pointing to `/availability`
-    - Visible to both volunteers and leaders (all authenticated roles in the app shell)
+    - Accept a `role: string` prop
+    - Render "Availability" link (`/availability`) for all roles
+    - Render "Events" link (`/events`) only when `isLeaderRole(role)` — preserving existing leader-only access to events
 
-13. Add RS-F005 seed examples to `supabase/seed.sql` (commented, for local dev reset)
+13. Modify `apps/web/app/(app)/layout.tsx`:
+    - Remove the `showEventsLink &&` gate wrapping `<AppNav />`
+    - Render `<AppNav role={session.profile.role} />` for all authenticated roles in the app shell
+    - Delete the now-unused `showEventsLink` variable
 
-14. Run `npm run typecheck && npm run lint && npm run build` — all must pass
+14. Add RS-F005 seed examples to `supabase/seed.sql` (commented, for local dev reset)
 
-15. Update `docs/tracking/progress.md`, `docs/features/feature-list.json`, and `docs/tracking/claude-progress.txt`
+15. Run `npm run typecheck && npm run lint && npm run build` — all must pass
+
+16. Update `docs/tracking/progress.md`, `docs/features/feature-list.json`, and `docs/tracking/claude-progress.txt`
 
 ## Acceptance Criteria Mapping
 
@@ -270,7 +287,7 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 - Heading: `font-display` (Space Grotesk) is borderline for a dashboard sub-page; use `text-h2` in DM Sans unless the page is a focused solo view like onboarding. Prefer `text-h2` DM Sans here since this is a recurring management page, not a welcoming moment.
 - Blockout list rows: simple card treatment with `bg-neutral-0` border `neutral.300`, `radius.200`
 - Add form: clean single-column, full-border date input and textarea, consistent with RS-F004 form style
-- Remove action: tertiary/ghost button or inline text link — "Remove" — not a destructive red; removing a blockout is a low-stakes action; no confirmation modal required
+- Remove action: two-step inline confirmation — initial ghost "Remove" link; on click transitions to an inline "Remove this blockout? Confirm / Cancel" state on the same row; `semantic.error` color appropriate for the confirm button only (not the initial remove link); no full modal needed for this low-impact action
 - Empty state copy: warm and supportive ("No blockouts yet — add a date when you can't serve and we'll let leaders know.")
 - General preferences summary (read-only): small `type.body-sm` chip row, `color.neutral.600`
 
@@ -320,8 +337,9 @@ Add "Availability" link to `app-nav.tsx`. Nav already conditionally renders base
 ### Manual checks
 1. Sign in as volunteer → navigate to `/availability` → should see volunteer view (warm background, add form, empty blockout list)
 2. Add a blockout with a date and optional reason → row persists, appears in list
-3. Add the same date again → inline error "You already have a blockout on this date" (no duplicate row created)
-4. Remove a blockout → row removed, list updates, no confirmation required
+3. Add the same date again (with active blockout) → inline error "You already have a blockout on this date" (partial unique index blocks duplicate active rows)
+3b. Soft-delete a blockout then add the same date again → succeeds (partial unique only enforces WHERE deleted_at IS NULL)
+4. Remove a blockout → inline confirmation appears; confirm → row soft-deleted (deleted_at set), disappears from list; row still exists in DB with deleted_at set
 5. Sign in as super_admin → navigate to `/availability` → should see leader view (cool background, operational layout)
 6. Sign in as dept_head who owns a department where the volunteer expressed interest → navigate to `/availability` → volunteer's blockout appears
 7. Sign in as dept_head who does NOT own the volunteer's department → blockout is not visible
