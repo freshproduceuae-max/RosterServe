@@ -34,8 +34,7 @@ For this repo state:
 
 ## Next Up
 
-- Draft and approve RS-F005 plan (Availability and blockout management)
-- Begin RS-F005 implementation on branch codex/rs-f005-availability-blockouts
+- RS-F005 implementation in progress on branch codex/rs-f005-availability-blockouts
 
 ## Status Legend
 
@@ -53,7 +52,7 @@ Update rule:
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
 | 3 | RS-F003 | Department and sub-team structure | P0 | passed |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
-| 5 | RS-F005 | Availability and blockout management | P0 | not_started |
+| 5 | RS-F005 | Availability and blockout management | P0 | in_progress |
 | 6 | RS-F006 | Interest request management | P1 | not_started |
 | 7 | RS-F007 | Skill profile and approval | P0 | not_started |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | not_started |

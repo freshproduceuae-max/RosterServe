@@ -125,3 +125,41 @@
 --   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
 --   'Acoustic Guitar'
 -- );
+
+-- RS-F005: Example availability blockout seed data
+-- Run these after the RS-F004 seed steps above.
+-- Blockouts represent specific dates the volunteer cannot serve.
+
+-- Example: add two blockouts for a volunteer
+-- INSERT INTO public.availability_blockouts (volunteer_id, date, reason)
+-- VALUES
+--   (
+--     (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--     '2026-04-13',
+--     'Away on holiday'
+--   ),
+--   (
+--     (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--     '2026-04-20',
+--     NULL
+--   )
+-- ON CONFLICT DO NOTHING;
+
+-- Example: view all active blockouts for a volunteer
+-- SELECT * FROM public.availability_blockouts
+-- WHERE volunteer_id = (SELECT id FROM auth.users WHERE email = 'volunteer@example.com')
+--   AND deleted_at IS NULL
+-- ORDER BY date;
+
+-- Example: soft-delete a blockout (as if the volunteer removed it via the UI)
+-- UPDATE public.availability_blockouts
+-- SET deleted_at = now()
+-- WHERE volunteer_id = (SELECT id FROM auth.users WHERE email = 'volunteer@example.com')
+--   AND date = '2026-04-13';
+
+-- Validation check: confirm a dept_head can see the volunteer's blockouts
+-- (requires the volunteer to have expressed interest in the dept_head's department)
+-- SELECT ab.*
+-- FROM public.availability_blockouts ab
+-- WHERE ab.deleted_at IS NULL;
+-- (run this as the dept_head user in Supabase Studio; should only return in-scope rows)
