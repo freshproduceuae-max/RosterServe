@@ -17,6 +17,11 @@ export default async function AppLayout({
     redirect("/sign-in");
   }
 
+  // Volunteer onboarding gate — send incomplete volunteers to the onboarding flow
+  if (session.profile.role === "volunteer" && !session.profile.onboarding_complete) {
+    redirect("/onboarding");
+  }
+
   const showEventsLink = isLeaderRole(session.profile.role);
 
   return (
