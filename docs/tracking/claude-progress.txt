@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-29
+Last updated: 2026-03-29 (session 2)
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding infrastructure; RS-F001–RS-F004 complete and merged to main
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout infrastructure; RS-F001–RS-F004 complete and merged to main; RS-F005 implemented and merged, manual validation pending
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,91 +9,93 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F004: Volunteer onboarding and profile setup — fully implemented and merged to main via PR #4 (2026-03-29)
-- Migration 00005_onboarding.sql: three additive tables (availability_preferences, volunteer_interests, volunteer_skills)
-- Lib layer: lib/onboarding/{types,schemas,queries,actions}.ts
-- UI: (onboarding)/layout.tsx, onboarding/page.tsx, _components/{step-indicator,availability-step,interests-step,skills-step,onboarding-flow}.tsx
-- (app)/layout.tsx: volunteer onboarding gate added
-- supabase/seed.sql: RS-F004 commented examples added
-- typecheck, lint, build all pass; PR #4 reviewed, approved, and merged
+- RS-F005: Availability and blockout management — plan drafted (2 review rounds), approved, implemented, PR #6 reviewed and merged to main (2026-03-29)
+- Migration 00007_availability_blockouts.sql: availability_blockouts table (soft-delete, partial unique index), 6 RLS policies on availability_blockouts, 1 new scoped volunteer-profile read policy on profiles
+- Lib layer: lib/availability/{types,schemas,queries,actions}.ts
+- UI: (app)/availability/page.tsx (shared role-gated route), _components/{add-blockout-form,blockout-list,volunteer-availability-view,leader-availability-view,volunteer-blockout-card}.tsx
+- app-nav.tsx: now accepts role prop; Availability link visible for all roles; Events link gated to leaders only
+- (app)/layout.tsx: AppNav rendered for all authenticated roles (was leader-only before)
+- supabase/seed.sql: RS-F005 blockout examples added
+- typecheck, lint, build all pass
 
-FILES CHANGED (RS-F004, now on main)
-- supabase/migrations/00005_onboarding.sql (new)
-- apps/web/lib/onboarding/types.ts (new)
-- apps/web/lib/onboarding/schemas.ts (new)
-- apps/web/lib/onboarding/queries.ts (new)
-- apps/web/lib/onboarding/actions.ts (new)
-- apps/web/app/(onboarding)/layout.tsx (new)
-- apps/web/app/(onboarding)/onboarding/page.tsx (new)
-- apps/web/app/(onboarding)/onboarding/_components/step-indicator.tsx (new)
-- apps/web/app/(onboarding)/onboarding/_components/availability-step.tsx (new)
-- apps/web/app/(onboarding)/onboarding/_components/interests-step.tsx (new)
-- apps/web/app/(onboarding)/onboarding/_components/skills-step.tsx (new)
-- apps/web/app/(onboarding)/onboarding/_components/onboarding-flow.tsx (new)
-- apps/web/app/(app)/layout.tsx (modified — volunteer onboarding gate)
-- supabase/seed.sql (modified — RS-F004 examples)
+FILES CHANGED (RS-F005, now on main)
+- supabase/migrations/00007_availability_blockouts.sql (new)
+- apps/web/lib/availability/types.ts (new)
+- apps/web/lib/availability/schemas.ts (new)
+- apps/web/lib/availability/queries.ts (new)
+- apps/web/lib/availability/actions.ts (new)
+- apps/web/app/(app)/availability/page.tsx (new)
+- apps/web/app/(app)/availability/_components/add-blockout-form.tsx (new)
+- apps/web/app/(app)/availability/_components/blockout-list.tsx (new)
+- apps/web/app/(app)/availability/_components/volunteer-availability-view.tsx (new)
+- apps/web/app/(app)/availability/_components/leader-availability-view.tsx (new)
+- apps/web/app/(app)/availability/_components/volunteer-blockout-card.tsx (new)
+- apps/web/app/(app)/app-nav.tsx (modified — role prop, Availability link for all)
+- apps/web/app/(app)/layout.tsx (modified — AppNav for all roles)
+- supabase/seed.sql (modified — RS-F005 examples)
 
 TEST STATUS
-- RS-F004: typecheck/lint/build pass; PR reviewed and merged
-- NOTE: The 11-item manual validation checklist (from plan-rs-f004) was not independently confirmed this session. Session wrap-up was deferred from the implementation session. User approved merge. Manual validation is carried as an acknowledged gap.
-- All RS-F001–RS-F003 checks remain valid (prior sessions)
+- RS-F005: typecheck/lint/build pass; PR reviewed and merged
+- NOTE: The 12-item manual validation checklist has NOT been run. Manual validation requires npx supabase db reset (applies migration 00007) and testing all 12 scenarios. RS-F005 is in_review, not passed.
+- All RS-F001–RS-F004 checks remain valid (prior sessions)
 
 KNOWN LIMITATIONS
-- RS-F001 plan file is missing from disk — known gap, no action required; future agents read code directly
-- RS-F004 manual validation checklist (11 checks requiring npx supabase db reset) was not independently run. If issues surface during RS-F005 integration, revisit.
+- RS-F001 plan file is missing from disk — known gap, no action required
+- RS-F004 manual validation (11 checks) was not independently confirmed — acknowledged gap from prior session
+- RS-F005 manual validation (12 checks) not yet run — must complete before marking RS-F005 passed
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None — RS-F004 is complete and merged
+- RS-F005 | Availability and blockout management — merged, awaiting manual validation
 
 NEXT FEATURE
-- RS-F005 | Availability and blockout management (depends on RS-F001, RS-F004)
+- RS-F006 | Interest request management (depends on RS-F003, RS-F004) — P1
+  NOTE: RS-F005 must be validated and marked passed before RS-F006 planning begins
 
 NEXT REQUIRED ACTION
-- Draft docs/plans/plan-rs-f005-availability-blockouts.md following docs/plans/README.md
-- User reviews and approves the plan before implementation begins
-- Implementation branch: codex/rs-f005-availability-blockouts
+1. Run manual validation for RS-F005:
+   - npx supabase db reset (applies migrations 00001–00007)
+   - Run all 12 manual checks from plan-rs-f005-availability-blockouts.md validation section
+2. When all pass: update progress.md (RS-F005: passed), feature-list.json (passes: true), plan status
+3. Then start RS-F006 plan drafting
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- RS-F005 branch: codex/rs-f005-availability-blockouts
+- RS-F006 branch: codex/rs-f006-interest-requests
 
 PLAN STATUS
 - Scaffolding plan: implemented
 - RS-F001 plan: implemented (plan file missing from disk — known gap)
 - RS-F002 plan: implemented and merged
 - RS-F003 plan: implemented and merged
-- RS-F004 plan: implemented and merged (status updated to reflect)
-- RS-F005 plan: not started
+- RS-F004 plan: implemented and merged
+- RS-F005 plan: implemented and merged (manual validation pending)
+- RS-F006 plan: not started
 
-RS-F004 ARCHITECTURAL DECISIONS (from approved plan + Codex addendums)
-- Gate location: (app)/layout.tsx adds one redirect for volunteer + !onboarding_complete → /onboarding; middleware stays thin
-- Onboarding route group: (onboarding)/ with its own minimal layout — no nav bar, warm-surface wrapper; layout gate ejects non-volunteers and already-onboarded users back to /dashboard
-- Three steps: (1) availability preferences — general days/times only, NOT dated blockouts (RS-F005); (2) department interests — FK to departments rows, skippable if none exist; (3) skills — free text, status=pending, approval deferred to RS-F007
-- Step data saved incrementally per step (server action per step); partial data persists on browser close
-- saveVolunteerSkills is APPEND-ONLY with dedupe — does not replace on re-submit (Codex addendum)
-- getActiveDepartmentsForInterests and getOnboardingState must filter departments.deleted_at IS NULL at query layer — stale interest rows from soft-deleted depts are invisible at UI layer (Codex addendum)
-- completeOnboarding() sets profiles.onboarding_complete = true then redirects to /dashboard; must be idempotent
-- Migration 00005_onboarding.sql: three new tables; purely additive, no existing tables altered
-- availability_preferences: UNIQUE on volunteer_id (one row per volunteer, upserted)
-- volunteer_interests: UNIQUE (volunteer_id, department_id); no status column — that is RS-F006
-- volunteer_skills: status column exists from day one (pending/approved/rejected) so RS-F007 can drive it without a migration
-- Downstream contracts: RS-F005 extends availability with dated blockouts table; RS-F006 adds status/routing to interests; RS-F007 adds approval workflow UI on top of existing skills table
-- Existing volunteers (onboarding_complete=false): gated on first sign-in after deployment — intentional
-- Redirect-loop safety: (app)/layout.tsx gates incomplete volunteers out; (onboarding)/layout.tsx gates complete/non-volunteer back — no bounce (Codex addendum)
+RS-F005 ARCHITECTURAL DECISIONS (from approved plan)
+- availability_blockouts is a separate table from availability_preferences (RS-F004) — additive, no alteration to existing tables
+- Soft-delete pattern: deleted_at column; removeBlockout sets deleted_at = now(); permanent purge deferred to RS-F014
+- Partial unique index (volunteer_id, date) WHERE deleted_at IS NULL — allows re-add of a previously soft-deleted date
+- Two-step inline confirmation before soft-delete (satisfies confirmation guardrail without a full modal)
+- Leader planning scope = volunteer_interests → departments (owner_id) for dept_head; volunteer_interests → departments → sub_teams (owner_id) for sub_leader — provisional, to be replaced by assignment-based scope in RS-F008
+- New profiles RLS policy added in 00007: leaders can read in-scope volunteer profiles for display_name; additive alongside existing 00004 policy
+- AppNav now accepts role prop; layout.tsx renders it for all roles; Events link gated by isLeaderRole()
+- v1 is blockout-first: dated unavailability only; positive dated availability not modeled; general preferences remain in availability_preferences (RS-F004)
 
-RS-F005 CONTEXT (what the next agent needs to know before planning)
-- RS-F005 adds dated availability and blockout management on top of the RS-F004 foundation
-- availability_preferences already captures general day/time preferences (upserted, one row per volunteer)
-- RS-F005 should add a separate dated table (e.g. availability_blockouts or availability_dates) — do NOT alter availability_preferences
-- Surfaces: volunteer (manage their own) + leader (read during roster planning)
-- Depends on: RS-F001, RS-F004
+RS-F006 CONTEXT (what the next agent needs to know before planning)
+- RS-F006 adds interest request status and routing on top of the volunteer_interests foundation from RS-F004
+- volunteer_interests table already exists: (volunteer_id, department_id) UNIQUE — no status column yet
+- RS-F006 should add a status/routing layer — either a status column on volunteer_interests or a separate interest_requests table — per the plan for that feature
+- Depends on: RS-F003 (departments/ownership), RS-F004 (volunteer_interests foundation)
+- Surfaces: volunteer (submit/view status) + leader (review, approve, reject)
+- Priority: P1
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
 - Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
+- Availability should support dated availability plus broader preferences/blockouts — RS-F005 delivers blockouts; preferences remain from RS-F004
 - Notification delivery remains implementation-neutral between documented options
 
 CANONICAL DOCS
@@ -111,10 +113,11 @@ CARRY-OVER EXECUTION NOTES
 - Update this file at the end of every implementation or review session
 - Mark a feature as passed only when its validation is genuinely satisfied
 - ESLint config ignores .next build output and next-env.d.ts
-- Pill-shaped CTAs reserved for welcome/promotional moments (onboarding qualifies); not for leader dashboards
+- Pill-shaped CTAs reserved for welcome/promotional moments; not for dashboard or management pages
 - Active/hover states must include non-color indicators (underline, border, etc.) for accessibility
-- font-display (Space Grotesk) must be used sparingly — onboarding heading qualifies; dense leader list headings do not
+- font-display (Space Grotesk) used sparingly — dense management pages use DM Sans
 - gh CLI is at /c/Program Files/GitHub CLI/gh.exe (not on PATH in the bash shell)
 - Owner role invariants must be enforced at both server-action and DB-trigger layers
 - getOwnerDisplayNames(ids) is the correct query for display; getProfilesByRole() is for owner-selection forms only
 - Do not commit directly to main — always branch, PR, Codex review, approval, then merge
+- Zod error property is .issues (not .errors) — this bit us in RS-F005 actions.ts
