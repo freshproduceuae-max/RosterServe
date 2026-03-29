@@ -51,15 +51,15 @@ ACTIVE FEATURE
 - RS-F005 | Availability and blockout management — merged, awaiting manual validation
 
 NEXT FEATURE
-- RS-F006 | Interest request management (depends on RS-F003, RS-F004) — P1
-  NOTE: RS-F005 must be validated and marked passed before RS-F006 planning begins
+- RS-F005 | Availability and blockout management — manual validation still required before this feature is closed
+  After RS-F005 passes: RS-F006 | Interest request management (depends on RS-F003, RS-F004) — P1
 
 NEXT REQUIRED ACTION
-1. Run manual validation for RS-F005:
+1. Run RS-F005 manual validation:
    - npx supabase db reset (applies migrations 00001–00007)
    - Run all 12 manual checks from plan-rs-f005-availability-blockouts.md validation section
-2. When all pass: update progress.md (RS-F005: passed), feature-list.json (passes: true), plan status
-3. Then start RS-F006 plan drafting
+2. If all checks pass: update progress.md (RS-F005: passed), feature-list.json (RS-F005 passes: true), plan file status
+3. Only after RS-F005 is marked passed: begin RS-F006 plan drafting
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
