@@ -81,7 +81,7 @@
         "Capture baseline profile details, interests, availability signals, and optional skill input.",
         "Transition completed volunteers into the role-appropriate dashboard experience."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F005",

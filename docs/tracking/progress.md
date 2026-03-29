@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-28
+Last updated: 2026-03-29
 Current phase: Feature implementation
-Current build stage: RS-F004 plan approved; ready for implementation
+Current build stage: RS-F004 complete and merged; RS-F005 plan drafting next
 
 ## Execution Gate
 
@@ -30,12 +30,12 @@ For this repo state:
 - RS-F003 plan created and approved
 - RS-F003 implemented and validated (typecheck, lint, build pass; design-fidelity review pass; code review pass)
 - RS-F004 plan created, reviewed by Codex, and approved
-- RS-F004 implemented; PR #4 open for review
+- RS-F004 implemented, PR #4 reviewed and merged to main (2026-03-29)
 
 ## Next Up
 
-- Review and merge PR #4 (RS-F004) — then validate manually before marking `passed`
-- RS-F005 plan drafting after RS-F004 is merged
+- Draft and approve RS-F005 plan (Availability and blockout management)
+- Begin RS-F005 implementation on branch codex/rs-f005-availability-blockouts
 
 ## Status Legend
 
@@ -52,7 +52,7 @@ Update rule:
 | 1 | RS-F001 | Authentication and role access | P0 | passed |
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
 | 3 | RS-F003 | Department and sub-team structure | P0 | passed |
-| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | in_review |
+| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | not_started |
 | 6 | RS-F006 | Interest request management | P1 | not_started |
 | 7 | RS-F007 | Skill profile and approval | P0 | not_started |

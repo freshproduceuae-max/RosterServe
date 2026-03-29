@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-28
+Last updated: 2026-03-29
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team infrastructure; RS-F001–RS-F003 complete and merged to main; RS-F004 implemented on branch codex/rs-f004-volunteer-onboarding, PR #4 open
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding infrastructure; RS-F001–RS-F004 complete and merged to main
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,16 +9,15 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F004: full implementation on branch codex/rs-f004-volunteer-onboarding
+- RS-F004: Volunteer onboarding and profile setup — fully implemented and merged to main via PR #4 (2026-03-29)
 - Migration 00005_onboarding.sql: three additive tables (availability_preferences, volunteer_interests, volunteer_skills)
 - Lib layer: lib/onboarding/{types,schemas,queries,actions}.ts
 - UI: (onboarding)/layout.tsx, onboarding/page.tsx, _components/{step-indicator,availability-step,interests-step,skills-step,onboarding-flow}.tsx
 - (app)/layout.tsx: volunteer onboarding gate added
 - supabase/seed.sql: RS-F004 commented examples added
-- typecheck, lint, build all pass
-- PR #4 opened against main
+- typecheck, lint, build all pass; PR #4 reviewed, approved, and merged
 
-FILES CHANGED (this session, on branch codex/rs-f004-volunteer-onboarding)
+FILES CHANGED (RS-F004, now on main)
 - supabase/migrations/00005_onboarding.sql (new)
 - apps/web/lib/onboarding/types.ts (new)
 - apps/web/lib/onboarding/schemas.ts (new)
@@ -33,30 +32,29 @@ FILES CHANGED (this session, on branch codex/rs-f004-volunteer-onboarding)
 - apps/web/app/(onboarding)/onboarding/_components/onboarding-flow.tsx (new)
 - apps/web/app/(app)/layout.tsx (modified — volunteer onboarding gate)
 - supabase/seed.sql (modified — RS-F004 examples)
-- docs/tracking/progress.md (modified — RS-F004: in_review)
 
 TEST STATUS
-- RS-F004: typecheck/lint/build pass; manual validation not yet run (PR #4 is pre-merge)
+- RS-F004: typecheck/lint/build pass; PR reviewed and merged
+- NOTE: The 11-item manual validation checklist (from plan-rs-f004) was not independently confirmed this session. Session wrap-up was deferred from the implementation session. User approved merge. Manual validation is carried as an acknowledged gap.
 - All RS-F001–RS-F003 checks remain valid (prior sessions)
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required; future agents read code directly
-- RS-F004 manual validation checklist is in PR #4 description; must pass before marking RS-F004 as `passed`
+- RS-F004 manual validation checklist (11 checks requiring npx supabase db reset) was not independently run. If issues surface during RS-F005 integration, revisit.
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F004 | Volunteer onboarding and profile setup — PR #4 open, awaiting review + approval + merge
+- None — RS-F004 is complete and merged
 
 NEXT FEATURE
 - RS-F005 | Availability and blockout management (depends on RS-F001, RS-F004)
 
 NEXT REQUIRED ACTION
-- User reviews PR #4: https://github.com/freshproduceuae-max/RosterServe/pull/4
-- After approval, merge PR #4
-- Run manual validation checklist (see PR description) — npx supabase db reset, then 11 manual checks
-- When all pass: update progress.md (RS-F004: passed), feature-list.json (passes: true), then start RS-F005 plan
+- Draft docs/plans/plan-rs-f005-availability-blockouts.md following docs/plans/README.md
+- User reviews and approves the plan before implementation begins
+- Implementation branch: codex/rs-f005-availability-blockouts
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
@@ -67,7 +65,7 @@ PLAN STATUS
 - RS-F001 plan: implemented (plan file missing from disk — known gap)
 - RS-F002 plan: implemented and merged
 - RS-F003 plan: implemented and merged
-- RS-F004 plan: implemented; PR #4 in review
+- RS-F004 plan: implemented and merged (status updated to reflect)
 - RS-F005 plan: not started
 
 RS-F004 ARCHITECTURAL DECISIONS (from approved plan + Codex addendums)
@@ -83,13 +81,19 @@ RS-F004 ARCHITECTURAL DECISIONS (from approved plan + Codex addendums)
 - volunteer_interests: UNIQUE (volunteer_id, department_id); no status column — that is RS-F006
 - volunteer_skills: status column exists from day one (pending/approved/rejected) so RS-F007 can drive it without a migration
 - Downstream contracts: RS-F005 extends availability with dated blockouts table; RS-F006 adds status/routing to interests; RS-F007 adds approval workflow UI on top of existing skills table
-- Existing volunteers (onboarding_complete=false): gated on first sign-in after deployment — intentional, tested explicitly (validation check #2)
+- Existing volunteers (onboarding_complete=false): gated on first sign-in after deployment — intentional
 - Redirect-loop safety: (app)/layout.tsx gates incomplete volunteers out; (onboarding)/layout.tsx gates complete/non-volunteer back — no bounce (Codex addendum)
+
+RS-F005 CONTEXT (what the next agent needs to know before planning)
+- RS-F005 adds dated availability and blockout management on top of the RS-F004 foundation
+- availability_preferences already captures general day/time preferences (upserted, one row per volunteer)
+- RS-F005 should add a separate dated table (e.g. availability_blockouts or availability_dates) — do NOT alter availability_preferences
+- Surfaces: volunteer (manage their own) + leader (read during roster planning)
+- Depends on: RS-F001, RS-F004
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
 - Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
-- Availability should support dated availability plus broader preferences/blockouts (RS-F005 extends RS-F004 foundation)
 - Notification delivery remains implementation-neutral between documented options
 
 CANONICAL DOCS
