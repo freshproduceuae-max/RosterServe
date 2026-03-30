@@ -103,7 +103,13 @@ function ActionControls({ claimId }: { claimId: string }) {
   );
 }
 
-export function SkillClaimCard({ claim }: { claim: SkillClaimWithVolunteer }) {
+export function SkillClaimCard({
+  claim,
+  readOnly = false,
+}: {
+  claim: SkillClaimWithVolunteer;
+  readOnly?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-200 rounded-200 border border-neutral-300 bg-neutral-0 p-300">
       <div className="flex items-start justify-between gap-200">
@@ -123,7 +129,9 @@ export function SkillClaimCard({ claim }: { claim: SkillClaimWithVolunteer }) {
       <p className="text-body-sm text-neutral-600">
         Claimed {formatDate(claim.created_at)}
       </p>
-      {claim.status === "pending" && <ActionControls claimId={claim.id} />}
+      {!readOnly && claim.status === "pending" && (
+        <ActionControls claimId={claim.id} />
+      )}
     </div>
   );
 }

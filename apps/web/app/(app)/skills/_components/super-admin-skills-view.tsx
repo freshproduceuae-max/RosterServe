@@ -59,7 +59,7 @@ export function SuperAdminSkillsView({
               </div>
               <div className="grid gap-300 sm:grid-cols-2 lg:grid-cols-3">
                 {grouped[dept].map((claim) => (
-                  <SkillClaimCard key={claim.id} claim={claim} />
+                  <SkillClaimCard key={claim.id} claim={claim} readOnly={true} />
                 ))}
               </div>
             </section>
