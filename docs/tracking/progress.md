@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-30 (session 5)
+Last updated: 2026-03-30 (session 6)
 Current phase: Feature implementation
-Current build stage: RS-F006 passed; RS-F007 (Skill profile and approval) is next
+Current build stage: RS-F007 plan approved and merged to main; implementation is next
 
 ## Execution Gate
 
@@ -37,10 +37,11 @@ For this repo state:
 - RS-F006 plan created, reviewed, and approved (2026-03-30)
 - RS-F006 implemented; PR #7 reviewed (multiple rounds), approved, and merged to main (2026-03-30)
 - RS-F006 manual validation (15 checks) confirmed passed (2026-03-30)
+- RS-F007 plan drafted, reviewed (3 review rounds addressing RLS INSERT policy, UPDATE WITH CHECK clauses, and legacy/soft-delete spec gaps), approved, and merged to main via PR #8 (2026-03-30)
 
 ## Next Up
 
-- RS-F007: Skill profile and approval (P0, depends on RS-F003 + RS-F004)
+- RS-F007: Skill profile and approval (P0) — plan approved, ready for implementation
 
 ## Status Legend
 
@@ -60,7 +61,7 @@ Update rule:
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Interest request management | P1 | passed |
-| 7 | RS-F007 | Skill profile and approval | P0 | not_started |
+| 7 | RS-F007 | Skill profile and approval | P0 | approved |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | not_started |
 | 9 | RS-F009 | Skill-gap detection and planning signals | P0 | not_started |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | not_started |

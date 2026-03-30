@@ -1,5 +1,5 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-30 (session 5)
+Last updated: 2026-03-30 (session 6)
 Project phase: Feature implementation
 Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request infrastructure; RS-F001–RS-F006 complete and merged to main; all 6 features passed
 
@@ -9,28 +9,15 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F006: Interest request management — merged to main and all 15 manual validation checks confirmed passed (2026-03-30)
-- Merged remote branches pruned: codex/rs-f002 through rs-f006 and docs/plan-rs-f005 all cleaned up
+- RS-F007: Skill profile and approval — implementation plan drafted, reviewed (3 rounds), approved, and merged to main via PR #8 (2026-03-30)
+- No implementation code was written this session — plan only
 
-FILES CHANGED (RS-F006, on main)
-- supabase/migrations/00008_interest_requests.sql (new)
-- apps/web/lib/interests/types.ts (new)
-- apps/web/lib/interests/queries.ts (new)
-- apps/web/lib/interests/actions.ts (new)
-- apps/web/app/(app)/interests/_components/interest-request-card.tsx (new)
-- apps/web/app/(app)/interests/_components/interest-status-list.tsx (new)
-- apps/web/app/(app)/interests/_components/leader-interests-view.tsx (new)
-- apps/web/app/(app)/interests/_components/submit-interest-form.tsx (new)
-- apps/web/app/(app)/interests/_components/super-admin-interests-view.tsx (new)
-- apps/web/app/(app)/interests/_components/volunteer-interests-view.tsx (new)
-- apps/web/app/(app)/interests/page.tsx (new)
-- apps/web/app/(app)/app-nav.tsx (modified — Interests link added)
-- apps/web/lib/availability/queries.ts (modified — getVolunteersInScope and getBlockoutsForScope made role-aware; rejected interests filtered from dept_head scope)
-- supabase/seed.sql (modified — RS-F006 seed examples)
+FILES CHANGED (session 6, on main)
+- docs/plans/plan-rs-f007-skill-profile-approval.md (new — Status: Approved)
 
 TEST STATUS
 - RS-F001–RS-F006: all passed
-- RS-F007: not started
+- RS-F007: plan approved, implementation not yet started
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required
@@ -42,17 +29,15 @@ BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None — RS-F006 passed; ready to begin RS-F007 planning
-
-NEXT FEATURE
-- RS-F007 | Skill profile and approval (P0, depends on RS-F003 + RS-F004)
+- RS-F007 | Skill profile and approval (P0) — plan approved, ready for implementation
 
 NEXT REQUIRED ACTION
-1. Draft implementation plan for RS-F007 (Skill profile and approval)
-   - Branch: codex/rs-f007-skill-profile-approval
-   - Plan path: docs/plans/plan-rs-f007-skill-profile-approval.md
-   - Follow the plan-drafting workflow: write plan → PR for review → approval → implementation
-2. RS-F007 key context (see below)
+1. Implement RS-F007 per the approved plan at docs/plans/plan-rs-f007-skill-profile-approval.md
+   - Create branch: codex/rs-f007-skill-profile-approval (fresh from main)
+   - Follow plan steps 1–16 in order
+   - Run npm run typecheck && npm run lint && npm run build (step 15)
+   - Complete 18-item manual validation checklist (plan section: Validation Plan)
+   - Update progress.md, feature-list.json, claude-progress.txt on completion
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
@@ -66,16 +51,19 @@ PLAN STATUS
 - RS-F004 plan: implemented and merged
 - RS-F005 plan: implemented, merged, and validated
 - RS-F006 plan: implemented, merged, and validated
-- RS-F007 plan: not started
+- RS-F007 plan: APPROVED (docs/plans/plan-rs-f007-skill-profile-approval.md) — implementation pending
 
-RS-F007 CONTEXT (what the next agent needs to know before planning)
-- RS-F007 adds skill profile capture and leader approval on top of the volunteer/department foundation
-- Depends on: RS-F003 (departments/ownership), RS-F004 (volunteer profiles)
-- Surfaces: volunteer (submit/view skills) + leader (approve/reject skill claims)
-- Priority: P0
-- Skills are department-linked (a volunteer claims a skill within a department context)
-- Only approved skills feed planning logic (RS-F008+)
-- Skill approval model is similar to interest request model but skills are permanent profile data, not routing signals
+RS-F007 KEY PLAN DECISIONS (implementer must know)
+- Migration 00009 is purely additive EXCEPT it drops and replaces the volunteer INSERT policy from 00005:
+  - Old policy: broad (volunteer_id = auth.uid() AND status = 'pending')
+  - New policy: dual-branch — legacy onboarding (skill_id IS NULL AND department_id IS NULL) OR catalog claim with approved-interest subquery AND EXISTS check that skill_id belongs to same active department_id in department_skills
+- UPDATE policies use explicit USING + WITH CHECK (RS-F006 pattern):
+  - Dept_head review: USING gates on pending + role + ownership; WITH CHECK gates status IN ('approved','rejected') + reviewed_by = auth.uid() + reviewed_at IS NOT NULL
+  - Volunteer withdraw: USING gates on pending + not-deleted; WITH CHECK gates deleted_at to 30-second window + reviewed_by IS NULL + reviewed_at IS NULL
+- Legacy onboarding skills (NULL department_id, NULL skill_id): visible in volunteer view with muted label and withdraw control; absent from all leader views
+- Soft-deleted catalog skills: FK on volunteer_skills.skill_id is NOT nulled (soft-delete doesn't cascade); claims remain valid using stored name column; skill disappears from claim form only
+- Route pattern: single shared (app)/skills/ page with explicit role dispatch — same shape as (app)/interests/
+- Sub_leader redirects to /dashboard; no Skills nav link
 
 RS-F006 NOTABLE IMPLEMENTATION DECISIONS (carry-forward reference)
 - Explicit role dispatch in /interests page — no isLeaderRole(); sub_leader redirects to /dashboard
