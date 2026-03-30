@@ -178,3 +178,41 @@
 --   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_2', 'approved', 'DEPT_HEAD_UUID', NOW()),
 --   -- Rejected interest (reviewed and declined)
 --   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_3', 'rejected', 'DEPT_HEAD_UUID', NOW());
+
+-- ---------------------------------------------------------------------------
+-- RS-F007 seed examples (commented out — requires real UUIDs from RS-F003/RS-F004/RS-F006)
+-- Note: These examples require RS-F003 department data, RS-F004 volunteer profiles,
+-- and RS-F006 approved interests to already exist in the local DB.
+-- Replace the placeholder UUIDs and emails with real values from your local seed data.
+-- ---------------------------------------------------------------------------
+
+-- Example: add a skill to a department's catalog (as dept_head)
+-- INSERT INTO public.department_skills (department_id, name, created_by)
+-- VALUES (
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team'),
+--   'Guitar',
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com')
+-- );
+
+-- Example: seed a pending volunteer skill claim (volunteer must have approved interest in the department)
+-- INSERT INTO public.volunteer_skills (volunteer_id, skill_id, department_id, name, status)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   (SELECT id FROM public.department_skills WHERE name = 'Guitar'),
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team'),
+--   'Guitar',
+--   'pending'
+-- );
+
+-- Example: seed an approved volunteer skill claim
+-- INSERT INTO public.volunteer_skills (volunteer_id, skill_id, department_id, name, status, reviewed_by, reviewed_at)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   (SELECT id FROM public.department_skills WHERE name = 'Guitar'),
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team'),
+--   'Guitar',
+--   'approved',
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com'),
+--   NOW()
+-- )
+-- ON CONFLICT DO NOTHING;

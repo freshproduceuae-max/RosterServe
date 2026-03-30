@@ -6,36 +6,46 @@ import type {
   VolunteerSkillClaim,
 } from "./types";
 
+export type DepartmentSkillWithName = DepartmentSkill & {
+  department_name: string;
+};
+
 /**
  * getDepartmentSkillsForLeader
- * Dept head: all active catalog entries for owned departments.
+ * Dept head: all active catalog entries for owned departments, with dept name.
  * RLS automatically restricts to the caller's owned departments.
  */
 export async function getDepartmentSkillsForLeader(): Promise<
-  DepartmentSkill[]
+  DepartmentSkillWithName[]
 > {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("department_skills")
-    .select("*")
+    .select("*, department:departments!department_id(name)")
     .is("deleted_at", null)
     .order("name", { ascending: true });
   if (error || !data) return [];
-  return data as DepartmentSkill[];
+
+  type RawRow = DepartmentSkill & { department: { name: string } | null };
+
+  return (data as unknown as RawRow[]).map((row) => ({
+    ...row,
+    department_name: row.department?.name ?? "",
+  }));
 }
 
 /**
  * getDepartmentSkillsForVolunteer
  * Volunteer: active catalog skills for departments where the volunteer has an
- * approved interest. Used to populate the skill claim form.
+ * approved interest. Includes department name for claim form grouping.
  */
 export async function getDepartmentSkillsForVolunteer(
   userId: string,
-): Promise<DepartmentSkill[]> {
+): Promise<DepartmentSkillWithName[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("department_skills")
-    .select("*")
+    .select("*, department:departments!department_id(name)")
     .is("deleted_at", null)
     .in(
       "department_id",
@@ -52,7 +62,13 @@ export async function getDepartmentSkillsForVolunteer(
     .order("department_id", { ascending: true })
     .order("name", { ascending: true });
   if (error || !data) return [];
-  return data as DepartmentSkill[];
+
+  type RawRow = DepartmentSkill & { department: { name: string } | null };
+
+  return (data as unknown as RawRow[]).map((row) => ({
+    ...row,
+    department_name: row.department?.name ?? "",
+  }));
 }
 
 /**
