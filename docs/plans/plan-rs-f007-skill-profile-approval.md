@@ -111,6 +111,39 @@ CREATE UNIQUE INDEX idx_volunteer_skills_volunteer_skill
 4. Volunteer reads catalog for departments where they have an active approved interest: `SELECT` WHERE `department_id IN (SELECT department_id FROM volunteer_interests WHERE volunteer_id = auth.uid() AND status = 'approved' AND deleted_at IS NULL)`
 5. `super_admin` reads all: `SELECT` with role subquery
 
+**Replacement INSERT policy on `volunteer_skills` (in migration 00009):**
+
+Migration 00009 must drop the existing broad INSERT policy from 00005 and replace it with a dual-branch policy that enforces the approved-interest gate at the DB layer for catalog claims:
+
+```sql
+DROP POLICY IF EXISTS "Volunteers can insert own pending skills" ON public.volunteer_skills;
+
+CREATE POLICY "Volunteers can insert own skills"
+  ON public.volunteer_skills FOR INSERT
+  WITH CHECK (
+    auth.uid() = volunteer_id
+    AND status = 'pending'
+    AND (
+      -- Legacy onboarding path: free-text name only, no catalog link
+      (skill_id IS NULL AND department_id IS NULL)
+      OR
+      -- Catalog claim path: volunteer must have an approved interest in the target department
+      (
+        skill_id IS NOT NULL
+        AND department_id IS NOT NULL
+        AND department_id IN (
+          SELECT vi.department_id FROM public.volunteer_interests vi
+          WHERE vi.volunteer_id = auth.uid()
+            AND vi.status = 'approved'
+            AND vi.deleted_at IS NULL
+        )
+      )
+    )
+  );
+```
+
+This ensures a direct client write cannot create department-linked claims without an approved interest. The legacy onboarding path (`persistSkills` in `onboarding/actions.ts`) continues to work because it inserts with NULL `skill_id` and NULL `department_id`, which the first branch admits.
+
 **New RLS policies on `volunteer_skills`:**
 
 6. `dept_head` reads skill claims in owned departments: `SELECT` WHERE `department_id IN (SELECT id FROM departments WHERE owner_id = auth.uid() AND deleted_at IS NULL)` AND caller has role `dept_head`
@@ -201,11 +234,11 @@ Update `app-nav.tsx` to add `{ label: "Skills", href: "/skills", show: role !== 
 
 **Schema:** Purely additive — new table `department_skills`, new nullable columns on `volunteer_skills`, new indexes. No existing data is altered. Existing `volunteer_skills` rows (legacy onboarding) gain NULL columns, which is backward compatible.
 
-**RLS:** Eight new policies added — this is an access-control change. The existing volunteer INSERT policy from 00005 (`volunteer_id = auth.uid() AND status = 'pending'`) covers both flows without modification: the legacy onboarding `persistSkills` path continues to insert rows with only `volunteer_id`, `name`, and `status` (new columns are nullable, backward compatible); RS-F007's `claimSkill` action inserts with `skill_id`, `department_id`, and `name` also set, still at `status = 'pending'`, which the same policy admits. The approved-interest gate is enforced at the application layer in `claimSkill`, not by RLS alone. The new `dept_head` UPDATE policy on `volunteer_skills` guards on `status = 'pending'` in the USING clause so already-reviewed rows cannot be re-reviewed at DB layer.
+**RLS:** Eight new policies added plus one replaced — this is an access-control change. Migration 00009 drops the broad INSERT policy from 00005 (`volunteer_id = auth.uid() AND status = 'pending'`) and replaces it with a dual-branch policy: the legacy onboarding path (NULL `skill_id` and NULL `department_id`) is still admitted; catalog claims (non-NULL `skill_id` and `department_id`) are admitted only when the volunteer has an approved interest in the target department via subquery. This enforces the approved-interest gate at the DB layer, not only in `claimSkill`. The new `dept_head` UPDATE policy guards on `status = 'pending'` in the USING clause so already-reviewed rows cannot be re-reviewed at the DB layer.
 
 **Downstream contracts:** RS-F008 and RS-F009 will query `volunteer_skills WHERE status = 'approved' AND department_id IS NOT NULL` for planning-eligible skills. The `department_id` and `skill_id` columns added here provide that filter path without further migration.
 
-**No auth changes. No new roles. Access control changes: eight new RLS policies.**
+**No auth changes. No new roles. Access control changes: eight new RLS policies plus one replaced.**
 
 ---
 
@@ -216,7 +249,9 @@ Update `app-nav.tsx` to add `{ label: "Skills", href: "/skills", show: role !== 
    - ALTER TABLE `volunteer_skills` ADD COLUMNS: `department_id`, `skill_id`, `reviewed_by`, `reviewed_at`
    - ADD indexes on `volunteer_skills.department_id`, `volunteer_skills.skill_id`
    - ADD partial unique index on `(volunteer_id, skill_id) WHERE deleted_at IS NULL AND skill_id IS NOT NULL`
-   - CREATE all RLS policies (5 on `department_skills`, 3 new on `volunteer_skills`) as described in Approach
+   - DROP POLICY "Volunteers can insert own pending skills" from `volunteer_skills` (defined in 00005)
+   - CREATE replacement INSERT policy with dual-branch WITH CHECK (legacy path + approved-interest-gated catalog path) as described in Approach
+   - CREATE remaining RLS policies (5 on `department_skills`, 3 new on `volunteer_skills`) as described in Approach
 
 2. Create `apps/web/lib/skills/types.ts`:
    - `DepartmentSkill`, `VolunteerSkillClaim`, `SkillClaimWithDepartment`, `SkillClaimWithVolunteer`
@@ -322,7 +357,7 @@ Update `app-nav.tsx` to add `{ label: "Skills", href: "/skills", show: role !== 
 - Volunteer cannot claim a skill for a department where they have no approved interest
 - Duplicate claim (same skill_id, same volunteer) returns inline error
 - Legacy onboarding skills (NULL department_id) visible to volunteer but absent from all leader views
-- Soft-deleted catalog skill: volunteer claim row with NULL skill_id handled gracefully in UI (raw `name` displayed)
+- Soft-deleted catalog skill: existing claims retain their `skill_id` FK (soft-delete does not cascade); claim remains visible in volunteer view using the `name` stored on the `volunteer_skills` row; soft-deleted skill no longer appears in the claim form drop-down
 - Dept_head cannot approve/reject claims outside owned departments
 
 ---
@@ -337,7 +372,7 @@ Update `app-nav.tsx` to add `{ label: "Skills", href: "/skills", show: role !== 
 - Status badges: pill with semantic tokens — `semantic.warning` (pending), `semantic.success` (approved), `semantic.error` (rejected); label + color (no color-only — accessibility rule)
 - Withdraw control: two-step inline confirmation, same RS-F006 pattern
 - Claim form: two-step (dept → skill); clean single-column; consistent with RS-F004/RS-F006 form style
-- Legacy row: muted appearance (`text-neutral-500`); no action affordance
+- Legacy row: muted appearance (`text-neutral-500`); withdraw control shown (same two-step inline confirmation); no claim/re-claim affordance from this row
 - Empty state: warm, first-person copy
 
 **Leader view — calm, operational:**
