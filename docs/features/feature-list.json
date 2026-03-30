@@ -115,7 +115,7 @@
         "Route each request to the appropriate reviewing leader.",
         "Reflect request outcomes back to the volunteer and relevant planning views."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F007",

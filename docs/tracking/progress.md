@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-30 (session 4)
+Last updated: 2026-03-30 (session 5)
 Current phase: Feature implementation
-Current build stage: RS-F006 merged to main; manual validation (15 checks) pending before marking passed
+Current build stage: RS-F006 passed; RS-F007 (Skill profile and approval) is next
 
 ## Execution Gate
 
@@ -36,10 +36,10 @@ For this repo state:
 - RS-F005 manual validation (12 checks) confirmed passed (2026-03-30)
 - RS-F006 plan created, reviewed, and approved (2026-03-30)
 - RS-F006 implemented; PR #7 reviewed (multiple rounds), approved, and merged to main (2026-03-30)
+- RS-F006 manual validation (15 checks) confirmed passed (2026-03-30)
 
 ## Next Up
 
-- RS-F006 manual validation (15 checks) — see plan-rs-f006-interest-requests.md § Validation Plan
 - RS-F007: Skill profile and approval (P0, depends on RS-F003 + RS-F004)
 
 ## Status Legend
@@ -59,7 +59,7 @@ Update rule:
 | 3 | RS-F003 | Department and sub-team structure | P0 | passed |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
-| 6 | RS-F006 | Interest request management | P1 | in_review |
+| 6 | RS-F006 | Interest request management | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | not_started |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | not_started |
 | 9 | RS-F009 | Skill-gap detection and planning signals | P0 | not_started |
