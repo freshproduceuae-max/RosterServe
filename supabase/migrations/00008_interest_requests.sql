@@ -41,6 +41,10 @@ CREATE INDEX idx_volunteer_interests_status
   ON public.volunteer_interests (status)
   WHERE deleted_at IS NULL;
 
+CREATE INDEX idx_volunteer_interests_reviewed_by
+  ON public.volunteer_interests (reviewed_by)
+  WHERE reviewed_by IS NOT NULL;
+
 -- ---------------------------------------------------------------------------
 -- 5. Update the volunteer SELECT policy to exclude soft-deleted rows
 -- ---------------------------------------------------------------------------
@@ -67,7 +71,10 @@ CREATE POLICY "Volunteers can withdraw own pending interests"
     AND status = 'pending'
     AND deleted_at IS NULL
   )
-  WITH CHECK (auth.uid() = volunteer_id);
+  WITH CHECK (
+    auth.uid() = volunteer_id
+    AND status = 'pending'
+  );
 
 -- Dept head: read interests for departments they own
 CREATE POLICY "Dept heads can read in-scope interests"
@@ -155,3 +162,24 @@ $$;
 
 -- Grant remains the same – function signature is unchanged, so REVOKE/GRANT
 -- from the previous migration (00006) still applies.
+
+-- ---------------------------------------------------------------------------
+-- 9. Patch INSERT policy to enforce status = 'pending' on new inserts
+-- ---------------------------------------------------------------------------
+DROP POLICY "Volunteers can insert own interests for active departments" ON public.volunteer_interests;
+
+CREATE POLICY "Volunteers can insert own interests for active departments"
+  ON public.volunteer_interests FOR INSERT
+  WITH CHECK (
+    auth.uid() = volunteer_id
+    AND status = 'pending'
+    AND EXISTS (
+      SELECT 1
+      FROM public.departments AS d
+      JOIN public.events AS e ON e.id = d.event_id
+      WHERE d.id = department_id
+        AND d.deleted_at IS NULL
+        AND e.deleted_at IS NULL
+        AND e.status = 'published'
+    )
+  );
