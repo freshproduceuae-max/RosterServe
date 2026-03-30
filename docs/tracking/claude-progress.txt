@@ -25,6 +25,12 @@ KNOWN LIMITATIONS
 - RS-F006 plan was committed directly to main (not via PR) — known process deviation, acknowledged
 - npx supabase db reset not verified (Docker not running during implementation) — migration SQL verified statically
 
+WORKSPACE STATE
+- Repo is on main at 3e8c89f; working tree is NOT fully clean
+- apps/web/tsconfig.tsbuildinfo — modified (auto-generated build artefact; not feature work; safe to ignore)
+- .claude/settings.local.json — untracked (Claude Code local config; not feature work; do not commit)
+- Next session should verify these are still non-feature files before assuming a pristine tree
+
 BLOCKERS
 - None
 
