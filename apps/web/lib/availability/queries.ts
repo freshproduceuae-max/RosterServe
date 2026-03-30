@@ -63,6 +63,29 @@ export async function getBlockoutsForScope(): Promise<BlockoutWithVolunteer[]> {
 
 export async function getVolunteersInScope(): Promise<VolunteerInScope[]> {
   const supabase = await createSupabaseServerClient();
+
+  // Super admin: return all volunteers regardless of interest status
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .single();
+
+  if (callerProfile?.role === "super_admin") {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .eq("role", "volunteer")
+      .is("deleted_at", null)
+      .order("display_name");
+    if (error || !data) return [];
+    return data.map((v) => ({
+      id: v.id,
+      display_name: v.display_name,
+      department_name: "",
+    }));
+  }
+
   // RLS on profiles (migration 00007) restricts rows to in-scope volunteers.
   // Join volunteer_interests → departments for department_name context.
   // Fetch status and deleted_at so we can filter out rejected/deleted interests client-side,
