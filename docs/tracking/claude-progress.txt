@@ -1,5 +1,5 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-30 (session 6)
+Last updated: 2026-03-30 (session 7)
 Project phase: Feature implementation
 Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request infrastructure; RS-F001–RS-F006 complete and merged to main; all 6 features passed
 
@@ -9,15 +9,33 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F007: Skill profile and approval — implementation plan drafted, reviewed (3 rounds), approved, and merged to main via PR #8 (2026-03-30)
-- No implementation code was written this session — plan only
+- RS-F007: Skill profile and approval — implementation complete (2026-03-30)
+  - Migration 00009, lib layer (types, queries, actions), 7 UI components, /skills page, nav link, seed examples
+  - typecheck, lint, build all pass
+  - PR created for review (see NEXT REQUIRED ACTION)
+  - 18-item manual validation not yet completed
 
-FILES CHANGED (session 6, on main)
-- docs/plans/plan-rs-f007-skill-profile-approval.md (new — Status: Approved)
+FILES CHANGED (session 7, on branch codex/rs-f007-skill-profile-approval)
+- supabase/migrations/00009_skills.sql (new)
+- apps/web/lib/skills/types.ts (new)
+- apps/web/lib/skills/queries.ts (new)
+- apps/web/lib/skills/actions.ts (new)
+- apps/web/app/(app)/skills/page.tsx (new)
+- apps/web/app/(app)/skills/_components/claim-skill-form.tsx (new)
+- apps/web/app/(app)/skills/_components/skill-claim-list.tsx (new)
+- apps/web/app/(app)/skills/_components/volunteer-skills-view.tsx (new)
+- apps/web/app/(app)/skills/_components/department-skill-catalog.tsx (new)
+- apps/web/app/(app)/skills/_components/skill-claim-card.tsx (new)
+- apps/web/app/(app)/skills/_components/leader-skills-view.tsx (new)
+- apps/web/app/(app)/skills/_components/super-admin-skills-view.tsx (new)
+- apps/web/app/(app)/skills/_components/status-badge.tsx (new — shared StatusBadge)
+- apps/web/app/(app)/app-nav.tsx (modified — Skills link added)
+- supabase/seed.sql (modified — RS-F007 examples appended)
+- docs/tracking/progress.md (modified — RS-F007 status in_review)
 
 TEST STATUS
 - RS-F001–RS-F006: all passed
-- RS-F007: plan approved, implementation not yet started
+- RS-F007: implementation complete; typecheck/lint/build pass; PR in review; manual validation (18 items) pending
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required
@@ -26,28 +44,31 @@ KNOWN LIMITATIONS
 - npx supabase db reset not verified (Docker not running during implementation) — migration SQL verified statically
 
 WORKSPACE STATE
-- Repo is on main at 3e8c89f; working tree is NOT fully clean
+- Branch: codex/rs-f007-skill-profile-approval
 - apps/web/tsconfig.tsbuildinfo — modified (auto-generated build artefact; not feature work; safe to ignore)
 - .claude/settings.local.json — untracked (Claude Code local config; not feature work; do not commit)
-- Next session should verify these are still non-feature files before assuming a pristine tree
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F007 | Skill profile and approval (P0) — plan approved, ready for implementation
+- RS-F007 | Skill profile and approval (P0) — implementation in PR review
 
 NEXT REQUIRED ACTION
-1. Implement RS-F007 per the approved plan at docs/plans/plan-rs-f007-skill-profile-approval.md
-   - Create branch: codex/rs-f007-skill-profile-approval (fresh from main)
-   - Follow plan steps 1–16 in order
-   - Run npm run typecheck && npm run lint && npm run build (step 15)
-   - Complete 18-item manual validation checklist (plan section: Validation Plan)
-   - Update progress.md, feature-list.json, claude-progress.txt on completion
+1. Human approves the RS-F007 implementation PR
+2. Merge to main, delete branch
+3. Complete 18-item manual validation (plan §Validation Plan in docs/plans/plan-rs-f007-skill-profile-approval.md)
+4. On all 18 items passing:
+   - Update docs/tracking/progress.md: RS-F007 status → passed
+   - Update docs/features/feature-list.json: RS-F007 passes → true
+   - Update docs/plans/plan-rs-f007-skill-profile-approval.md: Status → Implemented and Validated
+   - Update this file
+   - Commit directly to main (tracking-only changes)
+5. Begin RS-F008 plan drafting (Roster planning and assignment management, P0)
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- RS-F007 branch: codex/rs-f007-skill-profile-approval
+- RS-F008 branch: codex/rs-f008-roster-planning
 
 PLAN STATUS
 - Scaffolding plan: implemented
@@ -57,19 +78,15 @@ PLAN STATUS
 - RS-F004 plan: implemented and merged
 - RS-F005 plan: implemented, merged, and validated
 - RS-F006 plan: implemented, merged, and validated
-- RS-F007 plan: APPROVED (docs/plans/plan-rs-f007-skill-profile-approval.md) — implementation pending
+- RS-F007 plan: IMPLEMENTED (docs/plans/plan-rs-f007-skill-profile-approval.md) — PR in review
 
-RS-F007 KEY PLAN DECISIONS (implementer must know)
-- Migration 00009 is purely additive EXCEPT it drops and replaces the volunteer INSERT policy from 00005:
-  - Old policy: broad (volunteer_id = auth.uid() AND status = 'pending')
-  - New policy: dual-branch — legacy onboarding (skill_id IS NULL AND department_id IS NULL) OR catalog claim with approved-interest subquery AND EXISTS check that skill_id belongs to same active department_id in department_skills
-- UPDATE policies use explicit USING + WITH CHECK (RS-F006 pattern):
-  - Dept_head review: USING gates on pending + role + ownership; WITH CHECK gates status IN ('approved','rejected') + reviewed_by = auth.uid() + reviewed_at IS NOT NULL
-  - Volunteer withdraw: USING gates on pending + not-deleted; WITH CHECK gates deleted_at to 30-second window + reviewed_by IS NULL + reviewed_at IS NULL
-- Legacy onboarding skills (NULL department_id, NULL skill_id): visible in volunteer view with muted label and withdraw control; absent from all leader views
-- Soft-deleted catalog skills: FK on volunteer_skills.skill_id is NOT nulled (soft-delete doesn't cascade); claims remain valid using stored name column; skill disappears from claim form only
-- Route pattern: single shared (app)/skills/ page with explicit role dispatch — same shape as (app)/interests/
-- Sub_leader redirects to /dashboard; no Skills nav link
+RS-F007 KEY IMPLEMENTATION NOTES (for validation session)
+- getSkillClaimsForScope() (renamed from getPendingSkillClaimsForScope) returns ALL statuses — leader view renders pending + reviewed rows
+- status-badge.tsx is a shared component imported by both skill-claim-card.tsx and skill-claim-list.tsx
+- Legacy onboarding skills (NULL department_id): visible in volunteer view with "Legacy — no department link" muted label; withdrawable; absent from leader/admin views
+- Soft-deleted catalog skill: volunteer_skills.skill_id FK NOT nulled (soft-delete doesn't cascade); claim remains valid using stored name column
+- Super-admin view: readOnly={true} passed to all SkillClaimCard instances — no action buttons shown
+- SkillClaimCard.handleReject resets setRejecting(false) on success
 
 RS-F006 NOTABLE IMPLEMENTATION DECISIONS (carry-forward reference)
 - Explicit role dispatch in /interests page — no isLeaderRole(); sub_leader redirects to /dashboard
