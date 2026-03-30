@@ -163,3 +163,18 @@
 -- FROM public.availability_blockouts ab
 -- WHERE ab.deleted_at IS NULL;
 -- (run this as the dept_head user in Supabase Studio; should only return in-scope rows)
+
+-- ---------------------------------------------------------------------------
+-- RS-F006 seed examples (commented out — requires real UUIDs from RS-F003/RS-F004)
+-- Note for developers: These examples require RS-F003 department data and
+-- RS-F004 volunteer profiles to already exist in the local DB.
+-- Replace the placeholder UUIDs with real values from your local seed data.
+-- ---------------------------------------------------------------------------
+-- INSERT INTO public.volunteer_interests (volunteer_id, department_id, status, reviewed_by, reviewed_at)
+-- VALUES
+--   -- Pending interest (not yet reviewed)
+--   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_1', 'pending', NULL, NULL),
+--   -- Approved interest (reviewed and accepted)
+--   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_2', 'approved', 'DEPT_HEAD_UUID', NOW()),
+--   -- Rejected interest (reviewed and declined)
+--   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_3', 'rejected', 'DEPT_HEAD_UUID', NOW());
