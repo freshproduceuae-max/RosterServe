@@ -23,13 +23,28 @@ export async function getBlockoutsForScope(): Promise<BlockoutWithVolunteer[]> {
     .is("deleted_at", null)
     .order("date", { ascending: true });
   if (error || !data) return [];
+
+  // Filter out blockouts for volunteers with no active (non-deleted, non-rejected)
+  // interest in a department owned by the caller. RLS on volunteer_interests rows
+  // that were already rejected still grants visibility via migration 00007, so we
+  // must exclude them explicitly here.
+  const { data: interests } = await supabase
+    .from("volunteer_interests")
+    .select("volunteer_id, department_id, status, deleted_at")
+    .is("deleted_at", null)
+    .neq("status", "rejected");
+
+  const validVolunteerIds = new Set((interests ?? []).map((i) => i.volunteer_id));
+
   return (
     data as unknown as Array<AvailabilityBlockout & { profiles: { display_name: string } }>
-  ).map((row) => ({
-    ...row,
-    display_name: row.profiles.display_name,
-    department_name: "", // populated by getVolunteersInScope join; left empty here
-  }));
+  )
+    .filter((row) => validVolunteerIds.has(row.volunteer_id))
+    .map((row) => ({
+      ...row,
+      display_name: row.profiles.display_name,
+      department_name: "", // populated by getVolunteersInScope join; left empty here
+    }));
 }
 
 export async function getVolunteersInScope(): Promise<VolunteerInScope[]> {

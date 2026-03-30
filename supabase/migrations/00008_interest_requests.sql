@@ -32,7 +32,7 @@ ALTER TABLE public.volunteer_interests
 
 CREATE UNIQUE INDEX volunteer_interests_volunteer_id_department_id_active_idx
   ON public.volunteer_interests (volunteer_id, department_id)
-  WHERE deleted_at IS NULL;
+  WHERE deleted_at IS NULL AND status != 'rejected';
 
 -- ---------------------------------------------------------------------------
 -- 4. Add index on status for query performance (active rows only)
@@ -74,6 +74,7 @@ CREATE POLICY "Volunteers can withdraw own pending interests"
   WITH CHECK (
     auth.uid() = volunteer_id
     AND status = 'pending'
+    AND deleted_at IS NOT NULL
   );
 
 -- Dept head: read interests for departments they own
@@ -116,6 +117,9 @@ CREATE POLICY "Dept heads can review in-scope interests"
         AND d.owner_id = auth.uid()
         AND d.deleted_at IS NULL
     )
+    AND status IN ('approved', 'rejected')
+    AND reviewed_by = auth.uid()
+    AND reviewed_at IS NOT NULL
   );
 
 -- Super admin: replace old policy with a clean version (no functional change,
