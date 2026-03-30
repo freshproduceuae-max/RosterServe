@@ -1,6 +1,6 @@
 # Plan: RS-F005 - Availability And Blockout Management
 
-Status: Implemented — merged to main via PR #6 (2026-03-29); manual validation pending
+Status: Implemented and Validated — merged to main via PR #6 (2026-03-29); manual validation passed (2026-03-30)
 Feature: RS-F005
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json

@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-29 (session 2)
+Last updated: 2026-03-30 (session 3)
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout infrastructure; RS-F001–RS-F004 complete and merged to main; RS-F005 implemented and merged, manual validation pending
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout infrastructure; RS-F001–RS-F005 complete and merged to main
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,16 +9,11 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F005: Availability and blockout management — plan drafted (2 review rounds), approved, implemented, PR #6 reviewed and merged to main (2026-03-29)
-- Migration 00007_availability_blockouts.sql: availability_blockouts table (soft-delete, partial unique index), 6 RLS policies on availability_blockouts, 1 new scoped volunteer-profile read policy on profiles
-- Lib layer: lib/availability/{types,schemas,queries,actions}.ts
-- UI: (app)/availability/page.tsx (shared role-gated route), _components/{add-blockout-form,blockout-list,volunteer-availability-view,leader-availability-view,volunteer-blockout-card}.tsx
-- app-nav.tsx: now accepts role prop; Availability link visible for all roles; Events link gated to leaders only
-- (app)/layout.tsx: AppNav rendered for all authenticated roles (was leader-only before)
-- supabase/seed.sql: RS-F005 blockout examples added
-- typecheck, lint, build all pass
+- RS-F005: Availability and blockout management — validated and passed (2026-03-30)
+- All 12 manual validation checks confirmed (PR #6, merged 2026-03-29)
+- Tracking docs updated: progress.md (RS-F005: passed), feature-list.json (RS-F005 passes: true), plan file status updated
 
-FILES CHANGED (RS-F005, now on main)
+FILES CHANGED (RS-F005, now on main — for reference)
 - supabase/migrations/00007_availability_blockouts.sql (new)
 - apps/web/lib/availability/types.ts (new)
 - apps/web/lib/availability/schemas.ts (new)
@@ -35,31 +30,29 @@ FILES CHANGED (RS-F005, now on main)
 - supabase/seed.sql (modified — RS-F005 examples)
 
 TEST STATUS
-- RS-F005: typecheck/lint/build pass; PR reviewed and merged
-- NOTE: The 12-item manual validation checklist has NOT been run. Manual validation requires npx supabase db reset (applies migration 00007) and testing all 12 scenarios. RS-F005 is in_review, not passed.
-- All RS-F001–RS-F004 checks remain valid (prior sessions)
+- RS-F001–RS-F005: all passed
+- RS-F005: typecheck/lint/build pass; PR reviewed and merged; 12 manual checks confirmed
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required
 - RS-F004 manual validation (11 checks) was not independently confirmed — acknowledged gap from prior session
-- RS-F005 manual validation (12 checks) not yet run — must complete before marking RS-F005 passed
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F005 | Availability and blockout management — merged, awaiting manual validation
+- None — RS-F005 is closed
 
 NEXT FEATURE
-- RS-F005 | Availability and blockout management — manual validation still required before this feature is closed
-  After RS-F005 passes: RS-F006 | Interest request management (depends on RS-F003, RS-F004) — P1
+- RS-F006 | Interest request management (P1, depends on RS-F003 + RS-F004)
 
 NEXT REQUIRED ACTION
-1. Run RS-F005 manual validation:
-   - npx supabase db reset (applies migrations 00001–00007)
-   - Run all 12 manual checks from plan-rs-f005-availability-blockouts.md validation section
-2. If all checks pass: update progress.md (RS-F005: passed), feature-list.json (RS-F005 passes: true), plan file status
-3. Only after RS-F005 is marked passed: begin RS-F006 plan drafting
+1. Begin RS-F006 plan drafting:
+   - Read volunteer_interests table schema (RS-F004 baseline)
+   - Read RS-F003 departments/sub-teams schema
+   - Draft plan-rs-f006-interest-requests.md in docs/plans/
+   - Follow plan rules in docs/plans/README.md
+2. No branch needed until plan is approved
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
@@ -71,31 +64,23 @@ PLAN STATUS
 - RS-F002 plan: implemented and merged
 - RS-F003 plan: implemented and merged
 - RS-F004 plan: implemented and merged
-- RS-F005 plan: implemented and merged (manual validation pending)
+- RS-F005 plan: implemented, merged, and validated
 - RS-F006 plan: not started
-
-RS-F005 ARCHITECTURAL DECISIONS (from approved plan)
-- availability_blockouts is a separate table from availability_preferences (RS-F004) — additive, no alteration to existing tables
-- Soft-delete pattern: deleted_at column; removeBlockout sets deleted_at = now(); permanent purge deferred to RS-F014
-- Partial unique index (volunteer_id, date) WHERE deleted_at IS NULL — allows re-add of a previously soft-deleted date
-- Two-step inline confirmation before soft-delete (satisfies confirmation guardrail without a full modal)
-- Leader planning scope = volunteer_interests → departments (owner_id) for dept_head; volunteer_interests → departments → sub_teams (owner_id) for sub_leader — provisional, to be replaced by assignment-based scope in RS-F008
-- New profiles RLS policy added in 00007: leaders can read in-scope volunteer profiles for display_name; additive alongside existing 00004 policy
-- AppNav now accepts role prop; layout.tsx renders it for all roles; Events link gated by isLeaderRole()
-- v1 is blockout-first: dated unavailability only; positive dated availability not modeled; general preferences remain in availability_preferences (RS-F004)
 
 RS-F006 CONTEXT (what the next agent needs to know before planning)
 - RS-F006 adds interest request status and routing on top of the volunteer_interests foundation from RS-F004
 - volunteer_interests table already exists: (volunteer_id, department_id) UNIQUE — no status column yet
-- RS-F006 should add a status/routing layer — either a status column on volunteer_interests or a separate interest_requests table — per the plan for that feature
+- RS-F006 should add a status/routing layer — either a status column on volunteer_interests or a separate interest_requests table — decision belongs in the RS-F006 plan
 - Depends on: RS-F003 (departments/ownership), RS-F004 (volunteer_interests foundation)
 - Surfaces: volunteer (submit/view status) + leader (review, approve, reject)
 - Priority: P1
+- PRD requirement: record each interest request with a reviewable status; dept heads can approve or reject; volunteer sees outcome
+- Validation: submit interest as volunteer (pending status); review as leader (change status); volunteer sees updated outcome; unrelated leaders cannot see it
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
 - Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
-- Availability should support dated availability plus broader preferences/blockouts — RS-F005 delivers blockouts; preferences remain from RS-F004
+- Availability supports dated blockouts (RS-F005) plus general preferences (RS-F004)
 - Notification delivery remains implementation-neutral between documented options
 
 CANONICAL DOCS

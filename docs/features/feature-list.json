@@ -98,7 +98,7 @@
         "Make availability editable over time for volunteers.",
         "Surface relevant availability inside leader planning views."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F006",

@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-29 (session 2)
+Last updated: 2026-03-30 (session 3)
 Current phase: Feature implementation
-Current build stage: RS-F005 implemented and merged; manual validation pending before marking passed
+Current build stage: RS-F005 validated and passed; RS-F006 plan drafting next before marking passed
 
 ## Execution Gate
 
@@ -33,11 +33,11 @@ For this repo state:
 - RS-F004 implemented, PR #4 reviewed and merged to main (2026-03-29)
 - RS-F005 plan drafted, reviewed (2 review rounds), approved, and merged to main
 - RS-F005 implemented; PR #6 reviewed and merged to main (2026-03-29)
+- RS-F005 manual validation (12 checks) confirmed passed (2026-03-30)
 
 ## Next Up
 
-- Run RS-F005 manual validation checklist (12 checks — see plan file); mark passed when complete
-- RS-F006 plan drafting after RS-F005 is validated
+- RS-F006 plan drafting (Interest request management — P1, depends on RS-F003 + RS-F004)
 
 ## Status Legend
 
@@ -55,7 +55,7 @@ Update rule:
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
 | 3 | RS-F003 | Department and sub-team structure | P0 | passed |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
-| 5 | RS-F005 | Availability and blockout management | P0 | in_review |
+| 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Interest request management | P1 | not_started |
 | 7 | RS-F007 | Skill profile and approval | P0 | not_started |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | not_started |
