@@ -75,6 +75,8 @@ CREATE POLICY "Volunteers can withdraw own pending interests"
     auth.uid() = volunteer_id
     AND status = 'pending'
     AND deleted_at BETWEEN (now() - interval '30 seconds') AND (now() + interval '30 seconds')
+    AND reviewed_by IS NULL
+    AND reviewed_at IS NULL
   );
 
 -- Dept head: read interests for departments they own
@@ -121,6 +123,7 @@ CREATE POLICY "Dept heads can review in-scope interests"
     AND status IN ('approved', 'rejected')
     AND reviewed_by = auth.uid()
     AND reviewed_at IS NOT NULL
+    AND deleted_at IS NULL
   );
 
 -- Super admin: replace old policy with a clean version (no functional change,
@@ -171,6 +174,7 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 9. Patch INSERT policy to enforce status = 'pending' on new inserts
 -- ---------------------------------------------------------------------------
+
 DROP POLICY "Volunteers can insert own interests for active departments" ON public.volunteer_interests;
 
 CREATE POLICY "Volunteers can insert own interests for active departments"
@@ -188,3 +192,26 @@ CREATE POLICY "Volunteers can insert own interests for active departments"
         AND e.status = 'published'
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- 10. Trigger to lock immutable core fields on volunteer_interests
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.lock_interest_core_fields()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.volunteer_id IS DISTINCT FROM OLD.volunteer_id THEN
+    RAISE EXCEPTION 'volunteer_id is immutable on volunteer_interests';
+  END IF;
+  IF NEW.department_id IS DISTINCT FROM OLD.department_id THEN
+    RAISE EXCEPTION 'department_id is immutable on volunteer_interests';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER volunteer_interests_lock_core_fields
+  BEFORE UPDATE ON public.volunteer_interests
+  FOR EACH ROW
+  EXECUTE FUNCTION public.lock_interest_core_fields();

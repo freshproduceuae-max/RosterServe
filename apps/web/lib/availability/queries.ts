@@ -24,27 +24,41 @@ export async function getBlockoutsForScope(): Promise<BlockoutWithVolunteer[]> {
     .order("date", { ascending: true });
   if (error || !data) return [];
 
-  // Filter out blockouts for volunteers with no active (non-deleted, non-rejected)
-  // interest in a department owned by the caller. RLS on volunteer_interests rows
-  // that were already rejected still grants visibility via migration 00007, so we
-  // must exclude them explicitly here.
+  type BlockoutRow = AvailabilityBlockout & { profiles: { display_name: string } };
+  const rows = data as unknown as BlockoutRow[];
+
+  const mapRow = (row: BlockoutRow): BlockoutWithVolunteer => ({
+    ...row,
+    display_name: row.profiles.display_name,
+    department_name: "", // populated by getVolunteersInScope join; left empty here
+  });
+
+  // Super admins see all blockouts — no interest-status filter needed.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .single();
+
+  if (profile?.role === "super_admin") {
+    return rows.map(mapRow);
+  }
+
+  // Scoped roles (dept_head): filter out blockouts for volunteers with no active
+  // (non-deleted, non-rejected) interest in a department owned by the caller.
+  // RLS on volunteer_interests rows that were already rejected still grants
+  // visibility via migration 00007, so we must exclude them explicitly here.
   const { data: interests } = await supabase
     .from("volunteer_interests")
-    .select("volunteer_id, department_id, status, deleted_at")
+    .select("volunteer_id")
     .is("deleted_at", null)
     .neq("status", "rejected");
 
   const validVolunteerIds = new Set((interests ?? []).map((i) => i.volunteer_id));
 
-  return (
-    data as unknown as Array<AvailabilityBlockout & { profiles: { display_name: string } }>
-  )
+  return rows
     .filter((row) => validVolunteerIds.has(row.volunteer_id))
-    .map((row) => ({
-      ...row,
-      display_name: row.profiles.display_name,
-      department_name: "", // populated by getVolunteersInScope join; left empty here
-    }));
+    .map(mapRow);
 }
 
 export async function getVolunteersInScope(): Promise<VolunteerInScope[]> {
