@@ -19,7 +19,6 @@ export async function getDepartmentSkillsForLeader(): Promise<
     .from("department_skills")
     .select("*")
     .is("deleted_at", null)
-    .order("department_id", { ascending: true })
     .order("name", { ascending: true });
   if (error || !data) return [];
   return data as DepartmentSkill[];
@@ -88,12 +87,13 @@ export async function getMySkillClaims(
 }
 
 /**
- * getPendingSkillClaimsForScope
+ * getSkillClaimsForScope
  * Dept head: all skill claims (deleted_at IS NULL, department_id IS NOT NULL)
  * in owned departments, with volunteer display name, skill name, and dept name.
+ * Returns all statuses so the leader view can render pending + reviewed rows.
  * RLS automatically restricts to the caller's owned departments.
  */
-export async function getPendingSkillClaimsForScope(): Promise<
+export async function getSkillClaimsForScope(): Promise<
   SkillClaimWithVolunteer[]
 > {
   const supabase = await createSupabaseServerClient();
@@ -104,7 +104,7 @@ export async function getPendingSkillClaimsForScope(): Promise<
     )
     .is("deleted_at", null)
     .not("department_id", "is", null)
-    .eq("status", "pending")
+    .order("status", { ascending: true })
     .order("created_at", { ascending: true });
   if (error || !data) return [];
 
@@ -136,8 +136,7 @@ export async function getAllSkillClaims(): Promise<SkillClaimWithVolunteer[]> {
     )
     .is("deleted_at", null)
     .not("department_id", "is", null)
-    .order("department_id", { ascending: true })
-    .order("volunteer_id", { ascending: true });
+    .order("created_at", { ascending: true });
   if (error || !data) return [];
 
   type RawRow = VolunteerSkillClaim & {
@@ -146,10 +145,16 @@ export async function getAllSkillClaims(): Promise<SkillClaimWithVolunteer[]> {
     department: { name: string } | null;
   };
 
-  return (data as unknown as RawRow[]).map((row) => ({
-    ...row,
-    volunteer_display_name: row.volunteer?.display_name ?? "Unknown",
-    skill_name: row.department_skill?.name ?? row.name,
-    department_name: row.department?.name ?? "Unknown",
-  }));
+  return (data as unknown as RawRow[])
+    .map((row) => ({
+      ...row,
+      volunteer_display_name: row.volunteer?.display_name ?? "Unknown",
+      skill_name: row.department_skill?.name ?? row.name,
+      department_name: row.department?.name ?? "Unknown",
+    }))
+    .sort((a, b) => {
+      const dept = a.department_name.localeCompare(b.department_name);
+      if (dept !== 0) return dept;
+      return a.volunteer_display_name.localeCompare(b.volunteer_display_name);
+    });
 }
