@@ -3,7 +3,7 @@
 Status: Canonical tracker
 Last updated: 2026-03-30 (session 4)
 Current phase: Feature implementation
-Current build stage: RS-F005 validated and passed; RS-F006 implemented and in review
+Current build stage: RS-F006 merged to main; manual validation (15 checks) pending before marking passed
 
 ## Execution Gate
 
@@ -35,11 +35,11 @@ For this repo state:
 - RS-F005 implemented; PR #6 reviewed and merged to main (2026-03-29)
 - RS-F005 manual validation (12 checks) confirmed passed (2026-03-30)
 - RS-F006 plan created, reviewed, and approved (2026-03-30)
-- RS-F006 implemented; PR created for review (2026-03-30)
+- RS-F006 implemented; PR #7 reviewed (multiple rounds), approved, and merged to main (2026-03-30)
 
 ## Next Up
 
-- RS-F006 manual validation (15 checks) after PR review and merge
+- RS-F006 manual validation (15 checks) — see plan-rs-f006-interest-requests.md § Validation Plan
 - RS-F007: Skill profile and approval (P0, depends on RS-F003 + RS-F004)
 
 ## Status Legend

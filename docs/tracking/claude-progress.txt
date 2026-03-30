@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-03-30 (session 4)
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout infrastructure; RS-F001–RS-F005 complete and merged to main
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request infrastructure; RS-F001–RS-F005 complete and merged to main; RS-F006 merged to main, manual validation pending
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,51 +9,50 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F006: Interest request management — implemented and in review (2026-03-30)
-- PR created on codex/rs-f006-interest-requests; awaiting human review
+- RS-F006: Interest request management — merged to main (2026-03-30)
+- PR #7 approved after multiple review rounds (5 fix commits addressing RLS policy tightening, scope filtering, unique index, immutable field trigger, super_admin availability path)
 - Typecheck/lint/build pass; 15 manual validation checks pending
 
-FILES CHANGED (RS-F006, on PR branch)
+FILES CHANGED (RS-F006, now on main)
 - supabase/migrations/00008_interest_requests.sql (new)
 - apps/web/lib/interests/types.ts (new)
 - apps/web/lib/interests/queries.ts (new)
 - apps/web/lib/interests/actions.ts (new)
-- apps/web/app/(app)/interests/_components/interest-status-list.tsx (new)
-- apps/web/app/(app)/interests/_components/submit-interest-form.tsx (new)
-- apps/web/app/(app)/interests/_components/volunteer-interests-view.tsx (new)
 - apps/web/app/(app)/interests/_components/interest-request-card.tsx (new)
+- apps/web/app/(app)/interests/_components/interest-status-list.tsx (new)
 - apps/web/app/(app)/interests/_components/leader-interests-view.tsx (new)
+- apps/web/app/(app)/interests/_components/submit-interest-form.tsx (new)
 - apps/web/app/(app)/interests/_components/super-admin-interests-view.tsx (new)
+- apps/web/app/(app)/interests/_components/volunteer-interests-view.tsx (new)
 - apps/web/app/(app)/interests/page.tsx (new)
 - apps/web/app/(app)/app-nav.tsx (modified — Interests link added)
-- apps/web/lib/availability/queries.ts (modified — filter rejected interests from scope)
+- apps/web/lib/availability/queries.ts (modified — getVolunteersInScope and getBlockoutsForScope made role-aware; rejected interests filtered from dept_head scope)
 - supabase/seed.sql (modified — RS-F006 seed examples)
 
 TEST STATUS
 - RS-F001–RS-F005: all passed
-- RS-F006: typecheck/lint/build pass; PR in review; 15 manual checks pending
+- RS-F006: typecheck/lint/build pass; merged; 15 manual checks pending
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required
 - RS-F004 manual validation (11 checks) was not independently confirmed — acknowledged gap from prior session
 - RS-F006 plan was committed directly to main (not via PR) — known process deviation, acknowledged
-- npx supabase db reset not verified (Docker not running during implementation) — migration SQL verified statically
+- npx supabase db reset not verified (Docker not running during implementation) — migration SQL verified statically; run db reset before manual validation
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F006 — PR in review
+- None — RS-F006 merged, awaiting manual validation
 
 NEXT FEATURE
 - RS-F007 | Skill profile and approval (P0, depends on RS-F003 + RS-F004)
 
 NEXT REQUIRED ACTION
-1. Human reviews and approves RS-F006 PR
-2. Merge codex/rs-f006-interest-requests → main, delete branch
-3. Run 15 manual validation checks (see plan-rs-f006-interest-requests.md § Validation Plan)
-4. If all 15 checks pass: update progress.md RS-F006 → passed, feature-list.json RS-F006 passes: true, update this file
-5. Begin RS-F007 plan drafting
+1. Run 15 manual validation checks for RS-F006 (see docs/plans/plan-rs-f006-interest-requests.md § Validation Plan)
+   - Requires Docker running for: npx supabase db reset
+2. If all 15 checks pass: update progress.md RS-F006 → passed, feature-list.json RS-F006 passes: true, update this file
+3. Begin RS-F007 plan drafting
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
@@ -66,8 +65,16 @@ PLAN STATUS
 - RS-F003 plan: implemented and merged
 - RS-F004 plan: implemented and merged
 - RS-F005 plan: implemented, merged, and validated
-- RS-F006 plan: implemented, PR in review
+- RS-F006 plan: implemented, merged, awaiting manual validation
 - RS-F007 plan: not started
+
+RS-F006 NOTABLE IMPLEMENTATION DECISIONS
+- Explicit role dispatch in /interests page — no isLeaderRole(); sub_leader redirects to /dashboard
+- Partial unique index excludes rejected rows (WHERE deleted_at IS NULL AND status != 'rejected') — allows re-application after rejection
+- Immutable field trigger (volunteer_interests_lock_core_fields) locks volunteer_id and department_id at DB level
+- Volunteer withdraw WITH CHECK requires deleted_at BETWEEN (now() - 30s) AND (now() + 30s) — prevents arbitrary audit timestamp
+- Dept_head review USING requires status = 'pending' — no re-review/reversal at DB layer
+- getVolunteersInScope() and getBlockoutsForScope() both role-aware: super_admin skips interest filter, dept_head applies it
 
 RS-F007 CONTEXT (what the next agent needs to know before planning)
 - RS-F007 adds skill profile capture and leader approval on top of the volunteer/department foundation
@@ -106,4 +113,4 @@ CARRY-OVER EXECUTION NOTES
 - getOwnerDisplayNames(ids) is the correct query for display; getProfilesByRole() is for owner-selection forms only
 - Do not commit directly to main — always branch, PR, Codex review, approval, then merge
 - Zod error property is .issues (not .errors) — this bit us in RS-F005 actions.ts
-- When writing plans, "generate a PR" means plan-only PR for human review — it does NOT mean start implementation
+- "Generate a PR" after plan drafting = plan-only PR for human review; never an instruction to start implementation
