@@ -104,21 +104,21 @@ export async function getPendingSkillClaimsForScope(): Promise<
     )
     .is("deleted_at", null)
     .not("department_id", "is", null)
-    .order("status", { ascending: true })
+    .eq("status", "pending")
     .order("created_at", { ascending: true });
   if (error || !data) return [];
 
   type RawRow = VolunteerSkillClaim & {
-    volunteer: { display_name: string };
-    department_skill: { name: string };
-    department: { name: string };
+    volunteer: { display_name: string } | null;
+    department_skill: { name: string } | null;
+    department: { name: string } | null;
   };
 
   return (data as unknown as RawRow[]).map((row) => ({
     ...row,
-    volunteer_display_name: row.volunteer.display_name,
-    skill_name: row.department_skill.name,
-    department_name: row.department.name,
+    volunteer_display_name: row.volunteer?.display_name ?? "Unknown",
+    skill_name: row.department_skill?.name ?? row.name,
+    department_name: row.department?.name ?? "Unknown",
   }));
 }
 
@@ -141,15 +141,15 @@ export async function getAllSkillClaims(): Promise<SkillClaimWithVolunteer[]> {
   if (error || !data) return [];
 
   type RawRow = VolunteerSkillClaim & {
-    volunteer: { display_name: string };
-    department_skill: { name: string };
-    department: { name: string };
+    volunteer: { display_name: string } | null;
+    department_skill: { name: string } | null;
+    department: { name: string } | null;
   };
 
   return (data as unknown as RawRow[]).map((row) => ({
     ...row,
-    volunteer_display_name: row.volunteer.display_name,
-    skill_name: row.department_skill.name,
-    department_name: row.department.name,
+    volunteer_display_name: row.volunteer?.display_name ?? "Unknown",
+    skill_name: row.department_skill?.name ?? row.name,
+    department_name: row.department?.name ?? "Unknown",
   }));
 }
