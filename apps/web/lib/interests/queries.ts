@@ -92,7 +92,8 @@ export async function getDepartmentsAvailableToJoin(
       .from("volunteer_interests")
       .select("department_id")
       .eq("volunteer_id", userId)
-      .is("deleted_at", null),
+      .is("deleted_at", null)
+      .neq("status", "rejected"),
   ]);
 
   if (deptRes.error || !deptRes.data) return [];
