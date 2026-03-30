@@ -74,7 +74,7 @@ CREATE POLICY "Volunteers can withdraw own pending interests"
   WITH CHECK (
     auth.uid() = volunteer_id
     AND status = 'pending'
-    AND deleted_at IS NOT NULL
+    AND deleted_at BETWEEN (now() - interval '30 seconds') AND (now() + interval '30 seconds')
   );
 
 -- Dept head: read interests for departments they own
@@ -99,6 +99,7 @@ CREATE POLICY "Dept heads can review in-scope interests"
   ON public.volunteer_interests FOR UPDATE
   USING (
     deleted_at IS NULL
+    AND status = 'pending'
     AND EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid() AND p.role = 'dept_head'
