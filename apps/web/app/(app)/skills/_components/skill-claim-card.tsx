@@ -3,8 +3,7 @@
 import { useState, useTransition } from "react";
 import type { SkillClaimWithVolunteer } from "@/lib/skills/types";
 import { approveSkillClaim, rejectSkillClaim } from "@/lib/skills/actions";
-
-type ClaimStatus = "pending" | "approved" | "rejected";
+import { StatusBadge } from "./status-badge";
 
 function formatDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString("en-GB", {
@@ -12,29 +11,6 @@ function formatDate(isoString: string): string {
     month: "long",
     year: "numeric",
   });
-}
-
-function StatusBadge({ status }: { status: ClaimStatus }) {
-  const styles: Record<ClaimStatus, string> = {
-    pending:
-      "bg-semantic-warning/10 text-semantic-warning border border-semantic-warning/20",
-    approved:
-      "bg-semantic-success/10 text-semantic-success border border-semantic-success/20",
-    rejected:
-      "bg-semantic-error/10 text-semantic-error border border-semantic-error/20",
-  };
-  const labels: Record<ClaimStatus, string> = {
-    pending: "Pending review",
-    approved: "Approved",
-    rejected: "Rejected",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-200 py-50 text-body-sm font-medium ${styles[status]}`}
-    >
-      {labels[status]}
-    </span>
-  );
 }
 
 function ActionControls({ claimId }: { claimId: string }) {
@@ -55,6 +31,7 @@ function ActionControls({ claimId }: { claimId: string }) {
     startTransition(async () => {
       const result = await rejectSkillClaim(claimId);
       if (result?.error) setError(result.error);
+      else setRejecting(false);
     });
   }
 

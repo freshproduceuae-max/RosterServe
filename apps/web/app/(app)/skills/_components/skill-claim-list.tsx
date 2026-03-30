@@ -3,31 +3,7 @@
 import { useState, useTransition } from "react";
 import { withdrawSkillClaim } from "@/lib/skills/actions";
 import type { SkillClaimWithDepartment } from "@/lib/skills/types";
-
-type ClaimStatus = "pending" | "approved" | "rejected";
-
-function StatusBadge({ status }: { status: ClaimStatus }) {
-  const styles: Record<ClaimStatus, string> = {
-    pending:
-      "bg-semantic-warning/10 text-semantic-warning border border-semantic-warning/20",
-    approved:
-      "bg-semantic-success/10 text-semantic-success border border-semantic-success/20",
-    rejected:
-      "bg-semantic-error/10 text-semantic-error border border-semantic-error/20",
-  };
-  const labels: Record<ClaimStatus, string> = {
-    pending: "Pending review",
-    approved: "Approved",
-    rejected: "Rejected",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-200 py-50 text-body-sm font-medium ${styles[status]}`}
-    >
-      {labels[status]}
-    </span>
-  );
-}
+import { StatusBadge } from "./status-badge";
 
 function ClaimRow({ claim }: { claim: SkillClaimWithDepartment }) {
   const [confirming, setConfirming] = useState(false);
