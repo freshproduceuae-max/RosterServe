@@ -127,7 +127,7 @@ CREATE POLICY "Volunteers can insert own skills"
       -- Legacy onboarding path: free-text name only, no catalog link
       (skill_id IS NULL AND department_id IS NULL)
       OR
-      -- Catalog claim path: volunteer must have an approved interest in the target department
+      -- Catalog claim path: approved interest + skill must belong to the same department and be active
       (
         skill_id IS NOT NULL
         AND department_id IS NOT NULL
@@ -137,18 +137,72 @@ CREATE POLICY "Volunteers can insert own skills"
             AND vi.status = 'approved'
             AND vi.deleted_at IS NULL
         )
+        AND EXISTS (
+          SELECT 1 FROM public.department_skills ds
+          WHERE ds.id = skill_id
+            AND ds.department_id = department_id
+            AND ds.deleted_at IS NULL
+        )
       )
     )
   );
 ```
 
-This ensures a direct client write cannot create department-linked claims without an approved interest. The legacy onboarding path (`persistSkills` in `onboarding/actions.ts`) continues to work because it inserts with NULL `skill_id` and NULL `department_id`, which the first branch admits.
+This ensures a direct client write cannot create department-linked claims without an approved interest AND cannot pair an approved-interest department with a skill from a different department or a soft-deleted catalog entry. The legacy onboarding path (`persistSkills` in `onboarding/actions.ts`) continues to work because it inserts with NULL `skill_id` and NULL `department_id`, which the first branch admits.
 
 **New RLS policies on `volunteer_skills`:**
 
 6. `dept_head` reads skill claims in owned departments: `SELECT` WHERE `department_id IN (SELECT id FROM departments WHERE owner_id = auth.uid() AND deleted_at IS NULL)` AND caller has role `dept_head`
-7. `dept_head` approves/rejects claims: `UPDATE` USING `status = 'pending'` AND same scope — allows setting `status`, `reviewed_by`, `reviewed_at`
-8. Volunteer soft-deletes own pending claims: `UPDATE` WHERE `volunteer_id = auth.uid() AND status = 'pending' AND deleted_at IS NULL` — sets `deleted_at`
+
+7. `dept_head` approves/rejects claims — explicit `USING` + `WITH CHECK` (RS-F006 pattern):
+```sql
+CREATE POLICY "Dept heads can review in-scope skill claims"
+  ON public.volunteer_skills FOR UPDATE
+  USING (
+    deleted_at IS NULL
+    AND status = 'pending'
+    AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.role = 'dept_head'
+    )
+    AND EXISTS (
+      SELECT 1 FROM public.departments d
+      WHERE d.id = department_id
+        AND d.owner_id = auth.uid()
+        AND d.deleted_at IS NULL
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.departments d
+      WHERE d.id = department_id
+        AND d.owner_id = auth.uid()
+        AND d.deleted_at IS NULL
+    )
+    AND status IN ('approved', 'rejected')
+    AND reviewed_by = auth.uid()
+    AND reviewed_at IS NOT NULL
+    AND deleted_at IS NULL
+  );
+```
+
+8. Volunteer soft-deletes own pending claims — explicit `USING` + `WITH CHECK` (RS-F006 pattern):
+```sql
+CREATE POLICY "Volunteers can withdraw own pending skill claims"
+  ON public.volunteer_skills FOR UPDATE
+  USING (
+    auth.uid() = volunteer_id
+    AND status = 'pending'
+    AND deleted_at IS NULL
+  )
+  WITH CHECK (
+    auth.uid() = volunteer_id
+    AND status = 'pending'
+    AND deleted_at BETWEEN (now() - interval '30 seconds') AND (now() + interval '30 seconds')
+    AND reviewed_by IS NULL
+    AND reviewed_at IS NULL
+  );
+```
 
 ### Lib Layer (`apps/web/lib/skills/`)
 
