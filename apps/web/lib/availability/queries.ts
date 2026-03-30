@@ -36,9 +36,11 @@ export async function getVolunteersInScope(): Promise<VolunteerInScope[]> {
   const supabase = await createSupabaseServerClient();
   // RLS on profiles (migration 00007) restricts rows to in-scope volunteers.
   // Join volunteer_interests → departments for department_name context.
+  // Fetch status and deleted_at so we can filter out rejected/deleted interests client-side,
+  // since Supabase JS does not support filtering nested relationship columns inline.
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, volunteer_interests(department_id, departments(name))")
+    .select("id, display_name, volunteer_interests(department_id, status, deleted_at, departments(name))")
     .eq("role", "volunteer")
     .is("deleted_at", null);
   if (error || !data) return [];
@@ -48,25 +50,26 @@ export async function getVolunteersInScope(): Promise<VolunteerInScope[]> {
     display_name: string;
     volunteer_interests: Array<{
       department_id: string;
+      status: string;
+      deleted_at: string | null;
       departments: { name: string } | null;
     }>;
   };
 
   const rows = data as unknown as Row[];
-  // Flatten: one entry per volunteer per department interest
   const result: VolunteerInScope[] = [];
   for (const row of rows) {
-    const interests = row.volunteer_interests ?? [];
-    if (interests.length === 0) {
-      result.push({ id: row.id, display_name: row.display_name, department_name: "" });
-    } else {
-      for (const interest of interests) {
-        result.push({
-          id: row.id,
-          display_name: row.display_name,
-          department_name: interest.departments?.name ?? "",
-        });
-      }
+    // Only include interests that are active (not deleted) and not rejected
+    const interests = (row.volunteer_interests ?? []).filter(
+      (vi) => vi.deleted_at === null && vi.status !== "rejected"
+    );
+    if (interests.length === 0) continue; // volunteer has no in-scope interests
+    for (const interest of interests) {
+      result.push({
+        id: row.id,
+        display_name: row.display_name,
+        department_name: interest.departments?.name ?? "",
+      });
     }
   }
   return result;
