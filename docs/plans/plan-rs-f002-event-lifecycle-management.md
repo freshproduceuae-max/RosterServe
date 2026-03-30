@@ -1,6 +1,6 @@
 # Plan: RS-F002 - Event Lifecycle Management
 
-Status: Implemented
+Status: Implemented and merged — manual validation (13 checks) not explicitly recorded
 Feature: RS-F002
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json

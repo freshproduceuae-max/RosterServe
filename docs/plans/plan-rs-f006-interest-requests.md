@@ -1,6 +1,6 @@
 # Plan: RS-F006 - Interest Request Management
 
-Status: Draft
+Status: Implemented and merged to main via PR #7 (2026-03-30) — manual validation (15 checks) pending
 Feature: RS-F006
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json

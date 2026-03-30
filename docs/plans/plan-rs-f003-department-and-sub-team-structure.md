@@ -1,6 +1,6 @@
 # Plan: RS-F003 - Department And Sub-Team Structure
 
-Status: Implemented
+Status: Implemented and merged — manual validation (17 checks) not explicitly recorded
 Feature: RS-F003
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json

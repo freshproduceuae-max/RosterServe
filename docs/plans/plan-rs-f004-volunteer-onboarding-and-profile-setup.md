@@ -1,6 +1,6 @@
 # Plan: RS-F004 - Volunteer Onboarding And Profile Setup
 
-Status: Implemented and merged (2026-03-29)
+Status: Implemented and merged via PR #4 (2026-03-29) — manual validation (13 checks) not explicitly confirmed
 Feature: RS-F004
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
