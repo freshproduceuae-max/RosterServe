@@ -343,7 +343,7 @@ CREATE POLICY "Sub leaders can read events with their sub teams"
       SELECT 1
       FROM public.sub_teams AS st
       JOIN public.departments AS d ON d.id = st.department_id
-      WHERE d.event_id = id
+      WHERE d.event_id = events.id
         AND st.owner_id = auth.uid()
         AND st.deleted_at IS NULL
         AND d.deleted_at IS NULL
