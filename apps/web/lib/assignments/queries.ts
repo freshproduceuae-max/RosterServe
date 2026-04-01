@@ -128,10 +128,10 @@ export async function getVolunteersForAssignment(
   // Step 1: event_date
   const { data: eventData } = await supabase
     .from("events")
-    .select("date")
+    .select("event_date")
     .eq("id", eventId)
     .single();
-  const eventDate: string | null = eventData?.date ?? null;
+  const eventDate: string | null = eventData?.event_date ?? null;
 
   // Step 2: volunteers with approved interest in this dept
   const { data: interestData } = await supabase

@@ -62,6 +62,7 @@ export function DeptHeadRosterView({
         assignments={assignments}
         readOnly={false}
         subTeams={subTeams}
+        requireSubTeam={false}
       />
     </div>
   );

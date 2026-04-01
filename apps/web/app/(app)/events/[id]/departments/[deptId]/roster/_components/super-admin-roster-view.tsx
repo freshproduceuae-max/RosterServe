@@ -33,6 +33,7 @@ export function SuperAdminRosterView({
         assignments={assignments}
         readOnly={true}
         subTeams={subTeams}
+        requireSubTeam={false}
       />
     </div>
   );

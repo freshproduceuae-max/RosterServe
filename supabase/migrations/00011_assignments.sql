@@ -117,7 +117,8 @@ CREATE POLICY "Sub-leaders can read assignments in owned sub-teams"
   );
 
 -- 5. Sub-leader creates assignments in their owned sub-teams
---    sub_team_id required; role may not be dept_head
+--    sub_team_id required; role may not be dept_head;
+--    sub_team must belong to the same department as the assignment
 CREATE POLICY "Sub-leaders can insert assignments in owned sub-teams"
   ON public.assignments FOR INSERT
   WITH CHECK (
@@ -128,12 +129,15 @@ CREATE POLICY "Sub-leaders can insert assignments in owned sub-teams"
     AND public.get_my_role() = 'sub_leader'
     AND EXISTS (
       SELECT 1 FROM public.sub_teams st
-      WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL
+      WHERE st.id = sub_team_id
+        AND st.department_id = department_id
+        AND st.owner_id = auth.uid()
+        AND st.deleted_at IS NULL
     )
   );
 
 -- 6. Sub-leader updates (edit role / soft-delete) assignments in their owned sub-teams
---    WITH CHECK prevents promotion to dept_head
+--    WITH CHECK prevents promotion to dept_head and cross-department sub_team reassignment
 CREATE POLICY "Sub-leaders can update assignments in owned sub-teams"
   ON public.assignments FOR UPDATE
   USING (
@@ -142,7 +146,10 @@ CREATE POLICY "Sub-leaders can update assignments in owned sub-teams"
     AND public.get_my_role() = 'sub_leader'
     AND EXISTS (
       SELECT 1 FROM public.sub_teams st
-      WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL
+      WHERE st.id = sub_team_id
+        AND st.department_id = department_id
+        AND st.owner_id = auth.uid()
+        AND st.deleted_at IS NULL
     )
   )
   WITH CHECK (
@@ -150,7 +157,10 @@ CREATE POLICY "Sub-leaders can update assignments in owned sub-teams"
     AND role IN ('volunteer', 'sub_leader')
     AND EXISTS (
       SELECT 1 FROM public.sub_teams st
-      WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL
+      WHERE st.id = sub_team_id
+        AND st.department_id = department_id
+        AND st.owner_id = auth.uid()
+        AND st.deleted_at IS NULL
     )
   );
 

@@ -67,6 +67,7 @@ export function SubLeaderRosterView({
           assignments={assignments}
           readOnly={false}
           subTeams={subTeams}
+          requireSubTeam={true}
         />
       )}
     </div>

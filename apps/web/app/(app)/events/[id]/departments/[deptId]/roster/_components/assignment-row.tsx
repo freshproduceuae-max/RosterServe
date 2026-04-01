@@ -10,6 +10,9 @@ interface AssignmentRowProps {
   assignment: AssignmentWithContext;
   readOnly: boolean;
   subTeams: Pick<SubTeam, "id" | "name">[];
+  /** When true the sub-team field is required during edit — sub-leaders may not
+   *  move an assignment to a dept-level (no sub-team) placement. */
+  requireSubTeam: boolean;
 }
 
 const ROLE_LABELS: Record<AssignmentRole, string> = {
@@ -81,6 +84,7 @@ export function AssignmentRow({
   assignment,
   readOnly,
   subTeams,
+  requireSubTeam,
 }: AssignmentRowProps) {
   const state = useAssignmentRowState(assignment);
 
@@ -96,9 +100,10 @@ export function AssignmentRow({
             value={state.editSubTeamId}
             onChange={(e) => state.setEditSubTeamId(e.target.value)}
             disabled={state.isPending}
+            required={requireSubTeam}
             className="rounded-200 border border-neutral-300 bg-neutral-0 px-200 py-100 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-calm-600/30"
           >
-            <option value="">No sub-team</option>
+            {!requireSubTeam && <option value="">No sub-team</option>}
             {subTeams.map((st) => (
               <option key={st.id} value={st.id}>
                 {st.name}
@@ -147,6 +152,7 @@ export function AssignmentCard({
   assignment,
   readOnly,
   subTeams,
+  requireSubTeam,
 }: AssignmentRowProps) {
   const state = useAssignmentRowState(assignment);
 
@@ -167,9 +173,10 @@ export function AssignmentCard({
               value={state.editSubTeamId}
               onChange={(e) => state.setEditSubTeamId(e.target.value)}
               disabled={state.isPending}
+              required={requireSubTeam}
               className="rounded-200 border border-neutral-300 bg-neutral-0 px-200 py-100 text-body-sm focus:outline-none"
             >
-              <option value="">No sub-team</option>
+              {!requireSubTeam && <option value="">No sub-team</option>}
               {subTeams.map((st) => (
                 <option key={st.id} value={st.id}>
                   {st.name}

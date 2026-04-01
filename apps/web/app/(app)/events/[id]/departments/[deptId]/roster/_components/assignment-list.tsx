@@ -8,12 +8,14 @@ interface AssignmentListProps {
   assignments: AssignmentWithContext[];
   readOnly: boolean;
   subTeams: Pick<SubTeam, "id" | "name">[];
+  requireSubTeam: boolean;
 }
 
 export function AssignmentList({
   assignments,
   readOnly,
   subTeams,
+  requireSubTeam,
 }: AssignmentListProps) {
   if (assignments.length === 0) {
     return (
@@ -33,6 +35,7 @@ export function AssignmentList({
             assignment={a}
             readOnly={readOnly}
             subTeams={subTeams}
+            requireSubTeam={requireSubTeam}
           />
         ))}
       </div>
@@ -71,6 +74,7 @@ export function AssignmentList({
                   assignment={a}
                   readOnly={readOnly}
                   subTeams={subTeams}
+                  requireSubTeam={requireSubTeam}
                 />
               </tr>
             ))}

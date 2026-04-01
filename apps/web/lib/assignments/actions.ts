@@ -168,6 +168,7 @@ export async function updateAssignment(
       .from("sub_teams")
       .select("id")
       .eq("id", assignment.sub_team_id)
+      .eq("department_id", assignment.department_id)
       .eq("owner_id", session.profile.id)
       .is("deleted_at", null)
       .maybeSingle();
@@ -240,6 +241,7 @@ export async function removeAssignment(
       .from("sub_teams")
       .select("id")
       .eq("id", assignment.sub_team_id)
+      .eq("department_id", assignment.department_id)
       .eq("owner_id", session.profile.id)
       .is("deleted_at", null)
       .maybeSingle();
