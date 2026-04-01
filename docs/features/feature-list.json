@@ -132,7 +132,7 @@
         "Add leader approval and rejection handling for submitted skills.",
         "Ensure only approved skills feed planning logic."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F008",
