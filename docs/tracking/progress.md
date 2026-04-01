@@ -38,16 +38,17 @@ For this repo state:
 - RS-F006 implemented; PR #7 reviewed (multiple rounds), approved, and merged to main (2026-03-30)
 - RS-F006 manual validation (15 checks) confirmed passed (2026-03-30)
 - RS-F007 plan drafted, reviewed (3 review rounds addressing RLS INSERT policy, UPDATE WITH CHECK clauses, and legacy/soft-delete spec gaps), approved, and merged to main via PR #8 (2026-03-30)
-- RS-F007 implemented (2026-03-30): migration 00009, lib layer, 7 UI components, /skills page, nav link, seed examples; typecheck/lint/build all pass; PR #9 merged
+- RS-F007 implemented (2026-03-30): migration 00009, lib layer, 7 UI components, /skills page, nav link, seed examples; PR #9 merged
 - RS-F007 post-implementation fixes: RLS recursion repair (PR #10 merged); check-17 fix (getOwnedDepartmentsForLeader, leader-skills-view always renders owned dept sections)
 - RS-F007 validated (2026-04-02): 16/18 checks verified statically; check-17 fixed; check-18 (mobile) accepted via static layout analysis (live browser validation desirable when local env is running)
-- RS-F008 plan drafted, reviewed (2 rounds — sub-leader scope + canViewRoster link), approved (2026-04-02)
-- RS-F008 implemented (2026-04-02): migration 00011, lib layer (types/queries/actions), 10 UI components, /roster page with role dispatch, department-detail-card nav link; PR #11 merged; Codex approved after 2 review rounds (event_date fix, sub_team department_id enforcement, requireSubTeam UI fix); typecheck/lint/build all pass
-- RS-F008 manual validation (20 checks) pending — requires running local environment
+- RS-F008 plan drafted, reviewed (2 rounds — sub-leader scope + canViewRoster link), approved, implemented, and merged to main via PR #11 (2026-04-02)
+- RS-F008 implementation delivered: migration 00011_assignments.sql, assignments lib layer, roster route and components, department detail roster link, seed examples
+- RS-F008 blocking review findings fixed before approval: event_date lookup corrected; sub-leader assignment RLS/actions now enforce `sub_team.department_id = assignment.department_id`; sub-leader edit UI no longer offers a dept-level `No sub-team` option
+- RS-F008 automated checks pass after fixes: `npm run typecheck`, `npm run lint`, `npm run build`
 
 ## Next Up
 
-- RS-F008: Manual validation (20 checks) when local env is available, then mark passed
+- RS-F008: Manual validation (20 checks) when the local environment is available, then decide pass status
 - RS-F009: Skill-gap detection and planning signals (P0) — next after RS-F008 is validated
 
 ## Status Legend
@@ -84,7 +85,6 @@ Update rule:
 - The design system in `docs/design-system/design-system.md` is the UI source of truth for all future implementation and review.
 - The repo has moved past greenfield: scaffolding and RS-F001 auth infrastructure are in place. Architecture direction is defined by the canonical docs and the live codebase.
 - The one-time scaffolding phase is complete and the project now contains a runnable app and backend setup baseline.
-- RS-F003: Sub-leaders are read-only in this feature slice. "Manage the structures they are responsible for" deferred to RS-F008+ where sub-leaders act within their sub-team context.
 - RS-F003: Events RLS visibility cutover — the pre-RS-F003 broad leader event-read policy was replaced with ownership-scoped policies. dept_head/sub_leader see no events until super_admin assigns department/sub-team ownership.
-- RS-F008: Sub-leaders get write access (create/edit/remove assignments) scoped to sub-teams they own; they cannot manage dept-level assignments, other sub-leaders' sub-teams, or assign the dept_head role. Enforced at both RLS layer (policies 5 & 6 in migration 00011) and server-action layer. Aligns with PRD §8.3 and RS-F003 deferral note.
-- RS-F008: One active assignment per volunteer per event per department (single partial unique index on volunteer_id, event_id, department_id WHERE deleted_at IS NULL). sub_team_id is a placement field only — not a slot dimension.
+- RS-F008: Sub-leaders get write access (create/edit/remove assignments) scoped to sub-teams they own; they cannot manage dept-level assignments, other sub-leaders' sub-teams, or assign the dept_head role. Enforced at both RLS and server-action layers.
+- RS-F008: One active assignment per volunteer per event per department (single partial unique index on `volunteer_id`, `event_id`, `department_id` where `deleted_at IS NULL`). `sub_team_id` is a placement field only, not a separate slot dimension.

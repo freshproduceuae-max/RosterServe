@@ -1,6 +1,6 @@
 # Plan: RS-F008 - Roster Planning and Assignment Management
 
-Status: Implemented — Pending Manual Validation
+Status: Implemented - Pending Manual Validation
 Feature: RS-F008
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -11,6 +11,16 @@ Design System: docs/design-system/design-system.md
 ## Objective
 
 Give department heads a structured way to assign volunteers into events, departments, and sub-teams. Surface availability and approved skill context while assigning, and treat removal as a high-impact action requiring confirmation. Sub-leaders get write access (create, edit, remove) scoped strictly to sub-teams they own — they cannot touch dept-level assignments, other sub-leaders' sub-teams, or assign the `dept_head` role. Super admins see read-only oversight across all departments.
+
+## Implementation Outcome
+
+- Implemented and merged to `main` via PR #11 on 2026-04-02.
+- Automated verification completed: `npm run typecheck`, `npm run lint`, `npm run build`.
+- Codex blocking review findings were fixed before approval:
+  - `events.event_date` is now used for availability context.
+  - Sub-leader RLS and server actions now enforce `sub_team.department_id = assignment.department_id`.
+  - Sub-leader edit UI no longer offers a dept-level `No sub-team` option.
+- Manual validation remains open. Until the 20-item validation checklist is completed and recorded, RS-F008 must remain `passes: false`.
 
 ---
 
@@ -179,7 +189,10 @@ ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
        AND created_by = auth.uid()
        AND public.get_my_role() = 'sub_leader'
        AND EXISTS (SELECT 1 FROM public.sub_teams st
-                   WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL)
+                   WHERE st.id = sub_team_id
+                     AND st.department_id = department_id
+                     AND st.owner_id = auth.uid()
+                     AND st.deleted_at IS NULL)
      );
    ```
 
@@ -192,13 +205,19 @@ ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
        AND sub_team_id IS NOT NULL
        AND public.get_my_role() = 'sub_leader'
        AND EXISTS (SELECT 1 FROM public.sub_teams st
-                   WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL)
+                   WHERE st.id = sub_team_id
+                     AND st.department_id = department_id
+                     AND st.owner_id = auth.uid()
+                     AND st.deleted_at IS NULL)
      )
      WITH CHECK (
        sub_team_id IS NOT NULL
        AND role IN ('volunteer', 'sub_leader')
        AND EXISTS (SELECT 1 FROM public.sub_teams st
-                   WHERE st.id = sub_team_id AND st.owner_id = auth.uid() AND st.deleted_at IS NULL)
+                   WHERE st.id = sub_team_id
+                     AND st.department_id = department_id
+                     AND st.owner_id = auth.uid()
+                     AND st.deleted_at IS NULL)
      );
    ```
 
@@ -254,13 +273,13 @@ ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 
 - `updateAssignment(assignmentId, { role?, subTeamId? })`:
   - If caller is `dept_head`: verify ownership of assignment's department
-  - If caller is `sub_leader`: verify they own the assignment's sub_team; block setting `role = 'dept_head'`
+  - If caller is `sub_leader`: verify they own the assignment's sub_team in the same department; block setting `role = 'dept_head'`
   - Fetch assignment; verify `deleted_at IS NULL`; UPDATE role and/or sub_team_id
   - `revalidatePath(...)`, return result
 
 - `removeAssignment(assignmentId)`:
   - If caller is `dept_head`: verify ownership of assignment's department
-  - If caller is `sub_leader`: verify they own the assignment's sub_team; verify `sub_team_id IS NOT NULL`
+  - If caller is `sub_leader`: verify they own the assignment's sub_team in the same department; verify `sub_team_id IS NOT NULL`
   - Fetch assignment; verify `deleted_at IS NULL`; UPDATE `deleted_at = now()`
   - `revalidatePath(...)`, return result
   - Note: confirmation is enforced in the UI; this action performs the soft-delete unconditionally once called
@@ -385,7 +404,7 @@ Pass `canViewRoster` to `DepartmentDetailCard`. Show the "View Roster" link when
 | `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assignment-row.tsx` | Create | Single assignment row with inline edit + confirm-remove |
 | `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assign-volunteer-form.tsx` | Create | Assignment creation form with role/sub-team selection |
 | `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/volunteer-selector.tsx` | Create | Volunteer list with availability and skill context |
-| `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/sub-leader-roster-view.tsx` | Create | Read-only sub-team roster for sub_leader |
+| `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/sub-leader-roster-view.tsx` | Create | Write-enabled roster for sub_leader-owned sub-teams |
 | `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/super-admin-roster-view.tsx` | Create | Read-only oversight roster for super_admin |
 | `apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx` | Modify | Add "Roster" navigation link |
 | `supabase/seed.sql` | Modify | RS-F008 seed examples |
@@ -528,7 +547,7 @@ Pass `canViewRoster` to `DepartmentDetailCard`. Show the "View Roster" link when
 
 **Additional validation checks:**
 
-- Sub-leader sees only their sub-team's assignments; cannot assign or remove
+- Sub-leader sees only assignments in owned sub-teams and can create, edit, and remove only within that scope
 - Super_admin sees all assignments for a dept+event; no action controls
 - Volunteer with no approved interest in dept cannot be assigned (action returns error)
 - Duplicate assignment (same volunteer + event + dept/sub-team slot) returns inline error "This volunteer is already assigned to this slot"
@@ -629,8 +648,12 @@ Pass `canViewRoster` to `DepartmentDetailCard`. Show the "View Roster" link when
 
 ## Documentation Updates
 
-On completion:
-- `docs/tracking/progress.md` — RS-F008 status: `passed`
-- `docs/features/feature-list.json` — RS-F008 `passes: true`
-- `docs/tracking/claude-progress.txt` — full handoff update for next session
-- This plan file — status updated to `Implemented and Validated`
+Post-merge state for this session:
+- `docs/tracking/progress.md` — RS-F008 status updated to `in_review`
+- `docs/tracking/claude-progress.txt` — session handoff updated
+- This plan file — status updated to `Reviewed`
+
+After manual validation succeeds:
+- `docs/features/feature-list.json` — set `RS-F008.passes` to `true`
+- `docs/tracking/progress.md` — update RS-F008 status to `passed`
+- This plan file — update status to `Implemented and Validated`
