@@ -216,3 +216,28 @@
 --   NOW()
 -- )
 -- ON CONFLICT DO NOTHING;
+
+-- RS-F008: Assignment seed example
+--
+-- Example: dept head assigns a volunteer to their department (no sub-team).
+-- Replace UUIDs with real IDs from your local dev database.
+--
+-- INSERT INTO public.assignments (
+--   event_id,
+--   department_id,
+--   sub_team_id,
+--   volunteer_id,
+--   role,
+--   status,
+--   created_by
+-- )
+-- VALUES (
+--   (SELECT id FROM public.events LIMIT 1),
+--   (SELECT id FROM public.departments LIMIT 1),
+--   NULL,
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   'volunteer',
+--   'invited',
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com')
+-- )
+-- ON CONFLICT DO NOTHING;
