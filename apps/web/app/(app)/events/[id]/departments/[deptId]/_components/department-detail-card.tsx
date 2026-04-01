@@ -13,6 +13,7 @@ interface DepartmentDetailCardProps {
   ownerNames: Record<string, string>;
   isSuperAdmin: boolean;
   canManage: boolean;
+  canViewRoster: boolean;
 }
 
 export function DepartmentDetailCard({
@@ -21,6 +22,7 @@ export function DepartmentDetailCard({
   ownerNames,
   isSuperAdmin,
   canManage,
+  canViewRoster,
 }: DepartmentDetailCardProps) {
   const [showDelete, setShowDelete] = useState(false);
   const ownerName = ownerNames[department.owner_id ?? ""] ?? "Unassigned";
@@ -36,23 +38,33 @@ export function DepartmentDetailCard({
             <span className="font-semibold text-neutral-800">{ownerName}</span>
           </p>
         </div>
-        {isSuperAdmin && (
-          <div className="flex gap-200">
+        <div className="flex gap-200">
+          {canViewRoster && (
             <Link
-              href={`/events/${eventId}/departments/${department.id}/edit`}
+              href={`/events/${eventId}/departments/${department.id}/roster`}
               className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-600 transition-colors duration-fast hover:bg-neutral-100 hover:text-neutral-950"
             >
-              Edit
+              View Roster
             </Link>
-            <button
-              type="button"
-              onClick={() => setShowDelete(true)}
-              className="rounded-200 border border-semantic-error/30 bg-neutral-0 px-300 py-200 text-body-sm text-semantic-error transition-colors duration-fast hover:bg-semantic-error/5"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+          )}
+          {isSuperAdmin && (
+            <>
+              <Link
+                href={`/events/${eventId}/departments/${department.id}/edit`}
+                className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-600 transition-colors duration-fast hover:bg-neutral-100 hover:text-neutral-950"
+              >
+                Edit
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowDelete(true)}
+                className="rounded-200 border border-semantic-error/30 bg-neutral-0 px-300 py-200 text-body-sm text-semantic-error transition-colors duration-fast hover:bg-semantic-error/5"
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Sub-teams */}
