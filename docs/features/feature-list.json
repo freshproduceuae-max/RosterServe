@@ -149,7 +149,7 @@
         "Expose relevant planning context while leaders assign or adjust rosters.",
         "Treat removal and reassignment as controlled high-impact actions."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F009",

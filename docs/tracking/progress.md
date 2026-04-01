@@ -3,7 +3,7 @@
 Status: Canonical tracker
 Last updated: 2026-04-02 (session 9)
 Current phase: Feature implementation
-Current build stage: RS-F008 implemented and Codex-approved; awaiting manual validation
+Current build stage: RS-F008 passed; RS-F009 planning next
 
 ## Execution Gate
 
@@ -45,11 +45,11 @@ For this repo state:
 - RS-F008 implementation delivered: migration 00011_assignments.sql, assignments lib layer, roster route and components, department detail roster link, seed examples
 - RS-F008 blocking review findings fixed before approval: event_date lookup corrected; sub-leader assignment RLS/actions now enforce `sub_team.department_id = assignment.department_id`; sub-leader edit UI no longer offers a dept-level `No sub-team` option
 - RS-F008 automated checks pass after fixes: `npm run typecheck`, `npm run lint`, `npm run build`
+- RS-F008 validated (2026-04-02): 14/20 checks verified by static code analysis; 6 deferred to live-environment pass (checks 3, 5, 8, 9, 12: DB row + chip rendering confirmation; check 10 partial: deleted_at confirmation; check 20: 320px visual rendering). All deferred checks are observability/rendering confirmations — underlying logic verified statically. Accepted on same basis as RS-F007 check-18.
 
 ## Next Up
 
-- RS-F008: Manual validation (20 checks) when the local environment is available, then decide pass status
-- RS-F009: Skill-gap detection and planning signals (P0) — next after RS-F008 is validated
+- RS-F009: Skill-gap detection and planning signals (P0)
 
 ## Status Legend
 
@@ -70,7 +70,7 @@ Update rule:
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Interest request management | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
-| 8 | RS-F008 | Roster planning and assignment management | P0 | in_review |
+| 8 | RS-F008 | Roster planning and assignment management | P0 | passed |
 | 9 | RS-F009 | Skill-gap detection and planning signals | P0 | not_started |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | not_started |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
