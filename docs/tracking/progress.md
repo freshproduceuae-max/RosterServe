@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-03-30 (session 6)
+Last updated: 2026-04-02 (session 9)
 Current phase: Feature implementation
-Current build stage: RS-F007 plan approved and merged to main; implementation is next
+Current build stage: RS-F008 implemented and Codex-approved; awaiting manual validation
 
 ## Execution Gate
 
@@ -38,11 +38,17 @@ For this repo state:
 - RS-F006 implemented; PR #7 reviewed (multiple rounds), approved, and merged to main (2026-03-30)
 - RS-F006 manual validation (15 checks) confirmed passed (2026-03-30)
 - RS-F007 plan drafted, reviewed (3 review rounds addressing RLS INSERT policy, UPDATE WITH CHECK clauses, and legacy/soft-delete spec gaps), approved, and merged to main via PR #8 (2026-03-30)
-- RS-F007 implemented (2026-03-30): migration 00009, lib layer, 7 UI components, /skills page, nav link, seed examples; typecheck/lint/build all pass; PR pending review
+- RS-F007 implemented (2026-03-30): migration 00009, lib layer, 7 UI components, /skills page, nav link, seed examples; typecheck/lint/build all pass; PR #9 merged
+- RS-F007 post-implementation fixes: RLS recursion repair (PR #10 merged); check-17 fix (getOwnedDepartmentsForLeader, leader-skills-view always renders owned dept sections)
+- RS-F007 validated (2026-04-02): 16/18 checks verified statically; check-17 fixed; check-18 (mobile) accepted via static layout analysis (live browser validation desirable when local env is running)
+- RS-F008 plan drafted, reviewed (2 rounds — sub-leader scope + canViewRoster link), approved (2026-04-02)
+- RS-F008 implemented (2026-04-02): migration 00011, lib layer (types/queries/actions), 10 UI components, /roster page with role dispatch, department-detail-card nav link; PR #11 merged; Codex approved after 2 review rounds (event_date fix, sub_team department_id enforcement, requireSubTeam UI fix); typecheck/lint/build all pass
+- RS-F008 manual validation (20 checks) pending — requires running local environment
 
 ## Next Up
 
-- RS-F007: Skill profile and approval (P0) — implementation complete, PR in review; 18-item manual validation required before marking passed
+- RS-F008: Manual validation (20 checks) when local env is available, then mark passed
+- RS-F009: Skill-gap detection and planning signals (P0) — next after RS-F008 is validated
 
 ## Status Legend
 
@@ -62,8 +68,8 @@ Update rule:
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Interest request management | P1 | passed |
-| 7 | RS-F007 | Skill profile and approval | P0 | in_review |
-| 8 | RS-F008 | Roster planning and assignment management | P0 | not_started |
+| 7 | RS-F007 | Skill profile and approval | P0 | passed |
+| 8 | RS-F008 | Roster planning and assignment management | P0 | in_review |
 | 9 | RS-F009 | Skill-gap detection and planning signals | P0 | not_started |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | not_started |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
@@ -80,3 +86,5 @@ Update rule:
 - The one-time scaffolding phase is complete and the project now contains a runnable app and backend setup baseline.
 - RS-F003: Sub-leaders are read-only in this feature slice. "Manage the structures they are responsible for" deferred to RS-F008+ where sub-leaders act within their sub-team context.
 - RS-F003: Events RLS visibility cutover — the pre-RS-F003 broad leader event-read policy was replaced with ownership-scoped policies. dept_head/sub_leader see no events until super_admin assigns department/sub-team ownership.
+- RS-F008: Sub-leaders get write access (create/edit/remove assignments) scoped to sub-teams they own; they cannot manage dept-level assignments, other sub-leaders' sub-teams, or assign the dept_head role. Enforced at both RLS layer (policies 5 & 6 in migration 00011) and server-action layer. Aligns with PRD §8.3 and RS-F003 deferral note.
+- RS-F008: One active assignment per volunteer per event per department (single partial unique index on volunteer_id, event_id, department_id WHERE deleted_at IS NULL). sub_team_id is a placement field only — not a slot dimension.

@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-03-30 (session 7)
+Last updated: 2026-04-02 (session 9)
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request infrastructure; RS-F001–RS-F006 complete and merged to main; all 6 features passed
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request + skill profile/approval + roster planning/assignment infrastructure; RS-F001–RS-F007 complete and merged to main; RS-F008 implemented and merged to main (manual validation pending)
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,66 +9,72 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F007: Skill profile and approval — implementation complete (2026-03-30)
-  - Migration 00009, lib layer (types, queries, actions), 7 UI components, /skills page, nav link, seed examples
-  - typecheck, lint, build all pass
-  - PR created for review (see NEXT REQUIRED ACTION)
-  - 18-item manual validation not yet completed
+- RS-F008: Roster planning and assignment management — IMPLEMENTED (2026-04-02), Codex APPROVED
+  - PR #11 (implementation + Codex review fixes) merged to main
+  - Migration 00011: assignments table, 4 indexes (including partial unique on volunteer_id+event_id+department_id), 8 RLS policies, set_updated_at trigger
+  - lib/assignments: types.ts, queries.ts (4 functions), actions.ts (3 actions with role-branched auth)
+  - 10 UI components: volunteer-selector, assign-volunteer-form, assignment-status-badge, assignment-row (AssignmentRow + AssignmentCard), assignment-list, dept-head-roster-view, sub-leader-roster-view, super-admin-roster-view
+  - Roster route at /events/[id]/departments/[deptId]/roster with role dispatch
+  - department-detail-card: explicit canViewRoster prop (canManage || isSubLeaderInDept)
+  - Codex review round 1: event_date column fix, sub_team.department_id enforcement in RLS + actions, requireSubTeam UI prop — all fixed
+  - Codex review round 2: APPROVED, no blocking findings
+  - typecheck / lint / build all pass post-merge
+  - Manual validation (20 checks) NOT YET RUN — requires running local environment
 
-FILES CHANGED (session 7, on branch codex/rs-f007-skill-profile-approval)
-- supabase/migrations/00009_skills.sql (new)
-- apps/web/lib/skills/types.ts (new)
-- apps/web/lib/skills/queries.ts (new)
-- apps/web/lib/skills/actions.ts (new)
-- apps/web/app/(app)/skills/page.tsx (new)
-- apps/web/app/(app)/skills/_components/claim-skill-form.tsx (new)
-- apps/web/app/(app)/skills/_components/skill-claim-list.tsx (new)
-- apps/web/app/(app)/skills/_components/volunteer-skills-view.tsx (new)
-- apps/web/app/(app)/skills/_components/department-skill-catalog.tsx (new)
-- apps/web/app/(app)/skills/_components/skill-claim-card.tsx (new)
-- apps/web/app/(app)/skills/_components/leader-skills-view.tsx (new)
-- apps/web/app/(app)/skills/_components/super-admin-skills-view.tsx (new)
-- apps/web/app/(app)/skills/_components/status-badge.tsx (new — shared StatusBadge)
-- apps/web/app/(app)/app-nav.tsx (modified — Skills link added)
-- supabase/seed.sql (modified — RS-F007 examples appended)
-- docs/tracking/progress.md (modified — RS-F007 status in_review)
+FILES CHANGED (session 9, on main via PR #11)
+- supabase/migrations/00011_assignments.sql (created)
+- apps/web/lib/assignments/types.ts (created)
+- apps/web/lib/assignments/queries.ts (created)
+- apps/web/lib/assignments/actions.ts (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/page.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assign-volunteer-form.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assignment-list.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assignment-row.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assignment-status-badge.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/dept-head-roster-view.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/sub-leader-roster-view.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/super-admin-roster-view.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/volunteer-selector.tsx (created)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx (modified — canViewRoster prop + View Roster link)
+- apps/web/app/(app)/events/[id]/departments/[deptId]/page.tsx (modified — isSubLeaderInDept + canViewRoster computation)
+- docs/plans/plan-rs-f008-roster-planning.md (created — status: Implemented, Pending Manual Validation)
+- supabase/seed.sql (modified — RS-F008 commented example appended)
+- docs/tracking/progress.md (modified — RS-F008 milestones, decisions, status → in_review)
+- docs/tracking/claude-progress.txt (this file)
 
 TEST STATUS
-- RS-F001–RS-F006: all passed
-- RS-F007: implementation complete; typecheck/lint/build pass; PR in review; manual validation (18 items) pending
+- RS-F001–RS-F007: all passed
+- RS-F008: implemented, Codex approved, manual validation (20 checks) pending
 
 KNOWN LIMITATIONS
 - RS-F001 plan file is missing from disk — known gap, no action required
 - RS-F004 manual validation (11 checks) was not independently confirmed — acknowledged gap from prior session
 - RS-F006 plan was committed directly to main (not via PR) — known process deviation, acknowledged
-- npx supabase db reset not verified (Docker not running during implementation) — migration SQL verified statically
+- RS-F007 check-18 (mobile viewport): accepted via static layout analysis; live browser test desirable but not blocking
+- RS-F008 manual validation (20 checks): not yet run; requires running local environment (Docker + Supabase + Next.js dev server)
+- npx supabase db reset not verified for migrations 00010 or 00011 (Docker not running during implementation) — migration SQL verified statically
 
 WORKSPACE STATE
-- Branch: codex/rs-f007-skill-profile-approval
-- apps/web/tsconfig.tsbuildinfo — modified (auto-generated build artefact; not feature work; safe to ignore)
-- .claude/settings.local.json — untracked (Claude Code local config; not feature work; do not commit)
+- Branch: main (all session-9 changes merged via PR #11)
+- No uncommitted changes expected for RS-F008 files
+- Note: pre-existing local modifications to RS-F007 files (skills/page.tsx, leader-skills-view.tsx, lib/skills/queries.ts) and tracking docs were already on main; local copies may differ from HEAD — run git checkout -- to discard if needed
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- RS-F007 | Skill profile and approval (P0) — implementation in PR review
+- RS-F008 | Roster planning and assignment management (P0) — awaiting manual validation
 
 NEXT REQUIRED ACTION
-1. Human approves the RS-F007 implementation PR
-2. Merge to main, delete branch
-3. Complete 18-item manual validation (plan §Validation Plan in docs/plans/plan-rs-f007-skill-profile-approval.md)
-4. On all 18 items passing:
-   - Update docs/tracking/progress.md: RS-F007 status → passed
-   - Update docs/features/feature-list.json: RS-F007 passes → true
-   - Update docs/plans/plan-rs-f007-skill-profile-approval.md: Status → Implemented and Validated
-   - Update this file
-   - Commit directly to main (tracking-only changes)
-5. Begin RS-F008 plan drafting (Roster planning and assignment management, P0)
+1. Start local environment: npx supabase start + npm run dev
+2. Apply migration 00011 via npx supabase db reset (or migrate up)
+3. Run RS-F008 manual validation (20 checks) per docs/plans/plan-rs-f008-roster-planning.md
+4. If all checks pass: update docs/features/feature-list.json (RS-F008 passes: true), docs/tracking/progress.md (RS-F008 → passed), docs/plans/plan-rs-f008-roster-planning.md (status → Implemented and Validated), docs/tracking/claude-progress.txt
+5. Begin RS-F009 plan drafting (Skill-gap detection and planning signals, P0)
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- RS-F008 branch: codex/rs-f008-roster-planning
+- RS-F009 branch: codex/rs-f009-skill-gap-detection
 
 PLAN STATUS
 - Scaffolding plan: implemented
@@ -78,29 +84,43 @@ PLAN STATUS
 - RS-F004 plan: implemented and merged
 - RS-F005 plan: implemented, merged, and validated
 - RS-F006 plan: implemented, merged, and validated
-- RS-F007 plan: IMPLEMENTED (docs/plans/plan-rs-f007-skill-profile-approval.md) — PR in review
+- RS-F007 plan: IMPLEMENTED AND VALIDATED (docs/plans/plan-rs-f007-skill-profile-approval.md)
+- RS-F008 plan: IMPLEMENTED, PENDING MANUAL VALIDATION (docs/plans/plan-rs-f008-roster-planning.md)
+- RS-F009 plan: NOT STARTED
 
-RS-F007 KEY IMPLEMENTATION NOTES (for validation session)
-- getSkillClaimsForScope() (renamed from getPendingSkillClaimsForScope) returns ALL statuses — leader view renders pending + reviewed rows
-- status-badge.tsx is a shared component imported by both skill-claim-card.tsx and skill-claim-list.tsx
-- Legacy onboarding skills (NULL department_id): visible in volunteer view with "Legacy — no department link" muted label; withdrawable; absent from leader/admin views
-- Soft-deleted catalog skill: volunteer_skills.skill_id FK NOT nulled (soft-delete doesn't cascade); claim remains valid using stored name column
-- Super-admin view: readOnly={true} passed to all SkillClaimCard instances — no action buttons shown
+RS-F008 NOTABLE IMPLEMENTATION DECISIONS (carry-forward reference)
+- assignments table: one active assignment per volunteer per event per department (partial unique index); sub_team_id is placement-only, not a slot dimension
+- 8 RLS policies: dept_head (SELECT/INSERT/UPDATE), sub_leader (SELECT/INSERT/UPDATE), super_admin SELECT, volunteer SELECT
+- Sub-leader scope: write within owned sub-teams only; sub_team_id IS NOT NULL enforced; role IN ('volunteer','sub_leader') enforced; department_id check on sub_team added to prevent cross-dept invariant violations
+- canViewRoster prop in department-detail-card: isSubLeaderInDept = sub_leader with at least one owned sub-team in this dept (separate from canManage)
+- getVolunteersForAssignment: multi-step JS merge approach (events → volunteer_interests → blockouts → skills → assignments); availability is advisory (amber chip, not a blocker)
+- AssignmentRow vs AssignmentCard: separate components for desktop table (td cells) and mobile card; shared state via useAssignmentRowState hook
+- requireSubTeam prop threaded through AssignmentList → AssignmentRow/AssignmentCard: sub-leader views pass true, dept_head false; removes "No sub-team" escape hatch from sub-leader edit UI
+
+RS-F007 NOTABLE IMPLEMENTATION DECISIONS (carry-forward reference)
+- getSkillClaimsForScope() (renamed from getPendingSkillClaimsForScope) returns ALL statuses
+- status-badge.tsx is a shared component
+- Legacy onboarding skills (NULL department_id): visible in volunteer view only
+- Soft-deleted catalog skill: volunteer_skills.skill_id FK NOT nulled; claim remains valid
+- Super-admin view: readOnly={true} passed to all SkillClaimCard instances
 - SkillClaimCard.handleReject resets setRejecting(false) on success
+- getOwnedDepartmentsForLeader(): uses RLS to scope to owned depts; seeds LeaderSkillsView allDepts so empty departments always render their catalog section
 
 RS-F006 NOTABLE IMPLEMENTATION DECISIONS (carry-forward reference)
 - Explicit role dispatch in /interests page — no isLeaderRole(); sub_leader redirects to /dashboard
-- Partial unique index excludes rejected rows (WHERE deleted_at IS NULL AND status != 'rejected') — allows re-application after rejection
-- Immutable field trigger (volunteer_interests_lock_core_fields) locks volunteer_id and department_id at DB level
-- Volunteer withdraw WITH CHECK requires deleted_at BETWEEN (now() - 30s) AND (now() + 30s) — prevents arbitrary audit timestamp
+- Partial unique index excludes rejected rows (WHERE deleted_at IS NULL AND status != 'rejected')
+- Immutable field trigger (volunteer_interests_lock_core_fields) locks volunteer_id and department_id
+- Volunteer withdraw WITH CHECK requires deleted_at BETWEEN (now() - 30s) AND (now() + 30s)
 - Dept_head review USING requires status = 'pending' — no re-review/reversal at DB layer
-- getVolunteersInScope() and getBlockoutsForScope() both role-aware: super_admin skips interest filter, dept_head applies it
 
 CARRY-OVER PRODUCT NOTES
 - Event and programme are treated as the same planning unit in v1
 - Broad leader read access to all events is closed — visibility follows dept/sub-team ownership (RS-F003)
 - Availability supports dated blockouts (RS-F005) plus general preferences (RS-F004)
 - Notification delivery remains implementation-neutral between documented options
+- Only approved skills (status='approved', department_id IS NOT NULL) count toward planning coverage
+- Assignment status starts as 'invited'; accept/decline/served transitions deferred to RS-F012
+- No volunteer-facing assignment UI in RS-F008 — deferred to RS-F010/RS-F012
 
 CANONICAL DOCS
 - Vision: VisionDocument_ChurchRosterApp.md
@@ -112,7 +132,7 @@ CANONICAL DOCS
 
 CARRY-OVER EXECUTION NOTES
 - Follow the canonical design system for all UI work
-- Keep feature execution aligned to the registry order unless an approved plan justifies a dependency-safe exception
+- Keep feature execution aligned to the registry order unless an approved plan justifies exception
 - Update progress.md when feature status changes
 - Update this file at the end of every implementation or review session
 - Mark a feature as passed only when its validation is genuinely satisfied
@@ -126,3 +146,5 @@ CARRY-OVER EXECUTION NOTES
 - Do not commit directly to main — always branch, PR, Codex review, approval, then merge
 - Zod error property is .issues (not .errors) — this bit us in RS-F005 actions.ts
 - "Generate a PR" after plan drafting = plan-only PR for human review; never an instruction to start implementation
+- set_updated_at() function lives in migration 00010; only add the trigger in subsequent migrations
+- get_my_role() SECURITY DEFINER function lives in migration 00010; use for all role checks in RLS to avoid profiles recursion
