@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
 import { getDepartmentById, getOwnerDisplayNames } from "@/lib/departments/queries";
+import { getSkillGapsForDepartmentRoster } from "@/lib/skills/gap-queries";
 import { DepartmentDetailCard } from "./_components/department-detail-card";
 
 export default async function DepartmentDetailPage({
@@ -38,7 +39,12 @@ export default async function DepartmentDetailPage({
     department.owner_id,
     ...department.sub_teams.map((st) => st.owner_id),
   ].filter((id): id is string => id !== null);
-  const ownerNames = await getOwnerDisplayNames(ownerIds);
+  const [ownerNames, gapSummary] = await Promise.all([
+    getOwnerDisplayNames(ownerIds),
+    canViewRoster ? getSkillGapsForDepartmentRoster(eventId, deptId) : Promise.resolve(null),
+  ]);
+
+  const gapCount = gapSummary?.gaps.length ?? 0;
 
   return (
     <div className="flex flex-col gap-400">
@@ -56,6 +62,7 @@ export default async function DepartmentDetailPage({
         isSuperAdmin={isSuperAdmin}
         canManage={canManage}
         canViewRoster={canViewRoster}
+        gapCount={gapCount}
       />
     </div>
   );
