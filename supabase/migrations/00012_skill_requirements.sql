@@ -10,7 +10,7 @@
 -- ============================================================
 
 ALTER TABLE public.department_skills
-  ADD COLUMN is_required BOOLEAN NOT NULL DEFAULT false;
+  ADD COLUMN IF NOT EXISTS is_required BOOLEAN NOT NULL DEFAULT false;
 
 -- ============================================================
 -- 2. No new UPDATE policy needed for dept heads
@@ -50,6 +50,10 @@ CREATE POLICY "Sub-leaders can read skills for owned sub-team departments"
 
 -- Sub-leaders need to read approved volunteer skill claims scoped to
 -- departments where they own a sub-team so gap coverage can be computed.
+-- department_id IS NOT NULL intentionally excludes legacy free-text skill
+-- claims (onboarding path: skill_id IS NULL AND department_id IS NULL).
+-- Those claims have no FK to a catalog entry and can never satisfy a
+-- catalog-linked is_required requirement, so excluding them is correct.
 
 CREATE POLICY "Sub-leaders can read approved skills in owned sub-team departments"
   ON public.volunteer_skills FOR SELECT
