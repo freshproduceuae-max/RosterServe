@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-03 (session 10)
+Last updated: 2026-04-04 (session 11)
 Current phase: Feature implementation
-Current build stage: RS-F009 implemented; awaiting manual validation
+Current build stage: RS-F009 merged to main (PR #12); awaiting manual validation (21 items)
 
 ## Execution Gate
 
@@ -46,13 +46,14 @@ For this repo state:
 - RS-F008 blocking review findings fixed before approval: event_date lookup corrected; sub-leader assignment RLS/actions now enforce `sub_team.department_id = assignment.department_id`; sub-leader edit UI no longer offers a dept-level `No sub-team` option
 - RS-F008 automated checks pass after fixes: `npm run typecheck`, `npm run lint`, `npm run build`
 - RS-F008 validated (2026-04-02): 14/20 checks verified by static code analysis; 6 deferred to live-environment pass (checks 3, 5, 8, 9, 12: DB row + chip rendering confirmation; check 10 partial: deleted_at confirmation; check 20: 320px visual rendering). All deferred checks are observability/rendering confirmations — underlying logic verified statically. Accepted on same basis as RS-F007 check-18.
-- RS-F009 plan drafted, reviewed (2 rounds — spec compliance + code quality per task), approved, and implemented (2026-04-03); PR pending
+- RS-F009 plan drafted, reviewed (3 rounds — sub-leader RLS scope, interim coverage rule, file list accuracy), all approved
 - RS-F009 implementation delivered: migration 00012_skill_requirements.sql (is_required column + sub-leader RLS), gap-types.ts, gap-queries.ts, setSkillRequired action, Required toggle on skills page, GapSummary component, roster page wiring, volunteer selector skill match, department detail gap badge
 - RS-F009 automated checks pass: npm run typecheck, npm run lint, npm run build
+- RS-F009 PR #12 code-reviewed (no blocking findings) and merged to main (2026-04-04)
 
 ## Next Up
 
-- RS-F009: manual validation checklist (13 items) — then mark passed
+- RS-F009: manual validation checklist (21 items) — then mark passed
 - RS-F010: Personalized weekly dashboard (P0)
 
 ## Status Legend
