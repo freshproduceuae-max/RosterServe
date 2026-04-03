@@ -1,20 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { VolunteerForAssignment } from "@/lib/assignments/types";
 
 interface VolunteerSelectorProps {
   volunteers: VolunteerForAssignment[];
   selectedId: string | null;
   onChange: (id: string) => void;
+  requiredSkills?: string[];
 }
 
 export function VolunteerSelector({
   volunteers,
   selectedId,
   onChange,
+  requiredSkills = [],
 }: VolunteerSelectorProps) {
   const [filter, setFilter] = useState("");
+  const requiredSkillsSet = useMemo(() => new Set(requiredSkills), [requiredSkills]);
 
   const filtered = filter.trim()
     ? volunteers.filter((v) =>
@@ -87,15 +90,32 @@ export function VolunteerSelector({
                     </span>
                   </div>
                   {v.approved_skills.length > 0 && (
-                    <div className="flex flex-wrap gap-100">
-                      {v.approved_skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full border border-neutral-300 bg-surface-cool px-150 py-25 text-body-sm text-neutral-700"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                    <div className="flex flex-col gap-100">
+                      <div className="flex flex-wrap gap-100">
+                        {v.approved_skills.map((skill) => {
+                          const isRequired = requiredSkillsSet.has(skill);
+                          return (
+                            <span
+                              key={skill}
+                              className={`rounded-full px-150 py-25 text-body-sm ${
+                                isRequired
+                                  ? "border border-semantic-success bg-semantic-success/10 text-semantic-success"
+                                  : "border border-neutral-300 bg-surface-cool text-neutral-700"
+                              }`}
+                            >
+                              {skill}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      {requiredSkillsSet.size > 0 &&
+                        !v.approved_skills.some((skill) =>
+                          requiredSkillsSet.has(skill),
+                        ) && (
+                          <p className="text-body-sm text-semantic-warning">
+                            No required skills
+                          </p>
+                        )}
                     </div>
                   )}
                 </button>

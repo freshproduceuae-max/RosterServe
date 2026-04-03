@@ -14,6 +14,7 @@ interface DepartmentDetailCardProps {
   isSuperAdmin: boolean;
   canManage: boolean;
   canViewRoster: boolean;
+  gapCount?: number;
 }
 
 export function DepartmentDetailCard({
@@ -23,6 +24,7 @@ export function DepartmentDetailCard({
   isSuperAdmin,
   canManage,
   canViewRoster,
+  gapCount = 0,
 }: DepartmentDetailCardProps) {
   const [showDelete, setShowDelete] = useState(false);
   const ownerName = ownerNames[department.owner_id ?? ""] ?? "Unassigned";
@@ -40,12 +42,19 @@ export function DepartmentDetailCard({
         </div>
         <div className="flex gap-200">
           {canViewRoster && (
-            <Link
-              href={`/events/${eventId}/departments/${department.id}/roster`}
-              className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-600 transition-colors duration-fast hover:bg-neutral-100 hover:text-neutral-950"
-            >
-              View Roster
-            </Link>
+            <div className="flex items-center gap-150">
+              <Link
+                href={`/events/${eventId}/departments/${department.id}/roster`}
+                className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-600 transition-colors duration-fast hover:bg-neutral-100 hover:text-neutral-950"
+              >
+                View Roster
+              </Link>
+              {gapCount > 0 && (
+                <span className="rounded-full border border-semantic-warning bg-semantic-warning/10 px-200 py-50 text-body-sm font-medium text-semantic-warning">
+                  {gapCount === 1 ? "1 skill gap" : `${gapCount} skill gaps`}
+                </span>
+              )}
+            </div>
           )}
           {isSuperAdmin && (
             <>

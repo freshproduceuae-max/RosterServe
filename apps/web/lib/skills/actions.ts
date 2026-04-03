@@ -353,3 +353,67 @@ export async function rejectSkillClaim(
   revalidatePath("/skills");
   return { success: true };
 }
+
+/**
+ * setSkillRequired
+ * Dept head: mark or unmark a catalog skill as required for gap detection.
+ */
+export async function setSkillRequired(
+  skillId: string,
+  isRequired: boolean,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session || session.profile.role !== "dept_head") {
+    return { error: "Unauthorized" };
+  }
+
+  if (!skillId || typeof skillId !== "string") {
+    return { error: "Invalid skill" };
+  }
+  if (typeof isRequired !== "boolean") {
+    return { error: "isRequired must be a boolean" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // Fetch skill to get department_id
+  const { data: skill } = await supabase
+    .from("department_skills")
+    .select("id, department_id")
+    .eq("id", skillId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!skill) {
+    return { error: "Skill not found" };
+  }
+
+  // Verify ownership of the department
+  const { data: department } = await supabase
+    .from("departments")
+    .select("id")
+    .eq("id", skill.department_id)
+    .eq("owner_id", session.profile.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!department) {
+    return { error: "Unauthorized" };
+  }
+
+  const { error } = await supabase
+    .from("department_skills")
+    .update({ is_required: isRequired })
+    .eq("id", skillId)
+    .is("deleted_at", null);
+
+  if (error) {
+    return { error: "Failed to update skill. Please try again." };
+  }
+
+  revalidatePath("/skills");
+  // Invalidate event/department/roster pages so GapSummary and the gap badge
+  // reflect the updated required-skill state immediately.
+  revalidatePath("/events", "layout");
+  return { success: true };
+}

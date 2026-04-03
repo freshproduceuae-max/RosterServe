@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-02 (session 9)
+Last updated: 2026-04-03 (session 10)
 Current phase: Feature implementation
-Current build stage: RS-F008 passed; RS-F009 planning next
+Current build stage: RS-F009 implemented; awaiting manual validation
 
 ## Execution Gate
 
@@ -46,10 +46,14 @@ For this repo state:
 - RS-F008 blocking review findings fixed before approval: event_date lookup corrected; sub-leader assignment RLS/actions now enforce `sub_team.department_id = assignment.department_id`; sub-leader edit UI no longer offers a dept-level `No sub-team` option
 - RS-F008 automated checks pass after fixes: `npm run typecheck`, `npm run lint`, `npm run build`
 - RS-F008 validated (2026-04-02): 14/20 checks verified by static code analysis; 6 deferred to live-environment pass (checks 3, 5, 8, 9, 12: DB row + chip rendering confirmation; check 10 partial: deleted_at confirmation; check 20: 320px visual rendering). All deferred checks are observability/rendering confirmations — underlying logic verified statically. Accepted on same basis as RS-F007 check-18.
+- RS-F009 plan drafted, reviewed (2 rounds — spec compliance + code quality per task), approved, and implemented (2026-04-03); PR pending
+- RS-F009 implementation delivered: migration 00012_skill_requirements.sql (is_required column + sub-leader RLS), gap-types.ts, gap-queries.ts, setSkillRequired action, Required toggle on skills page, GapSummary component, roster page wiring, volunteer selector skill match, department detail gap badge
+- RS-F009 automated checks pass: npm run typecheck, npm run lint, npm run build
 
 ## Next Up
 
-- RS-F009: Skill-gap detection and planning signals (P0)
+- RS-F009: manual validation checklist (13 items) — then mark passed
+- RS-F010: Personalized weekly dashboard (P0)
 
 ## Status Legend
 
@@ -71,7 +75,7 @@ Update rule:
 | 6 | RS-F006 | Interest request management | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | passed |
-| 9 | RS-F009 | Skill-gap detection and planning signals | P0 | not_started |
+| 9 | RS-F009 | Skill-gap detection and planning signals | P0 | in_review |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | not_started |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
 | 12 | RS-F012 | Assignment response workflow | P0 | not_started |

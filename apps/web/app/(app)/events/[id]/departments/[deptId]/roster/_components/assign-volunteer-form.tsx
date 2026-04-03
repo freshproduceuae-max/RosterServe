@@ -16,6 +16,7 @@ interface AssignVolunteerFormProps {
   subTeams: Pick<SubTeam, "id" | "name">[];
   /** When true the sub-team field is required and "No sub-team" is omitted. */
   requireSubTeam: boolean;
+  requiredSkills?: string[];
 }
 
 export function AssignVolunteerForm({
@@ -24,6 +25,7 @@ export function AssignVolunteerForm({
   volunteers,
   subTeams,
   requireSubTeam,
+  requiredSkills = [],
 }: AssignVolunteerFormProps) {
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<string | null>(null);
   const [role, setRole] = useState<AssignmentRole>("volunteer");
@@ -123,6 +125,7 @@ export function AssignVolunteerForm({
           volunteers={volunteers}
           selectedId={selectedVolunteerId}
           onChange={setSelectedVolunteerId}
+          requiredSkills={requiredSkills}
         />
       </div>
 
