@@ -1,6 +1,6 @@
 # Plan: RS-F009 — Skill-Gap Detection and Planning Signals
 
-Status: Implemented
+Status: Implemented — Pending Review and Validation
 Feature: RS-F009
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -74,12 +74,12 @@ If no required skills are defined, return an empty/neutral state (no false alarm
 ### Modified files
 - `apps/web/lib/skills/types.ts` — add `is_required: boolean` to `DepartmentSkill`
 - `apps/web/lib/skills/actions.ts` — add `setSkillRequired(skillId, isRequired)` server action
-- `apps/web/lib/skills/queries.ts` — include `is_required` in `getDepartmentSkillsForLeader()`
-- `apps/web/app/(app)/skills/page.tsx` — render Required toggle per skill catalog item (dept head view)
+- `apps/web/app/(app)/skills/_components/department-skill-catalog.tsx` — add Required toggle and optimistic state to `SkillRow` (dept head only); `skills/page.tsx` and `queries.ts` were not modified — `getDepartmentSkillsForLeader()` already uses `select("*")` which includes the new column
 - `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/page.tsx` — load gap data alongside assignments; pass to views
-- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/dept-head-roster-view.tsx` — add `<GapSummary>` below header
-- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/sub-leader-roster-view.tsx` — add `<GapSummary>` (read-only)
-- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/volunteer-selector.tsx` — skill match highlighting
+- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/dept-head-roster-view.tsx` — add `<GapSummary>` below header; pass `requiredSkills` to assign form
+- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/sub-leader-roster-view.tsx` — add `<GapSummary>` (read-only); pass `requiredSkills` to assign form
+- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/assign-volunteer-form.tsx` — add `requiredSkills?: string[]` prop; pass through to `<VolunteerSelector>`
+- `apps/web/app/(app)/events/[id]/departments/[deptId]/roster/_components/volunteer-selector.tsx` — skill match highlighting and "No required skills" warning
 - `apps/web/app/(app)/events/[id]/departments/[deptId]/_components/department-detail-card.tsx` — gap badge
 - `apps/web/app/(app)/events/[id]/departments/[deptId]/page.tsx` — load gap data for dept detail badge
 - `docs/tracking/progress.md` — update status
@@ -101,6 +101,8 @@ If no required skills are defined, return an empty/neutral state (no false alarm
 3. **Sub-leader SELECT on `volunteer_skills`** — New policy added: sub-leaders can read `status = 'approved'` volunteer skill claims scoped to departments where they own a sub-team. Filtered to `department_id IS NOT NULL` to exclude legacy free-text onboarding claims (which have no catalog FK and cannot satisfy a catalog-linked requirement). This is intentional.
 
 **Migration collision check:** Before applying, verify `00012_skill_requirements.sql` does not conflict with existing policies in `00009_skills.sql`. Specifically confirm that policy 5c is `FOR UPDATE` (not `FOR ALL`) and that the new sub-leader SELECT policies do not duplicate or contradict any existing SELECT policies on these two tables.
+
+**Sub-leader validation requirement:** Because this migration introduces read access for sub-leaders on two previously restricted tables, manual validation must include at least one sub-leader pass through the roster page after the migration is applied — confirming GapSummary renders correctly for a sub-leader session and that no RLS errors are returned for the gap query.
 
 **No new auth rules, roles, or environment variables required.**
 
