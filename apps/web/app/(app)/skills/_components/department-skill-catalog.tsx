@@ -39,13 +39,14 @@ function SkillRow({ skill }: { skill: DepartmentSkillWithName }) {
       <button
         onClick={handleToggleRequired}
         disabled={togglePending}
+        aria-pressed={isRequired}
         className={`rounded-full border px-200 py-50 text-body-sm font-medium transition-colors duration-fast disabled:opacity-50 ${
           isRequired
             ? "border-semantic-warning bg-semantic-warning/10 text-semantic-warning"
             : "border-neutral-300 text-neutral-600 hover:border-neutral-400 hover:text-neutral-950"
         }`}
       >
-        Required
+        {isRequired ? "Required" : "Set required"}
       </button>
       <div className="flex items-center gap-200">
         {error && (

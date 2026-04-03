@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { VolunteerForAssignment } from "@/lib/assignments/types";
 
 interface VolunteerSelectorProps {
@@ -17,6 +17,7 @@ export function VolunteerSelector({
   requiredSkills = [],
 }: VolunteerSelectorProps) {
   const [filter, setFilter] = useState("");
+  const requiredSkillsSet = useMemo(() => new Set(requiredSkills), [requiredSkills]);
 
   const filtered = filter.trim()
     ? volunteers.filter((v) =>
@@ -92,7 +93,7 @@ export function VolunteerSelector({
                     <div className="flex flex-col gap-100">
                       <div className="flex flex-wrap gap-100">
                         {v.approved_skills.map((skill) => {
-                          const isRequired = requiredSkills.includes(skill);
+                          const isRequired = requiredSkillsSet.has(skill);
                           return (
                             <span
                               key={skill}
@@ -107,9 +108,9 @@ export function VolunteerSelector({
                           );
                         })}
                       </div>
-                      {requiredSkills.length > 0 &&
+                      {requiredSkillsSet.size > 0 &&
                         !v.approved_skills.some((skill) =>
-                          requiredSkills.includes(skill),
+                          requiredSkillsSet.has(skill),
                         ) && (
                           <p className="text-body-sm text-semantic-warning">
                             No required skills

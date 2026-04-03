@@ -33,12 +33,15 @@ export async function getSkillGapsForDepartmentRoster(
       .filter((n): n is string => n !== null)
       .sort((a, b) => a.localeCompare(b));
 
-    // 2. Fetch active assignment volunteer_ids for this event + department
+    // 2. Fetch non-declined assignment volunteer_ids for this event + department.
+    // Declined volunteers are no longer expected to serve, so they should not
+    // contribute to skill coverage. invited, accepted, and served all count.
     const { data: assignments, error: assignmentsError } = await supabase
       .from("assignments")
       .select("volunteer_id")
       .eq("event_id", eventId)
       .eq("department_id", deptId)
+      .neq("status", "declined")
       .is("deleted_at", null);
 
     if (assignmentsError) {

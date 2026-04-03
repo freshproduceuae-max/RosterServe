@@ -23,7 +23,8 @@ export function GapSummary({ summary }: { summary: RosterGapSummary }) {
                   : "border-semantic-warning bg-semantic-warning/10 text-semantic-warning"
               }`}
             >
-              {covered ? "✓ " : "✗ "}
+              <span aria-hidden="true">{covered ? "✓ " : "✗ "}</span>
+              <span className="sr-only">{covered ? "covered: " : "missing: "}</span>
               {skill}
             </span>
           );

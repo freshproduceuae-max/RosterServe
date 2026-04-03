@@ -412,5 +412,8 @@ export async function setSkillRequired(
   }
 
   revalidatePath("/skills");
+  // Invalidate event/department/roster pages so GapSummary and the gap badge
+  // reflect the updated required-skill state immediately.
+  revalidatePath("/events", "layout");
   return { success: true };
 }
