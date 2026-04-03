@@ -5,6 +5,8 @@ import type { AssignmentWithContext, VolunteerForAssignment } from "@/lib/assign
 import type { DepartmentWithSubTeams } from "@/lib/departments/types";
 import { AssignmentList } from "./assignment-list";
 import { AssignVolunteerForm } from "./assign-volunteer-form";
+import { GapSummary } from "./gap-summary";
+import type { RosterGapSummary } from "@/lib/skills/gap-types";
 
 interface DeptHeadRosterViewProps {
   eventId: string;
@@ -13,6 +15,7 @@ interface DeptHeadRosterViewProps {
   department: DepartmentWithSubTeams;
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
+  gapSummary: RosterGapSummary;
 }
 
 export function DeptHeadRosterView({
@@ -22,6 +25,7 @@ export function DeptHeadRosterView({
   department,
   assignments,
   volunteers,
+  gapSummary,
 }: DeptHeadRosterViewProps) {
   const [showForm, setShowForm] = useState(false);
 
@@ -45,6 +49,8 @@ export function DeptHeadRosterView({
           {showForm ? "Cancel" : "Assign volunteer"}
         </button>
       </div>
+
+      <GapSummary summary={gapSummary} />
 
       {/* Assign form */}
       {showForm && (

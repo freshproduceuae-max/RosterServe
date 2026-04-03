@@ -5,6 +5,8 @@ import type { AssignmentWithContext, VolunteerForAssignment } from "@/lib/assign
 import type { SubTeam } from "@/lib/departments/types";
 import { AssignmentList } from "./assignment-list";
 import { AssignVolunteerForm } from "./assign-volunteer-form";
+import { GapSummary } from "./gap-summary";
+import type { RosterGapSummary } from "@/lib/skills/gap-types";
 
 interface SubLeaderRosterViewProps {
   eventId: string;
@@ -14,6 +16,7 @@ interface SubLeaderRosterViewProps {
   subTeams: Pick<SubTeam, "id" | "name">[];
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
+  gapSummary: RosterGapSummary;
 }
 
 export function SubLeaderRosterView({
@@ -23,6 +26,7 @@ export function SubLeaderRosterView({
   subTeams,
   assignments,
   volunteers,
+  gapSummary,
 }: SubLeaderRosterViewProps) {
   const [showForm, setShowForm] = useState(false);
 
@@ -45,6 +49,8 @@ export function SubLeaderRosterView({
           {showForm ? "Cancel" : "Assign volunteer"}
         </button>
       </div>
+
+      <GapSummary summary={gapSummary} />
 
       {/* Assign form — sub-team required, limited to owned sub-teams */}
       {showForm && (
