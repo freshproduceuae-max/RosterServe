@@ -20,12 +20,17 @@ export async function getSkillGapsForDepartmentRoster(
       .eq("is_required", true)
       .is("deleted_at", null);
 
-    if (requiredError || !requiredSkills || requiredSkills.length === 0) {
+    if (requiredError) {
+      console.error("[getSkillGapsForDepartmentRoster] failed to fetch required skills", requiredError);
+      return { required: [], covered: [], gaps: [], state: "uncovered" };
+    }
+    if (!requiredSkills || requiredSkills.length === 0) {
       return { required: [], covered: [], gaps: [], state: "no_requirements" };
     }
 
     const required = requiredSkills
-      .map((s) => s.name as string)
+      .map((s) => s.name)
+      .filter((n): n is string => n !== null)
       .sort((a, b) => a.localeCompare(b));
 
     // 2. Fetch active assignment volunteer_ids for this event + department
@@ -41,8 +46,8 @@ export async function getSkillGapsForDepartmentRoster(
     }
 
     const volunteerIds = (assignments ?? [])
-      .map((a) => a.volunteer_id as string)
-      .filter(Boolean);
+      .map((a) => a.volunteer_id)
+      .filter((id): id is string => id !== null);
 
     // 3. If no assignments, all required skills are gaps
     if (volunteerIds.length === 0) {
@@ -72,8 +77,8 @@ export async function getSkillGapsForDepartmentRoster(
     const requiredSet = new Set(required);
     const approvedNamesInRequired = new Set<string>(
       (volunteerSkills ?? [])
-        .map((vs) => vs.name as string)
-        .filter((name) => requiredSet.has(name)),
+        .map((vs) => vs.name)
+        .filter((name): name is string => name !== null && requiredSet.has(name)),
     );
 
     // 5. Derive covered and gaps
@@ -96,7 +101,8 @@ export async function getSkillGapsForDepartmentRoster(
     }
 
     return { required, covered, gaps, state };
-  } catch {
-    return { required: [], covered: [], gaps: [], state: "no_requirements" };
+  } catch (err) {
+    console.error("[getSkillGapsForDepartmentRoster] unexpected error", err);
+    return { required: [], covered: [], gaps: [], state: "uncovered" };
   }
 }

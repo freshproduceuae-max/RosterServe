@@ -404,7 +404,8 @@ export async function setSkillRequired(
   const { error } = await supabase
     .from("department_skills")
     .update({ is_required: isRequired })
-    .eq("id", skillId);
+    .eq("id", skillId)
+    .is("deleted_at", null);
 
   if (error) {
     return { error: "Failed to update skill. Please try again." };
