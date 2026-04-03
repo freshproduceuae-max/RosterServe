@@ -3,6 +3,7 @@ export type DepartmentSkill = {
   id: string;
   department_id: string;
   name: string;
+  is_required: boolean;
   created_by: string | null;
   created_at: string;
   deleted_at: string | null;
