@@ -47,7 +47,7 @@ Add an UPDATE RLS policy so dept heads can set `is_required` on skills they own 
 
 New query `getSkillGapsForDepartmentRoster(eventId, deptId)`:
 1. Fetch required skills: `department_skills WHERE department_id = deptId AND is_required = true AND deleted_at IS NULL`
-2. Fetch active assignments: `assignments WHERE event_id = eventId AND department_id = deptId AND deleted_at IS NULL`
+2. Fetch non-declined assignments: `assignments WHERE event_id = eventId AND department_id = deptId AND status != 'declined' AND deleted_at IS NULL` — **interim coverage rule:** `invited`, `accepted`, and `served` all count toward skill coverage. `declined` volunteers are no longer expected to serve and are excluded. This is an intentional v1 simplification; per-status granularity (e.g. accepted-only) belongs in RS-F012 or later.
 3. For each assigned volunteer, fetch approved skills: `volunteer_skills WHERE volunteer_id IN [...] AND department_id = deptId AND status = 'approved' AND deleted_at IS NULL`
 4. Union approved skill names across all assigned volunteers → covered set
 5. Return `RosterGapSummary { required: string[], covered: string[], gaps: string[] }`
@@ -92,9 +92,15 @@ If no required skills are defined, return an empty/neutral state (no false alarm
 
 **Schema:** One `ALTER TABLE` adding a boolean column with a default (`false`). Safe to apply without data migration — all existing rows get `is_required = false`, which is the correct neutral starting state.
 
-**RLS:** New UPDATE policy on `department_skills`. Must be added in the migration.
-- Dept heads can UPDATE `is_required` on skills where they own the department (`department.owner_id = auth.uid()`).
-- No RLS changes to `volunteer_skills` or `assignments`.
+**RLS:** The migration (`00012_skill_requirements.sql`) makes three access changes:
+
+1. **Dept head UPDATE on `department_skills`** — No new policy needed. The existing policy "Dept heads can soft-delete own department skills" (policy 5c in `00009_skills.sql`) uses `FOR UPDATE` and its `USING`/`WITH CHECK` clauses impose no column restriction, so toggling `is_required` passes through it without an additional rule.
+
+2. **Sub-leader SELECT on `department_skills`** — New policy added: sub-leaders can read the required-skill catalog for departments where they own a sub-team. Required so the gap query can run on the roster page without elevated privilege.
+
+3. **Sub-leader SELECT on `volunteer_skills`** — New policy added: sub-leaders can read `status = 'approved'` volunteer skill claims scoped to departments where they own a sub-team. Filtered to `department_id IS NOT NULL` to exclude legacy free-text onboarding claims (which have no catalog FK and cannot satisfy a catalog-linked requirement). This is intentional.
+
+**Migration collision check:** Before applying, verify `00012_skill_requirements.sql` does not conflict with existing policies in `00009_skills.sql`. Specifically confirm that policy 5c is `FOR UPDATE` (not `FOR ALL`) and that the new sub-leader SELECT policies do not duplicate or contradict any existing SELECT policies on these two tables.
 
 **No new auth rules, roles, or environment variables required.**
 
@@ -197,15 +203,18 @@ Surface: leader — calm, data-rich, structured
 
 ## Risks Or Blockers
 
-1. UPDATE RLS on `department_skills` may not exist — migration must add it explicitly.
-2. Skills page structure from RS-F007 must be read before adding the toggle.
-3. Sub-leaders see dept-level gap summary (not sub-team level) — this is by design, not a bug.
-4. No required skills defined = GapSummary renders nothing (avoid false noise).
+1. **UPDATE RLS on `department_skills`** — Existing policy 5c in `00009_skills.sql` covers `is_required` toggles; no new UPDATE policy needed. Verified: the policy is `FOR UPDATE` with no column-level restriction.
+2. **Sub-leader access scope** — Sub-leaders reading the roster page trigger gap queries against `department_skills` and `volunteer_skills`. Without explicit SELECT policies for their role, those queries return empty results, silently masking all gaps. Two sub-leader SELECT policies are added in `00012_skill_requirements.sql` to address this. This is an explicit access impact, not a zero-change migration.
+3. **Interim coverage rule ambiguity** — The feature uses invited + accepted + served as coverage contributors; declined is excluded. This is intentional for v1 (RS-F012 may add per-status nuance later). This rule is documented here so it is not treated as an accidental interpretation during review.
+4. **Skills page structure** — Required toggle lives in `DepartmentSkillCatalog` component (`department-skill-catalog.tsx`), not in the page wrapper. The page wrapper (`skills/page.tsx`) is not modified for this feature.
+5. **Sub-leaders see dept-level gap summary (not sub-team level)** — by design, not a bug.
+6. **No required skills defined** = GapSummary renders nothing — no empty card, no noise.
 
 ---
 
 ## Validation Plan
 
+**Functional checks:**
 1. Mark a skill as Required on skills page as dept head — persists on reload
 2. View roster with no assignments — GapSummary shows skill as gap
 3. Assign volunteer with approved version of that skill — GapSummary shows fully covered
@@ -215,10 +224,24 @@ Surface: leader — calm, data-rich, structured
 7. In volunteer selector, verify skills matching required show check indicator
 8. In volunteer selector, verify volunteer with no required skills shows "No required skills" note
 9. Department detail card shows gap badge when gaps exist; no badge when covered
-10. As sub-leader — gap summary visible, Required toggle not shown
+10. As sub-leader — gap summary visible, Required toggle not shown on skills page
 11. As volunteer — no gap UI visible anywhere
 12. No required skills defined — GapSummary renders nothing on roster page
-13. `npm run typecheck`, `npm run lint`, `npm run build` — all pass
+13. Assign an invited (not yet accepted) volunteer with the required skill — gap resolves (interim coverage rule: invited counts)
+14. Assign a declined volunteer with the required skill — gap does NOT resolve (declined excluded)
+
+**Migration check:**
+15. `00012_skill_requirements.sql` applied cleanly in the local Supabase stack; no policy name collisions with `00009_skills.sql`; existing dept head UPDATE behavior unchanged
+
+**Design-fidelity checks (RS-F009 is `ui: true`):**
+16. GapSummary renders nothing (no empty card, no placeholder) when no required skills are defined — no noise
+17. GapSummary skill chips use `semantic-success` color for covered, `semantic-warning` color for gaps — color matches design system spec exactly
+18. Gap badge on department detail card is an amber pill and absent (no badge rendered) when fully covered — no false noise in the UI
+19. Required toggle on skills page is visible only to dept_head; volunteer catalog view shows no toggle
+20. GapSummary on the roster page is compact, border-driven, and does not introduce a large visual block — consistent with leader surface density
+
+**Automated checks:**
+21. `npm run typecheck`, `npm run lint`, `npm run build` — all pass
 
 ---
 
