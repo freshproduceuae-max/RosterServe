@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createDepartmentSkill, deleteDepartmentSkill } from "@/lib/skills/actions";
+import { createDepartmentSkill, deleteDepartmentSkill, setSkillRequired } from "@/lib/skills/actions";
 import type { DepartmentSkillWithName } from "@/lib/skills/queries";
 
 function SkillRow({ skill }: { skill: DepartmentSkillWithName }) {
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isRequired, setIsRequired] = useState(skill.is_required);
+  const [togglePending, startToggleTransition] = useTransition();
 
   function handleDelete() {
     setError(null);
@@ -20,9 +22,31 @@ function SkillRow({ skill }: { skill: DepartmentSkillWithName }) {
     });
   }
 
+  function handleToggleRequired() {
+    const next = !isRequired;
+    setIsRequired(next); // optimistic
+    startToggleTransition(async () => {
+      const result = await setSkillRequired(skill.id, next);
+      if (result?.error) {
+        setIsRequired(!next); // revert on error
+      }
+    });
+  }
+
   return (
     <li className="flex items-center justify-between gap-200 rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200">
       <span className="text-body text-neutral-950">{skill.name}</span>
+      <button
+        onClick={handleToggleRequired}
+        disabled={togglePending}
+        className={`rounded-full border px-200 py-50 text-body-sm font-medium transition-colors duration-fast disabled:opacity-50 ${
+          isRequired
+            ? "border-semantic-warning bg-semantic-warning/10 text-semantic-warning"
+            : "border-neutral-300 text-neutral-600 hover:border-neutral-400 hover:text-neutral-950"
+        }`}
+      >
+        Required
+      </button>
       <div className="flex items-center gap-200">
         {error && (
           <span className="text-body-sm text-semantic-error">{error}</span>
