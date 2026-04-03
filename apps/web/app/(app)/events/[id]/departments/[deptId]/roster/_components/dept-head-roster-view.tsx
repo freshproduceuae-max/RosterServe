@@ -60,6 +60,7 @@ export function DeptHeadRosterView({
           volunteers={volunteers}
           subTeams={subTeams}
           requireSubTeam={false}
+          requiredSkills={gapSummary.required}
         />
       )}
 

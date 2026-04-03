@@ -60,6 +60,7 @@ export function SubLeaderRosterView({
           volunteers={volunteers}
           subTeams={subTeams}
           requireSubTeam={true}
+          requiredSkills={gapSummary.required}
         />
       )}
 

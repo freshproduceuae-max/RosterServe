@@ -7,12 +7,14 @@ interface VolunteerSelectorProps {
   volunteers: VolunteerForAssignment[];
   selectedId: string | null;
   onChange: (id: string) => void;
+  requiredSkills?: string[];
 }
 
 export function VolunteerSelector({
   volunteers,
   selectedId,
   onChange,
+  requiredSkills = [],
 }: VolunteerSelectorProps) {
   const [filter, setFilter] = useState("");
 
@@ -87,15 +89,32 @@ export function VolunteerSelector({
                     </span>
                   </div>
                   {v.approved_skills.length > 0 && (
-                    <div className="flex flex-wrap gap-100">
-                      {v.approved_skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full border border-neutral-300 bg-surface-cool px-150 py-25 text-body-sm text-neutral-700"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                    <div className="flex flex-col gap-100">
+                      <div className="flex flex-wrap gap-100">
+                        {v.approved_skills.map((skill) => {
+                          const isRequired = requiredSkills.includes(skill);
+                          return (
+                            <span
+                              key={skill}
+                              className={`rounded-full px-150 py-25 text-body-sm ${
+                                isRequired
+                                  ? "border border-semantic-success bg-semantic-success/10 text-semantic-success"
+                                  : "border border-neutral-300 bg-surface-cool text-neutral-700"
+                              }`}
+                            >
+                              {skill}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      {requiredSkills.length > 0 &&
+                        !v.approved_skills.some((skill) =>
+                          requiredSkills.includes(skill),
+                        ) && (
+                          <p className="text-body-sm text-semantic-warning">
+                            No required skills
+                          </p>
+                        )}
                     </div>
                   )}
                 </button>
