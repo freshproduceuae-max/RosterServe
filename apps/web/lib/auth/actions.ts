@@ -1,11 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getPublicEnv } from "@/lib/env";
 import { signInSchema, signUpSchema } from "./schemas";
 
-export type AuthActionResult = { error: string } | { success: true } | undefined;
+export type AuthActionResult = { error: string } | { success: true } | { redirectTo: string } | undefined;
 
 export async function signInAction(
   _prev: AuthActionResult,
@@ -29,7 +28,9 @@ export async function signInAction(
     };
   }
 
-  redirect("/dashboard");
+  // Return redirectTo instead of calling redirect() to avoid the Next.js 15
+  // useActionState + redirect() RSC refresh loop.
+  return { redirectTo: "/dashboard" };
 }
 
 export async function signUpAction(

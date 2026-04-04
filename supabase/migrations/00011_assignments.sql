@@ -45,9 +45,25 @@ CREATE UNIQUE INDEX idx_assignments_vol_event_dept
   WHERE deleted_at IS NULL;
 
 -- ============================================================
+-- HELPER: set_updated_at()
+-- Trigger function that stamps updated_at on every UPDATE.
+-- NOTE: This function was referenced in this migration but never defined in
+-- any prior migration (the comment pointing to 00010 was incorrect).
+-- Defined here with CREATE OR REPLACE so it is idempotent on re-apply.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+-- ============================================================
 -- TRIGGER
--- set_updated_at() already exists (00010_fix_profiles_rls_recursion.sql).
--- Only add the trigger here — do NOT re-create the function.
 -- ============================================================
 
 CREATE TRIGGER assignments_set_updated_at
