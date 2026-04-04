@@ -233,7 +233,7 @@ CREATE POLICY "Dept heads can read events with their departments"
     deleted_at IS NULL
     AND EXISTS (
       SELECT 1 FROM public.departments AS d
-      WHERE d.event_id = id
+      WHERE d.event_id = events.id
         AND d.owner_id = auth.uid()
         AND d.deleted_at IS NULL
     )
