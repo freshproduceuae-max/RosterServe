@@ -84,6 +84,19 @@ AS $$
 $$;
 
 -- ============================================================
+-- KNOWN CONSTRAINT — availability_blockouts not patched here
+-- ============================================================
+-- The "Dept heads can read in-scope blockouts" and "Sub leaders can read
+-- in-scope blockouts" policies (00007_availability_blockouts.sql) still use
+-- direct inline JOINs to volunteer_interests, departments, and sub_teams.
+-- These are NOT a current recursion risk because no profiles RLS policy
+-- accesses availability_blockouts, so no chain from profiles evaluation
+-- reaches blockouts.
+-- If a future profiles policy or a profiles-adjacent policy ever accesses
+-- blockouts, those two policies must be updated to use i_own_dept() and the
+-- volunteer_interests EXISTS must use i_own_dept() as well.
+
+-- ============================================================
 -- PART B: departments — break departments ↔ sub_teams cycle
 -- Replace the inline sub_teams EXISTS with i_have_sub_team_in_dept()
 -- ============================================================
