@@ -150,12 +150,12 @@ export async function getDeptHeadDashboardData(
   const depts = deptRows as unknown as RawDeptRow[];
   const deptIds = depts.map((d) => d.id);
 
-  // 2. Fetch all non-deleted assignments for these depts in the window in one query
+  // 2. Fetch all non-deleted assignments for these depts — all statuses needed
+  // so that declined counts render correctly for dept heads.
   const { data: assignmentRows } = await supabase
     .from("assignments")
-    .select("department_id, status")
+    .select("department_id, volunteer_id, status")
     .in("department_id", deptIds)
-    .neq("status", "declined")
     .is("deleted_at", null);
 
   // Count by dept + status
@@ -189,13 +189,11 @@ export async function getDeptHeadDashboardData(
     if (row.name) requiredByDept.get(row.department_id)!.add(row.name);
   }
 
-  // Fetch all non-declined assigned volunteer IDs for these depts
-  const { data: assignedVolunteers } = await supabase
-    .from("assignments")
-    .select("department_id, volunteer_id")
-    .in("department_id", deptIds)
-    .neq("status", "declined")
-    .is("deleted_at", null);
+  // Derive non-declined volunteer IDs from the already-fetched assignment rows
+  // (declined volunteers are excluded from skill coverage per the RS-F009 interim coverage rule).
+  const assignedVolunteers = (assignmentRows ?? []).filter(
+    (r) => r.status !== "declined" && r.volunteer_id,
+  );
 
   const volunteersByDept = new Map<string, string[]>();
   for (const row of assignedVolunteers ?? []) {
