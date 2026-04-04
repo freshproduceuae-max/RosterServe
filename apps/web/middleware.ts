@@ -47,8 +47,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user trying to access auth pages
-  if (user && isPublicAuthPath) {
+  // Authenticated user trying to access auth pages.
+  // Skip the redirect for RSC prefetch requests (Next-Router-State-Tree header or ?_rsc= param)
+  // so that Next.js 15's server-action redirect flow can complete cleanly.
+  const isRscRequest =
+    request.headers.has("Next-Router-State-Tree") ||
+    request.nextUrl.searchParams.has("_rsc");
+  if (user && isPublicAuthPath && !isRscRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

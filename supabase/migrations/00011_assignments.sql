@@ -46,13 +46,12 @@ CREATE UNIQUE INDEX idx_assignments_vol_event_dept
 
 -- ============================================================
 -- TRIGGER
--- set_updated_at() already exists (00010_fix_profiles_rls_recursion.sql).
--- Only add the trigger here — do NOT re-create the function.
+-- update_updated_at() is defined in 00001_auth_profiles.sql.
 -- ============================================================
 
 CREATE TRIGGER assignments_set_updated_at
   BEFORE UPDATE ON public.assignments
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 -- ============================================================
 -- RLS

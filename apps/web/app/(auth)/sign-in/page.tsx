@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useActionState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useActionState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { signInAction, type AuthActionResult } from "@/lib/auth/actions";
 
@@ -10,12 +10,19 @@ const CALLBACK_ERROR_MESSAGE =
 
 function SignInForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const callbackError = searchParams.get("error") === "confirmation_failed";
 
   const [state, formAction, isPending] = useActionState<
     AuthActionResult,
     FormData
   >(signInAction, undefined);
+
+  useEffect(() => {
+    if (state && "redirectTo" in state) {
+      router.push(state.redirectTo);
+    }
+  }, [state, router]);
 
   const errorMessage =
     callbackError && !state
