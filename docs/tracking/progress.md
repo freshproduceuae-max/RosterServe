@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-04 (session 11)
+Last updated: 2026-04-04 (session 12)
 Current phase: Feature implementation
-Current build stage: RS-F009 merged to main (PR #12); awaiting manual validation (21 items)
+Current build stage: RS-F009 passed; RS-F010 planning next
 
 ## Execution Gate
 
@@ -50,10 +50,11 @@ For this repo state:
 - RS-F009 implementation delivered: migration 00012_skill_requirements.sql (is_required column + sub-leader RLS), gap-types.ts, gap-queries.ts, setSkillRequired action, Required toggle on skills page, GapSummary component, roster page wiring, volunteer selector skill match, department detail gap badge
 - RS-F009 automated checks pass: npm run typecheck, npm run lint, npm run build
 - RS-F009 PR #12 code-reviewed (no blocking findings) and merged to main (2026-04-04)
+- RS-F009 RLS bug fixes found during validation: PR #13 (validation infrastructure fixes) and PR #14 (00015 SECURITY DEFINER hardening, 00016 events dept_head policy fix, 00017 assignment soft-delete fix) reviewed and merged to main (2026-04-04)
+- RS-F009 manual validation (21 items) confirmed passed (2026-04-04); all re-validation checks after PR #14 merge also pass
 
 ## Next Up
 
-- RS-F009: manual validation checklist (21 items) — then mark passed
 - RS-F010: Personalized weekly dashboard (P0)
 
 ## Status Legend
@@ -76,7 +77,7 @@ Update rule:
 | 6 | RS-F006 | Interest request management | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | passed |
-| 9 | RS-F009 | Skill-gap detection and planning signals | P0 | in_review |
+| 9 | RS-F009 | Skill-gap detection and planning signals | P0 | passed |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | not_started |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
 | 12 | RS-F012 | Assignment response workflow | P0 | not_started |

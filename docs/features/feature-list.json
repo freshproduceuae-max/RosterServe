@@ -166,7 +166,7 @@
         "Compare coverage against approved skills and current roster state.",
         "Surface actionable gap signals in leader planning views."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F010",
