@@ -48,8 +48,7 @@ export async function getVolunteerDashboardData(
       .in("status", ["invited", "accepted"])
       .is("deleted_at", null)
       .gte("events.event_date", today)
-      .lte("events.event_date", windowEnd)
-      .order("events.event_date", { ascending: true }),
+      .lte("events.event_date", windowEnd),
 
     supabase
       .from("volunteer_skills")
@@ -91,7 +90,7 @@ export async function getVolunteerDashboardData(
     department_name: row.departments.name,
     sub_team_id: row.sub_team_id,
     sub_team_name: row.sub_teams?.name ?? null,
-  }));
+  })).sort((a, b) => a.event_date.localeCompare(b.event_date));
 
   return {
     upcomingAssignments,
@@ -118,8 +117,7 @@ export async function getDeptHeadDashboardData(
     .eq("owner_id", userId)
     .is("deleted_at", null)
     .gte("events.event_date", today)
-    .lte("events.event_date", windowEnd)
-    .order("events.event_date", { ascending: true });
+    .lte("events.event_date", windowEnd);
 
   if (deptError || !deptRows || deptRows.length === 0) {
     const [interestRes, skillRes] = await Promise.all([
@@ -310,8 +308,7 @@ export async function getSubLeaderDashboardData(
     .eq("owner_id", userId)
     .is("deleted_at", null)
     .gte("departments.events.event_date", today)
-    .lte("departments.events.event_date", windowEnd)
-    .order("departments.events.event_date", { ascending: true });
+    .lte("departments.events.event_date", windowEnd);
 
   if (stError || !subTeamRows || subTeamRows.length === 0) {
     return { subTeamSummaries: [] };
