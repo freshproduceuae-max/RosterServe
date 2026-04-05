@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-04-04 (session 12)
+Last updated: 2026-04-05 (session 13)
 Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request + skill profile/approval + roster planning/assignment + skill-gap detection; RS-F001–RS-F009 passed
+Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request + skill profile/approval + roster planning/assignment + skill-gap detection + personalized weekly dashboard (implementation done, validation outstanding); RS-F001–RS-F009 passed; RS-F010 in_review
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,53 +9,74 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F009: Skill-gap detection and planning signals — PASSED (2026-04-04)
-  - PR #12 merged (feature implementation)
-  - PR #13 merged (validation infrastructure fixes — session 11)
-  - PR #14 merged (3 RLS bug fixes found during validation):
-      00015: Revoke PUBLIC EXECUTE on SECURITY DEFINER helpers (get_my_role, i_own_dept, i_have_sub_team_in_dept, dept_is_active)
-      00016: Fix events dept_head policy (d.event_id = id → d.event_id = events.id); patched in 00003 + 00013 sources too
-      00017: Fix assignment soft-delete blocked by RLS (remove deleted_at IS NULL from dept_head + sub_leader SELECT policies)
-  - All 21 manual validation checks passed; re-validation of 00015/16/17-affected checks also passed
-  - Automated checks pass: npm run typecheck, npm run lint, npm run build
+- RS-F010: Personalized weekly dashboard — IMPLEMENTED, manual validation outstanding (2026-04-05)
+  - PR #15 merged: implementation plan docs
+  - PR #16 merged: full feature implementation
+      lib/dashboard/types.ts — 4 role data shapes + supporting types
+      lib/dashboard/queries.ts — 4 role query functions (noStore, server-client)
+      app/(app)/dashboard/page.tsx — replaced placeholder with role-branching server component
+      _components/volunteer-dashboard.tsx
+      _components/dept-head-dashboard.tsx
+      _components/sub-leader-dashboard.tsx
+      _components/super-admin-dashboard.tsx
+      _components/assignment-card.tsx
+      _components/roster-health-bar.tsx
+  - Post-merge hotfix (commit 52470c7): removed invalid PostgREST .order() calls on embedded resources (caused empty dashboards)
+  - Migration 00018 (commit ea58d63): volunteer events + sub_teams RLS — two SECURITY DEFINER helpers + two SELECT policies; was omitted from PR #16, committed in session 13 wrap-up
 
-KNOWN FOLLOW-UP (not blocking)
-- Two sibling soft-delete re-check bugs in 00009_skills.sql noted by code reviewer:
+AUTOMATED CHECKS
+- npm run typecheck — PASS
+- npm run lint — PASS
+- npm run build — PASS
+
+MANUAL VALIDATION OUTSTANDING (checks 1–8)
+  1. Volunteer dashboard shows correct upcoming assignments (14-day window), correct context chips, pending skill/interest counts
+  2. Dept-head view shows correct invited/accepted/declined per owned dept, gap badge count matches dept-detail page
+  3. Sub-leader view shows correct sub-team roster cards and gap badges
+  4. Super-admin view shows correct event table with dept + volunteer counts
+  5. Zero-scope cross-account check (volunteer A cannot see volunteer B's data)
+  6. State-change check (invited → accepted reflects on next dashboard load)
+  7. Empty-state check (each role shows calm empty message when no upcoming data)
+  8. Design-fidelity review (surface tints per role, chip tokens, gap badge amber, card spacing, heading hierarchy)
+
+KNOWN FOLLOW-UP (not blocking RS-F010 validation, but before RS-F012)
+- Two sibling soft-delete re-check bugs from RS-F007 code review:
     "Dept heads can soft-delete own department skills" on department_skills
     "Volunteers can withdraw own pending skill claims" on volunteer_skills
-  These are latent — no user-facing breakage confirmed yet — but should be addressed before RS-F012 (assignment response workflow).
+  Latent — no user-facing breakage confirmed — address before RS-F012.
 
 TEST STATUS
 - RS-F001–RS-F009: passed
-- RS-F010: not started
+- RS-F010: in_review (implementation done; manual validation outstanding)
+- RS-F011+: not_started
 
 BLOCKERS
 - None
 
 ACTIVE FEATURE
-- None — RS-F009 just passed
+- RS-F010 (validation phase)
 
 NEXT REQUIRED ACTION
-1. Draft RS-F010 plan (Personalized weekly dashboard, P0)
-   - Plan file: docs/plans/plan-rs-f010-weekly-dashboard.md
-   - Depends on: RS-F001, RS-F008, RS-F009 (all passed)
-   - Follow the standard planning workflow:
-       a. Audit relevant existing code (dashboard page, session, role-based rendering)
-       b. Identify scope from PRD (docs/prd/prd.md) and feature registry (docs/features/feature-list.json)
-       c. Draft plan, submit for review, iterate until approved
-       d. Implementation only after explicit approval
-2. After plan approved, implement RS-F010
+1. Run RS-F010 manual validation checks 1–8 in a live environment
+   - Check list: docs/plans/plan-rs-f010-weekly-dashboard.md → "Validation Plan" section
+   - If all pass: mark RS-F010.passes = true in docs/features/feature-list.json, update progress.md status to `passed`, update plan status to `Implemented and Validated`, update claude-progress.txt
+2. Begin RS-F011 (Instructions and media sharing, P1)
+   - Plan file to create: docs/plans/plan-rs-f011-instructions-media.md
+   - Depends on: RS-F002, RS-F003, RS-F008 (all passed)
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- Last merged branch: fix/rls-bugs-00015-00016-00017 (deleted after merge, PR #14)
-- Next likely branch: codex/rs-f010-weekly-dashboard
+- Last merged branch: codex/rs-f010-weekly-dashboard (deleted after merge, PR #16)
+- Next likely branch: codex/rs-f011-instructions-media
 
 PLAN STATUS
-- RS-F009 plan: IMPLEMENTED AND VALIDATED
-  - Plan file: docs/plans/plan-rs-f009-skill-gap-detection.md
-- RS-F010 plan: NOT STARTED
-  - Plan file (to create): docs/plans/plan-rs-f010-weekly-dashboard.md
+- RS-F010 plan: IMPLEMENTED — VALIDATION OUTSTANDING
+  - Plan file: docs/plans/plan-rs-f010-weekly-dashboard.md
+- RS-F011 plan: NOT STARTED
+  - Plan file (to create): docs/plans/plan-rs-f011-instructions-media.md
+
+MIGRATION STATUS
+- 00018_volunteer_event_subteam_read.sql: committed to main (ea58d63), pushed to origin; must be applied to production Supabase before the volunteer dashboard works end-to-end
 
 CANONICAL DOCS
 - PRD: docs/prd/prd.md
@@ -63,7 +84,7 @@ CANONICAL DOCS
 - Progress tracker: docs/tracking/progress.md
 - Session handoff: docs/tracking/claude-progress.txt
 - Plan rules: docs/plans/README.md
-- RS-F009 plan: docs/plans/plan-rs-f009-skill-gap-detection.md
+- RS-F010 plan: docs/plans/plan-rs-f010-weekly-dashboard.md
 
 CARRY-OVER EXECUTION NOTES
 - Follow the canonical design system for all UI work

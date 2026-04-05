@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-04 (session 12)
+Last updated: 2026-04-05 (session 13)
 Current phase: Feature implementation
-Current build stage: RS-F009 passed; RS-F010 planning next
+Current build stage: RS-F010 implemented; manual validation outstanding
 
 ## Execution Gate
 
@@ -53,10 +53,16 @@ For this repo state:
 - RS-F009 RLS bug fixes found during validation: PR #13 (validation infrastructure fixes) and PR #14 (00015 SECURITY DEFINER hardening, 00016 events dept_head policy fix, 00017 assignment soft-delete fix) reviewed and merged to main (2026-04-04)
 - RS-F009 manual validation (21 items) confirmed passed (2026-04-04); all re-validation checks after PR #14 merge also pass
 - RS-F010 plan drafted, reviewed, approved, and merged to main via PR #15 (2026-04-05)
+- RS-F010 implemented: lib/dashboard/types.ts, lib/dashboard/queries.ts, dashboard/page.tsx, 5 role/shared components; PR #16 reviewed, approved, and merged to main (2026-04-05)
+- RS-F010 post-merge hotfix: invalid PostgREST embedded-resource .order() calls removed (commit 52470c7, pushed to main 2026-04-05)
+- RS-F010 migration 00018: volunteer events + sub_teams RLS policies committed and pushed (commit ea58d63, 2026-04-05) — was omitted from PR #16
+- RS-F010 automated checks pass: npm run typecheck, npm run lint, npm run build
+- RS-F010 manual validation (checks 1–8): outstanding — required before marking passed
 
 ## Next Up
 
-- RS-F010: Personalized weekly dashboard (P0)
+- RS-F010: Complete manual validation (checks 1–8 from plan), then mark passed
+- RS-F011: Instructions and media sharing (P1) — next after RS-F010 passes
 
 ## Status Legend
 
@@ -79,7 +85,7 @@ Update rule:
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and assignment management | P0 | passed |
 | 9 | RS-F009 | Skill-gap detection and planning signals | P0 | passed |
-| 10 | RS-F010 | Personalized weekly dashboard | P0 | in_progress |
+| 10 | RS-F010 | Personalized weekly dashboard | P0 | in_review |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
 | 12 | RS-F012 | Assignment response workflow | P0 | not_started |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |

@@ -1,6 +1,6 @@
 # Plan: RS-F010 — Personalized Weekly Dashboard
 
-Status: Draft
+Status: Implemented — manual validation outstanding
 Feature: RS-F010
 Source PRD: docs/prd/prd.md
 Source Feature List: docs/features/feature-list.json
@@ -90,7 +90,7 @@ Two shared display components:
 
 **Schema:** None — no new tables, columns, or indexes.
 
-**Auth / RLS:** None — existing policies already scope every query correctly. No new grants or policies.
+**Auth / RLS:** Migration 00018_volunteer_event_subteam_read.sql was added as a follow-up after PR #16 merged. It adds two SECURITY DEFINER helpers (`i_have_assignment_for_event`, `i_have_assignment_for_sub_team`) and two RLS SELECT policies on `events` and `sub_teams` that grant volunteers read access to rows tied to their assignments. Without this migration the volunteer dashboard inner-joins return empty data. Committed to main 2026-04-05 (commit ea58d63).
 
 **Environment variables:** None.
 
