@@ -1,37 +1,46 @@
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { isLeaderRole, ROLE_LABELS } from "@/lib/auth/roles";
+import {
+  getVolunteerDashboardData,
+  getDeptHeadDashboardData,
+  getSubLeaderDashboardData,
+  getSuperAdminDashboardData,
+} from "@/lib/dashboard/queries";
+import { VolunteerDashboard } from "./_components/volunteer-dashboard";
+import { DeptHeadDashboard } from "./_components/dept-head-dashboard";
+import { SubLeaderDashboard } from "./_components/sub-leader-dashboard";
+import { SuperAdminDashboard } from "./_components/super-admin-dashboard";
 
 export default async function DashboardPage() {
-  const session = await getSessionWithProfile();
+  // Opt out of the full-route cache so dashboard data is fresh on every
+  // navigation. Note: rename to noStore() (no unstable_ prefix) on Next.js 15+.
+  noStore();
 
+  const session = await getSessionWithProfile();
   if (!session) {
     redirect("/sign-in");
   }
 
   const { profile } = session;
-  const leader = isLeaderRole(profile.role);
+  const displayName = profile.display_name ?? "there";
 
-  return (
-    <div className="flex flex-col gap-300">
-      <article
-        className={[
-          "rounded-300 border border-neutral-300 p-500 shadow-soft",
-          leader ? "bg-surface-cool" : "bg-surface-warm",
-        ].join(" ")}
-      >
-        <p className="font-mono text-mono uppercase text-neutral-600">
-          {ROLE_LABELS[profile.role]}
-        </p>
-        <h2 className="mt-200 font-display text-h2 text-neutral-950">
-          {profile.display_name || "Welcome"}
-        </h2>
-        <p className="mt-200 text-body-sm text-neutral-600">
-          {leader
-            ? "Your leadership dashboard will appear here as features are built."
-            : "Your volunteer dashboard will appear here as features are built."}
-        </p>
-      </article>
-    </div>
-  );
+  if (profile.role === "super_admin") {
+    const data = await getSuperAdminDashboardData();
+    return <SuperAdminDashboard data={data} />;
+  }
+
+  if (profile.role === "dept_head") {
+    const data = await getDeptHeadDashboardData(profile.id);
+    return <DeptHeadDashboard data={data} displayName={displayName} />;
+  }
+
+  if (profile.role === "sub_leader") {
+    const data = await getSubLeaderDashboardData(profile.id);
+    return <SubLeaderDashboard data={data} displayName={displayName} />;
+  }
+
+  // Default: volunteer
+  const data = await getVolunteerDashboardData(profile.id);
+  return <VolunteerDashboard data={data} displayName={displayName} />;
 }
