@@ -72,7 +72,7 @@ export type DeptHeadDashboardData = {
   pendingSkillApprovals: number;
 };
 
-export type SubLeaderDashboardData = {
+export type TeamHeadDashboardData = {
   subTeamSummaries: SubTeamRosterSummary[];
 };
 

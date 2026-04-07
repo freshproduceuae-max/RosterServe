@@ -39,7 +39,7 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
   } = assignment;
 
   const formattedDate = formatEventDate(event_date);
-  const roleLabel = role === "sub_leader" ? "Sub-leader" : "Volunteer";
+  const roleLabel = role === "team_head" ? "Team Head" : "Volunteer";
   const statusClass = STATUS_CLASSES[status] ?? STATUS_CLASSES.invited;
   const statusLabel = STATUS_LABELS[status] ?? status;
 

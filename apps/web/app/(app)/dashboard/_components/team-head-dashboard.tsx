@@ -12,12 +12,12 @@ function formatEventDate(isoDate: string): string {
 }
 import { RosterHealthBar } from "./roster-health-bar";
 
-interface SubLeaderDashboardProps {
+interface TeamHeadDashboardProps {
   data: TeamHeadDashboardData;
   displayName: string;
 }
 
-export function SubLeaderDashboard({ data, displayName }: SubLeaderDashboardProps) {
+export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps) {
   const { subTeamSummaries } = data;
 
   return (
@@ -29,12 +29,12 @@ export function SubLeaderDashboard({ data, displayName }: SubLeaderDashboardProp
         </h1>
       </div>
 
-      {/* Sub-team roster cards */}
+      {/* Team roster cards */}
       <section className="flex flex-col gap-300">
-        <h2 className="font-display text-h2 text-neutral-950">Your sub-teams</h2>
+        <h2 className="font-display text-h2 text-neutral-950">Your teams</h2>
         {subTeamSummaries.length === 0 ? (
           <p className="text-body text-neutral-600">
-            No upcoming assignments in your sub-teams.
+            No upcoming assignments in your teams.
           </p>
         ) : (
           <div className="flex flex-col gap-300">

@@ -111,7 +111,7 @@ export function AssignVolunteerForm({
           className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-950 focus:outline-none focus:ring-2 focus:ring-brand-calm-600/30"
         >
           <option value="volunteer">Volunteer</option>
-          <option value="sub_leader">Sub-leader</option>
+          <option value="team_head">Team Head</option>
           {/* dept_head option is intentionally omitted */}
         </select>
       </div>

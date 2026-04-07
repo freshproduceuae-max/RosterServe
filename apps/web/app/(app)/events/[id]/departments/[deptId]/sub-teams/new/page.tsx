@@ -25,7 +25,7 @@ export default async function NewSubTeamPage({
 
   const [department, ownerProfiles] = await Promise.all([
     getDepartmentById(deptId),
-    getProfilesByRole("sub_leader"),
+    getProfilesByRole("team_head"),
   ]);
 
   if (!department) notFound();

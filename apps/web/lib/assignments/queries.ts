@@ -36,12 +36,12 @@ export async function getAssignmentsForRoster(
 }
 
 /**
- * getSubLeaderAssignments
- * Sub-leader: active assignments for event+dept where sub_team_id is in the
+ * getTeamHeadAssignments
+ * Team head: active assignments for event+dept where sub_team_id is in the
  * caller's owned sub-teams. Caller must pass all owned sub-team IDs.
  * RLS restricts to caller's owned sub-teams.
  */
-export async function getSubLeaderAssignments(
+export async function getTeamHeadAssignments(
   eventId: string,
   deptId: string,
   subTeamIds: string[],

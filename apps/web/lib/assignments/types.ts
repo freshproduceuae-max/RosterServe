@@ -1,4 +1,4 @@
-export type AssignmentRole = 'volunteer' | 'sub_leader' | 'dept_head';
+export type AssignmentRole = 'volunteer' | 'team_head' | 'dept_head';
 export type AssignmentStatus = 'invited' | 'accepted' | 'declined' | 'served';
 
 export type Assignment = {

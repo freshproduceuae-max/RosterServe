@@ -68,7 +68,7 @@ export async function getSubTeamById(id: string): Promise<SubTeam | null> {
 }
 
 export async function getProfilesByRole(
-  role: "dept_head" | "sub_leader"
+  role: "dept_head" | "team_head"
 ): Promise<OwnerProfile[]> {
   const session = await getSessionWithProfile();
   if (

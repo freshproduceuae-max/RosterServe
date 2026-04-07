@@ -1,6 +1,6 @@
 // RS-F003 review: these queries filter deleted_at IS NULL and delegate event
 // visibility scoping entirely to RLS. After the 00003_departments migration,
-// dept_head and sub_leader users only see events where they own a department or
+// dept_head and team_head users only see events where they own a department or
 // sub-team respectively — this is enforced at the database layer, not here.
 // No application-layer changes are required.
 import { createSupabaseServerClient } from "@/lib/supabase/server";

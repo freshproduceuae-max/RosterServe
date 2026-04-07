@@ -48,7 +48,7 @@ export function SubTeamForm({
       {/* Owner */}
       <div className="flex flex-col gap-100">
         <label htmlFor="ownerId" className="text-label font-semibold text-neutral-950">
-          Sub-leader <span className="font-normal text-neutral-600">(optional)</span>
+          Team Head <span className="font-normal text-neutral-600">(optional)</span>
         </label>
         <select
           id="ownerId"

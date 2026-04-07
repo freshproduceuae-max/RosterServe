@@ -1,4 +1,11 @@
-export const APP_ROLES = ["super_admin", "dept_head", "sub_leader", "volunteer"] as const;
+export const APP_ROLES = [
+  "super_admin",
+  "all_depts_leader",
+  "dept_head",
+  "team_head",
+  "supporter",
+  "volunteer",
+] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 export type Profile = {
@@ -6,6 +13,7 @@ export type Profile = {
   role: AppRole;
   display_name: string;
   onboarding_complete: boolean;
+  supporter_of: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

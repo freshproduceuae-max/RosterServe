@@ -25,14 +25,14 @@ export default async function DepartmentDetailPage({
     department.owner_id === session.profile.id;
   const canManage = isSuperAdmin || isDeptHeadOwner;
 
-  // Sub-leaders reach this page via isLeaderRole but canManage is false.
+  // Team Heads reach this page via isLeaderRole but canManage is false.
   // They should still see the Roster link if they own a sub-team in this dept.
-  const isSubLeaderInDept =
-    session.profile.role === "sub_leader" &&
+  const isTeamHeadInDept =
+    session.profile.role === "team_head" &&
     department.sub_teams.some(
       (st) => st.owner_id === session.profile.id && st.deleted_at === null,
     );
-  const canViewRoster = canManage || isSubLeaderInDept;
+  const canViewRoster = canManage || isTeamHeadInDept;
 
   // Collect only the owner IDs actually present on this department and its sub-teams
   const ownerIds = [

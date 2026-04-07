@@ -8,19 +8,18 @@ import { AssignVolunteerForm } from "./assign-volunteer-form";
 import { GapSummary } from "./gap-summary";
 import type { RosterGapSummary } from "@/lib/skills/gap-types";
 
-// This file is superseded by team-head-roster-view.tsx. Kept for reference only.
-interface SubLeaderRosterViewProps {
+interface TeamHeadRosterViewProps {
   eventId: string;
   deptId: string;
   eventTitle: string;
-  /** All sub-teams owned by this sub-leader in this dept */
+  /** All sub-teams owned by this team head in this dept */
   subTeams: Pick<SubTeam, "id" | "name">[];
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
   gapSummary: RosterGapSummary;
 }
 
-export function SubLeaderRosterView({
+export function TeamHeadRosterView({
   eventId,
   deptId,
   eventTitle,
@@ -28,7 +27,7 @@ export function SubLeaderRosterView({
   assignments,
   volunteers,
   gapSummary,
-}: SubLeaderRosterViewProps) {
+}: TeamHeadRosterViewProps) {
   const [showForm, setShowForm] = useState(false);
 
   const heading =

@@ -5,7 +5,7 @@ import type {
   DeptRosterHealth,
   EventOverview,
   EventWithDeptHealth,
-  SubLeaderDashboardData,
+  TeamHeadDashboardData,
   SubTeamRosterSummary,
   VolunteerDashboardData,
 } from "./types";
@@ -288,12 +288,12 @@ export async function getDeptHeadDashboardData(
 }
 
 // ---------------------------------------------------------------------------
-// Sub-leader
+// Team head
 // ---------------------------------------------------------------------------
 
-export async function getSubLeaderDashboardData(
+export async function getTeamHeadDashboardData(
   userId: string,
-): Promise<SubLeaderDashboardData> {
+): Promise<TeamHeadDashboardData> {
   const supabase = await createSupabaseServerClient();
   const today = todayIso();
   const windowEnd = plusDaysIso(14);

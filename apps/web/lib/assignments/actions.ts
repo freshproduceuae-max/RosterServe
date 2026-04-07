@@ -26,7 +26,7 @@ export async function createAssignment(
   if (!session) return { error: "Unauthorized" };
 
   const callerRole = session.profile.role;
-  if (callerRole !== "dept_head" && callerRole !== "sub_leader") {
+  if (callerRole !== "dept_head" && callerRole !== "team_head") {
     return { error: "Unauthorized" };
   }
 
@@ -55,9 +55,9 @@ export async function createAssignment(
       if (!st) return { error: "Sub-team not found or does not belong to this department" };
     }
   } else {
-    // sub_leader
-    if (!subTeamId) return { error: "Sub-team is required for sub-leader assignments" };
-    if (role === "dept_head") return { error: "Sub-leaders cannot assign the dept_head role" };
+    // team_head
+    if (!subTeamId) return { error: "Sub-team is required for team head assignments" };
+    if (role === "dept_head") return { error: "Team Heads cannot assign the dept_head role" };
 
     // Verify sub-team ownership and that it belongs to this dept
     const { data: st } = await supabase
@@ -118,7 +118,7 @@ export async function updateAssignment(
   if (!session) return { error: "Unauthorized" };
 
   const callerRole = session.profile.role;
-  if (callerRole !== "dept_head" && callerRole !== "sub_leader") {
+  if (callerRole !== "dept_head" && callerRole !== "team_head") {
     return { error: "Unauthorized" };
   }
 
@@ -157,9 +157,9 @@ export async function updateAssignment(
       if (!st) return { error: "Sub-team not found or does not belong to this department" };
     }
   } else {
-    // sub_leader
+    // team_head
     if (updates.role === "dept_head") {
-      return { error: "Sub-leaders cannot assign the dept_head role" };
+      return { error: "Team Heads cannot assign the dept_head role" };
     }
     if (!assignment.sub_team_id) {
       return { error: "Unauthorized" };
@@ -207,7 +207,7 @@ export async function removeAssignment(
   if (!session) return { error: "Unauthorized" };
 
   const callerRole = session.profile.role;
-  if (callerRole !== "dept_head" && callerRole !== "sub_leader") {
+  if (callerRole !== "dept_head" && callerRole !== "team_head") {
     return { error: "Unauthorized" };
   }
 
@@ -233,7 +233,7 @@ export async function removeAssignment(
       .maybeSingle();
     if (!dept) return { error: "Unauthorized" };
   } else {
-    // sub_leader
+    // team_head
     if (!assignment.sub_team_id) {
       return { error: "Unauthorized" };
     }

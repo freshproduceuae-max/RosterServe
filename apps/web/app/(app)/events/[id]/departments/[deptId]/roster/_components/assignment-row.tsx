@@ -17,7 +17,7 @@ interface AssignmentRowProps {
 
 const ROLE_LABELS: Record<AssignmentRole, string> = {
   volunteer: "Volunteer",
-  sub_leader: "Sub-leader",
+  team_head: "Team Head",
   dept_head: "Dept head",
 };
 
@@ -124,7 +124,7 @@ export function AssignmentRow({
             className="rounded-200 border border-neutral-300 bg-neutral-0 px-200 py-100 text-body-sm focus:outline-none focus:ring-2 focus:ring-brand-calm-600/30"
           >
             <option value="volunteer">Volunteer</option>
-            <option value="sub_leader">Sub-leader</option>
+            <option value="team_head">Team Head</option>
           </select>
         ) : (
           ROLE_LABELS[assignment.role]
@@ -197,7 +197,7 @@ export function AssignmentCard({
               className="rounded-200 border border-neutral-300 bg-neutral-0 px-200 py-100 text-body-sm focus:outline-none"
             >
               <option value="volunteer">Volunteer</option>
-              <option value="sub_leader">Sub-leader</option>
+              <option value="team_head">Team Head</option>
             </select>
           ) : (
             ROLE_LABELS[assignment.role]
