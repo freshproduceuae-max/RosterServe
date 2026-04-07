@@ -19,7 +19,7 @@ export type DepartmentActionResult = { error: string } | { success: true } | und
 async function verifyOwnerRole(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   ownerId: string,
-  expectedRole: "dept_head" | "sub_leader"
+  expectedRole: "dept_head" | "team_head"
 ): Promise<boolean> {
   const { data } = await supabase
     .from("profiles")
@@ -253,9 +253,9 @@ export async function createSubTeam(
   if (!dept) return { error: "Department not found." };
 
   if (parsed.data.ownerId) {
-    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "sub_leader");
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "team_head");
     if (!validOwner) {
-      return { error: "The selected owner must be a Sub-Leader." };
+      return { error: "The selected owner must be a Team Head." };
     }
   }
 
@@ -322,9 +322,9 @@ export async function updateSubTeam(
   }
 
   if (parsed.data.ownerId) {
-    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "sub_leader");
+    const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "team_head");
     if (!validOwner) {
-      return { error: "The selected owner must be a Sub-Leader." };
+      return { error: "The selected owner must be a Team Head." };
     }
   }
 

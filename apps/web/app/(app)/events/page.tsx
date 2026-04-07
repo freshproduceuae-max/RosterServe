@@ -23,14 +23,16 @@ export default async function EventsPage({
       : undefined;
 
   const events = await getEvents(statusFilter ? { status: statusFilter } : undefined);
-  const isSuperAdmin = hasMinimumRole(session.profile.role, "super_admin");
+  // all_depts_leader can create events by default; dept_head/team_head require
+  // an explicit grant (RS-F002). Use all_depts_leader rank as the minimum.
+  const canCreateEvent = hasMinimumRole(session.profile.role, "all_depts_leader");
 
   return (
     <div className="flex flex-col gap-400">
       {/* Header */}
       <div className="flex flex-col gap-200 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-display text-h1 text-neutral-950">Events</h1>
-        {isSuperAdmin && (
+        {canCreateEvent && (
           <Link
             href="/events/new"
             className="rounded-200 bg-brand-calm-600 px-400 py-200 text-center text-body font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90"
@@ -59,7 +61,7 @@ export default async function EventsPage({
 
       {/* Content */}
       {events.length === 0 ? (
-        <EventEmptyState canCreate={isSuperAdmin} />
+        <EventEmptyState canCreate={canCreateEvent} />
       ) : (
         <EventListTable events={events} />
       )}

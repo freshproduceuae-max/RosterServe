@@ -7,7 +7,9 @@ import { EventForm } from "../_components/event-form";
 export default async function NewEventPage() {
   const session = await getSessionWithProfile();
   if (!session) redirect("/sign-in");
-  if (!hasMinimumRole(session.profile.role, "super_admin")) redirect("/events");
+  // all_depts_leader can create events by default (RS-F001).
+  // Dept Head / Team Head grants are handled in RS-F002.
+  if (!hasMinimumRole(session.profile.role, "all_depts_leader")) redirect("/events");
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-400">

@@ -30,7 +30,7 @@ export default async function EditSubTeamPage({
   const [subTeam, department, ownerProfiles] = await Promise.all([
     getSubTeamById(subTeamId),
     getDepartmentById(deptId),
-    getProfilesByRole("sub_leader"),
+    getProfilesByRole("team_head"),
   ]);
 
   if (!subTeam || !department) notFound();

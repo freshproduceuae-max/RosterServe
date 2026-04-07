@@ -6,13 +6,13 @@ import { getDepartmentById } from "@/lib/departments/queries";
 import { getEventById } from "@/lib/events/queries";
 import {
   getAssignmentsForRoster,
-  getSubLeaderAssignments,
+  getTeamHeadAssignments,
   getAllAssignmentsForEventDept,
   getVolunteersForAssignment,
 } from "@/lib/assignments/queries";
 import { getSkillGapsForDepartmentRoster } from "@/lib/skills/gap-queries";
 import { DeptHeadRosterView } from "./_components/dept-head-roster-view";
-import { SubLeaderRosterView } from "./_components/sub-leader-roster-view";
+import { TeamHeadRosterView } from "./_components/team-head-roster-view";
 import { SuperAdminRosterView } from "./_components/super-admin-roster-view";
 
 export default async function RosterPage({
@@ -58,8 +58,8 @@ export default async function RosterPage({
     );
   }
 
-  // ── Sub-leader ─────────────────────────────────────────────────────────────
-  if (role === "sub_leader") {
+  // ── Team head ──────────────────────────────────────────────────────────────
+  if (role === "team_head") {
     const mySubTeams = department.sub_teams.filter(
       (st) => st.owner_id === profileId && st.deleted_at === null,
     );
@@ -69,14 +69,14 @@ export default async function RosterPage({
     const subTeamIds = mySubTeams.map((st) => st.id);
 
     const [assignments, volunteers, gapSummary] = await Promise.all([
-      getSubLeaderAssignments(eventId, deptId, subTeamIds),
+      getTeamHeadAssignments(eventId, deptId, subTeamIds),
       getVolunteersForAssignment(deptId, eventId),
       getSkillGapsForDepartmentRoster(eventId, deptId),
     ]);
 
     return (
       <PageShell eventId={eventId} deptId={deptId}>
-        <SubLeaderRosterView
+        <TeamHeadRosterView
           eventId={eventId}
           deptId={deptId}
           eventTitle={event.title}
