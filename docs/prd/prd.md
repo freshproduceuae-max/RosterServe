@@ -247,20 +247,24 @@ Priority: `P0`
 Suggested order: `1`
 Description: Establish authenticated access and enforce the product's expanded role hierarchy from the first entry point.
 
+Scope note: RS-F001 delivers the structural role/access foundation — enum, auth typing, route guards, baseline RLS, and role entry points. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002. Those behaviors are deliberately excluded from RS-F001 validation.
+
 Requirements:
 - The product must support email/password authentication for all user roles.
 - The system must support six roles: `super_admin`, `all_depts_leader`, `dept_head`, `team_head`, `supporter`, and `volunteer`.
 - Authenticated users must land in a role-appropriate application experience.
 - Unauthenticated users must not access protected programme or roster data.
-- Role-based visibility must cascade correctly: each role sees everything directly beneath them in the hierarchy.
-- A Supporter must mirror their assigned leader's permissions excluding admin-level access.
-- Super Admin must be able to grant or revoke event-creation access for Dept Heads and Team Heads.
+- Role-based visibility must cascade correctly using a role rank; higher-ranked roles have access to data within their structural scope.
+- The `supporter` role must be stored in the database and routed to a dashboard stub; delegated permission mirroring is implemented in RS-F018.
+- The `all_depts_leader` role must be stored and routed; cross-department read scope is established in RS-F003.
 
 Validation:
-1. Sign in as each of the six roles and verify access to only allowed screens and data.
+1. Sign in as each of the six roles and verify access to only allowed screens and data within structural scope.
 2. Attempt to open protected routes without a session and confirm access is denied.
 3. Attempt cross-role access and confirm visibility is blocked at both UI and data layers.
-4. Confirm a Supporter sees exactly what their assigned leader sees, minus admin functions.
+4. Confirm `npm run typecheck`, `npm run lint`, and `npm run build` all pass with zero errors.
+5. Confirm `npx supabase db reset` applies all migrations without error.
+6. Confirm no TypeScript file references the removed `sub_leader` role string.
 
 ### RS-F002 - Event Lifecycle Management
 
@@ -609,7 +613,7 @@ The following already-built features require revision plans before their impleme
 
 | Feature | Revision needed |
 |---|---|
-| RS-F001 | Add `all_depts_leader`, `team_head`, `supporter` roles; update RLS and route guards |
+| RS-F001 | Add `all_depts_leader`, `team_head`, `supporter` roles; update RLS and route guards. Scope: structural foundation only — Supporter mirroring in RS-F018, event-creation grant in RS-F002. |
 | RS-F002 | Restrict event creation to Super Admin + All Departments Leader by default; add grant mechanism |
 | RS-F003 | Rename sub-teams to teams; add rotation labels, headcount requirements, permanent membership model |
 | RS-F006 | Change outcome of approval to create permanent group membership; add team placement step |
