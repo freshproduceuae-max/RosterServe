@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-05 (session 13)
-Current phase: Feature implementation
-Current build stage: RS-F010 implemented; manual validation outstanding
+Last updated: 2026-04-07 (session 14)
+Current phase: Product revision — vision and PRD updated; feature revisions required before resuming implementation
+Current build stage: Vision and PRD revised (2026-04-07); feature-list.json v2 published; 8 features reset to passes=false pending revision; 3 new features added (RS-F016, RS-F017, RS-F018)
 
 ## Execution Gate
 
@@ -57,12 +57,15 @@ For this repo state:
 - RS-F010 post-merge hotfix: invalid PostgREST embedded-resource .order() calls removed (commit 52470c7, pushed to main 2026-04-05)
 - RS-F010 migration 00018: volunteer events + sub_teams RLS policies committed and pushed (commit ea58d63, 2026-04-05) — was omitted from PR #16
 - RS-F010 automated checks pass: npm run typecheck, npm run lint, npm run build
-- RS-F010 manual validation (checks 1–8): outstanding — required before marking passed
+- RS-F010 manual validation (checks 1–8): paused — feature requires revision per PRD v2 before validation is meaningful
+- Vision document revised (2026-04-07): role hierarchy expanded to 6 roles, permanent group membership model added, team rotation added, request-to-serve flow replaces invitation model, terminology corrected
+- PRD revised (2026-04-07): all sections updated; RS-F016 (team rotation), RS-F017 (auto-suggestions), RS-F018 (supporter role) added
+- Feature list v2 published (2026-04-07): 8 features reset to passes=false with revision notes; RS-F005 remains passes=true; RS-F016–RS-F018 added
 
 ## Next Up
 
-- RS-F010: Complete manual validation (checks 1–8 from plan), then mark passed
-- RS-F011: Instructions and media sharing (P1) — next after RS-F010 passes
+- Decide revision sequencing: which feature to revise first (recommended: RS-F001 — role hierarchy is the foundation everything else depends on)
+- Each revision requires its own plan → Codex review → implementation → code review → validation cycle
 
 ## Status Legend
 
@@ -76,21 +79,24 @@ Update rule:
 
 | Order | ID | Feature | Priority | Status |
 |---|---|---|---|---|
-| 1 | RS-F001 | Authentication and role access | P0 | passed |
-| 2 | RS-F002 | Event lifecycle management | P0 | passed |
-| 3 | RS-F003 | Department and sub-team structure | P0 | passed |
-| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
+| 1 | RS-F001 | Authentication and role access | P0 | revision_required |
+| 2 | RS-F002 | Event lifecycle management | P0 | revision_required |
+| 3 | RS-F003 | Department and team structure | P0 | revision_required |
+| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | revision_required |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
-| 6 | RS-F006 | Interest request management | P1 | passed |
-| 7 | RS-F007 | Skill profile and approval | P0 | passed |
-| 8 | RS-F008 | Roster planning and assignment management | P0 | passed |
-| 9 | RS-F009 | Skill-gap detection and planning signals | P0 | passed |
-| 10 | RS-F010 | Personalized weekly dashboard | P0 | in_review |
+| 6 | RS-F006 | Request to join and permanent group membership | P1 | revision_required |
+| 7 | RS-F007 | Skill profile and approval | P0 | revision_required |
+| 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | revision_required |
+| 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | revision_required |
+| 10 | RS-F010 | Personalized weekly dashboard | P0 | revision_required |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
-| 12 | RS-F012 | Assignment response workflow | P0 | not_started |
+| 12 | RS-F012 | Request-to-serve response workflow | P0 | not_started |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | not_started |
 | 15 | RS-F015 | Error handling and support escalation | P2 | not_started |
+| 16 | RS-F016 | Team rotation scheduling | P1 | not_started |
+| 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | not_started |
+| 18 | RS-F018 | Supporter and secretary role management | P1 | not_started |
 
 ## Major Decisions
 

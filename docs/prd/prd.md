@@ -1,21 +1,15 @@
 # RosterServe PRD
 
 Status: Canonical
-Last updated: 2026-03-27
+Last updated: 2026-04-07 — role hierarchy expanded, permanent group membership model added, team rotation added, request-to-serve flow, skills model broadened, new features RS-F016–RS-F018 added
 Owner: Project Architecture
 
 ## 1. Canonical Inputs
 
 This PRD is based on the following inputs:
-- `VisionDocument_ChurchRosterApp.md` as the canonical product vision
+- `VisionDocument_ChurchRosterApp.md` as the canonical product vision (revised 2026-04-07)
 - `docs/design-system/design-system.md` as the canonical design and UX baseline
 - `CLAUDE.md` as the operating contract for documentation authority, stack direction, and sequencing rules
-- The current repo structure, which is greenfield and docs-only with no application code yet
-- `docs/RosteringSystem_Design_Style_Guide.md` as a secondary historical design input already normalized into the canonical design-system document
-
-Missing or limited inputs:
-- There is no implemented application, schema, or API baseline yet
-- There are no additional architecture docs beyond the current operating contract
 
 ## 2. Product Definition
 
@@ -23,8 +17,9 @@ RosterServe is a church rostering platform that helps church leaders plan weekly
 
 The current phase is a first operational release that replaces spreadsheet, WhatsApp, and email coordination with a structured product for:
 - event and roster planning
-- volunteer availability and interest capture
-- assignment communication and response
+- permanent volunteer group membership within departments
+- request-to-serve confirmation flows
+- skill management and gap detection
 - instructions and media distribution
 - role-based operational visibility
 
@@ -37,33 +32,25 @@ RosterServe is not:
 
 ## 3. Repo And Technical Baseline
 
-Current repo posture:
-- The repo currently contains product and design documents only
-- There is no live implementation to constrain the PRD
-- The PRD must therefore define a build-ready scope without assuming completed architecture
-
-Chosen technical direction from the operating contract:
+Chosen technical direction:
 - Frontend: Next.js + TypeScript + Tailwind CSS
 - Backend platform: Supabase for Postgres, Auth, Storage, Realtime, and RLS
 - Deployment: Vercel
-- Supporting libraries likely to be used: Zod, date-fns, and Resend or Supabase Edge Functions for email flows
-
-PRD implication:
-- Requirements should assume a web product with role-based access, relational data, storage-backed media, and a responsive UI
-- Requirements must not depend on Prisma-first abstractions or any other stack that conflicts with the current documented direction
+- Supporting libraries: Zod, date-fns, Resend or Supabase Edge Functions for email flows
 
 ## 4. Goals
 
 Primary goals:
 - Centralize roster planning and weekly programme communication in one product
-- Give volunteers a simple, role-relevant way to manage availability, interest, and assignment responses
-- Give leaders a structured operational view of departments, sub-teams, assignments, and skill coverage
-- Reduce missed assignments and coordination gaps by making instructions, status, and alerts visible and timely
+- Give volunteers a simple way to join departments, belong to named teams, and confirm service requests
+- Give leaders a structured operational view of departments, teams, assignments, skill coverage, and headcount
+- Surface non-confirmations and gaps early enough for leaders to act before the event
 - Preserve safety and accountability through role-based visibility, soft-delete controls, and approval flows
 
 Secondary goals:
+- Support team rotation scheduling so departments can alternate teams across weekly events
+- Provide analytics-driven auto-suggestions for cross-team gap filling
 - Create a product foundation that can later support richer reporting, integrations, and recurring workflows
-- Make the first release clear enough to plan and implement in disciplined slices
 
 ## 5. Non-Goals
 
@@ -84,6 +71,7 @@ The initial execution scope does not include:
 - Safe operations by default: destructive and high-impact actions require confirmation and deletion never bypasses approval
 - Approved data over assumed data: only approved skills count in planning decisions
 - Visibility follows responsibility: users should not gain access outside the scope defined by the role hierarchy
+- Permanent membership over per-event re-invitation: volunteers belong to named groups that persist; events pull from those groups
 - Build in reviewable slices: the product should later decompose cleanly into stable features and plans
 
 ## 7. Style And Experience Baseline
@@ -97,39 +85,61 @@ All planning, implementation, and review must preserve the following design base
 - mobile-first responsive behavior with strong desktop support for planning workflows
 - token-driven UI decisions for color, spacing, radius, typography, and motion
 
-The PRD does not authorize generic framework-default UI. Any future design or implementation that conflicts with the canonical design-system document is considered drift unless the design-system document is updated first.
-
 ## 8. Primary Users
 
-### 8.1 Super Admin / Senior Leader
+### 8.1 Super Admin
 
 Needs:
-- full visibility across events, departments, sub-teams, and users
-- the ability to create or remove major structure
-- approval control for destructive actions and administrative oversight
-- a high-level operational view of programme health
+- full visibility across all events, departments, teams, and users
+- the ability to create, edit, and remove any structure
+- approval control for permanent deletions and admin oversight
+- a high-level stats and reporting dashboard
+- the ability to grant or revoke event-creation access for Dept Heads and Team Heads
+- bulk skill upload via template or manual entry
 
-### 8.2 Department Head
-
-Needs:
-- ownership of a department within each event
-- the ability to review availability, interest, skills, and assignment status
-- the ability to create assignments, post instructions, and react to declines or gaps
-- confidence that only relevant volunteers and approved skills are used in planning
-
-### 8.3 Sub-Leader / Overseer
+### 8.2 All Departments Leader
 
 Needs:
-- delegated visibility into assigned departments or sub-teams
-- the ability to manage the part of the roster they are responsible for
-- visibility into accepted, declined, and pending assignments for their area
+- visibility and operational control across all their assigned departments
+- the ability to create events, add departments, add skills, and add Team Heads within their scope
+- the same planning and assignment capabilities as a Dept Head, applied across all departments they oversee
+- a dashboard showing planning health, skill gaps, headcount coverage, and non-confirmations across their departments
 
-### 8.4 Volunteer
+### 8.3 Department Head
 
 Needs:
-- a simple onboarding and dashboard experience
-- clear visibility into upcoming service, instructions, equipment notes, and team context
-- the ability to set availability, express interest, add skills, and accept or decline assignments
+- ownership and full control of their department and all teams within it
+- the ability to select which team (A, B, C) serves each event — manually or via automatic rotation
+- the ability to set headcount requirements per team per event type
+- visibility into team member confirmations and non-confirmations for each event
+- the ability to approve, edit, or remove volunteer skill claims within their department
+- the ability to approve volunteer requests to join their department (creating permanent group membership)
+- the ability to place approved volunteers into named teams within their department
+- the ability to add instructions and media per event, department, or team
+
+### 8.4 Team Head
+
+Needs:
+- ownership of their named team within a department
+- visibility into their team members' confirmation status for each event they are selected for
+- the ability to approve, edit, or remove volunteer skill claims for their team
+- clear assignment within their department hierarchy — always under a Dept Head unless moved
+
+### 8.5 Supporter / Secretary
+
+Needs:
+- to act on behalf of their assigned leader across all that leader's permitted actions
+- access mirroring their assigned leader's role (Dept Head level, Team Head level, etc.)
+- no admin-level access regardless of who they are assigned to
+
+### 8.6 Volunteer
+
+Needs:
+- a simple onboarding experience that leads to requesting to join departments
+- permanent group membership in a named team after their request is approved
+- clear visibility into upcoming service requests, their team context, and instructions
+- the ability to confirm or decline a request to serve, with confirmation required on decline
+- the ability to add skills (pending approval), set availability, and manage their profile
 - confidence that they only see information relevant to them
 
 ## 9. Scope By Release Posture
@@ -137,17 +147,21 @@ Needs:
 ### 9.1 Initial Execution Scope
 
 The first release should support:
-- email/password authentication and role-based access
-- event creation and lifecycle management
-- department and sub-team structure within events
-- volunteer onboarding, availability, and interest capture
-- skill submission and approval
-- roster building and assignment management
-- skill-gap detection for leaders
-- personalized weekly dashboards
-- instructions and media sharing
-- assignment acceptance and decline flows
-- notifications for assignments and key status changes
+- email/password authentication and role-based access for all six roles
+- event creation and lifecycle management (Super Admin and All Departments Leader by default; others by grant)
+- department and team structure with permanent volunteer group membership
+- named team rotation support (Team A, B, C) with manual or automatic rotation scheduling
+- headcount requirements per team per event type
+- volunteer onboarding, availability, and request-to-serve interest capture
+- skill submission and approval (Dept Head and Team Head can both approve/edit/remove)
+- bulk skill upload via admin template
+- roster confirmation flow (request to serve → Team Head confirms → volunteers confirm individually)
+- cross-team auto-suggestions for gap filling based on skill match and availability analytics
+- skill-gap and headcount-gap detection for leaders
+- personalized weekly dashboards per role with cascading visibility
+- instructions and media sharing per event, department, or team
+- request-to-serve confirmation and decline flows
+- notifications for requests to serve, confirmations, declines, and key status changes
 - proactive leader alerts before events
 - soft-delete and admin approval controls
 - friendly error handling with support escalation paths
@@ -156,7 +170,6 @@ The first release should support:
 
 Later phases may include:
 - richer analytics and reporting
-- broader admin insight dashboards
 - deeper recurring planning automation
 - third-party integrations
 - broader communications tooling
@@ -175,36 +188,43 @@ Deferred from the first release:
 
 ### 10.1 Leader Creates And Prepares An Event
 
-1. A Senior Leader or Admin creates an event and sets its status
-2. Departments and sub-teams for that event are created or assigned
-3. Department Heads and Sub-Leaders gain scoped visibility for planning
+1. Super Admin or All Departments Leader creates an event and sets its status
+2. Dept Head selects which team (A, B, C) serves this event — manually or via rotation schedule
+3. Dept Head sends a request to serve to the selected team
+4. Team Head receives the request and confirms (yes/no)
+5. Each volunteer under that Team Head also confirms individually (yes/no)
+6. Volunteers directly under the Dept Head (no Team Head) confirm directly
+7. Non-confirmations are highlighted on the Dept Head dashboard for action
 
-### 10.2 Volunteer Onboards And Signals Readiness
+### 10.2 Volunteer Joins A Department
 
-1. A volunteer signs in and completes onboarding prompts
-2. The volunteer sets general availability and blockout or preferred service times
-3. The volunteer expresses interest in departments or sub-teams
-4. The volunteer may add skills for approval
+1. Volunteer signs in and completes onboarding
+2. Volunteer submits a request to join a department
+3. Dept Head reviews and approves or rejects the request
+4. On approval, volunteer becomes a permanent member of that department
+5. Dept Head optionally places the volunteer into a named team (Team A, B, C, or a standalone team)
+6. Permanent membership persists across all future events
 
-### 10.3 Leaders Build The Roster
+### 10.3 Gap Filling And Auto-Suggestions
 
-1. A Department Head reviews event structure, volunteer availability, approved skills, and prior responses
-2. The leader assigns volunteers into department and sub-team roles
-3. The system highlights skill gaps or staffing risk
-4. The leader posts instructions and attachments relevant to assigned people
+1. A team member or Team Head cannot confirm for a specific event
+2. The non-confirmation is highlighted on the Dept Head dashboard
+3. The system suggests available members from other teams within the same department based on skill match and availability analytics
+4. Dept Head reviews suggestions and manually confirms replacements
+5. If no replacement is available from permanent members, Dept Head may consider external interest requests
 
-### 10.4 Volunteer Receives And Responds To Assignment
+### 10.4 Volunteer Confirms Or Declines
 
-1. The volunteer receives an assignment notification
-2. The volunteer opens a personalized view of the programme
-3. The volunteer accepts or declines the assignment with required confirmation where applicable
-4. Leaders see the updated status and respond if the roster needs adjustment
+1. Volunteer receives a request to serve notification
+2. Volunteer opens their dashboard and sees the request with event, team, and role context
+3. Volunteer confirms or declines (decline requires confirmation dialog)
+4. Dept Head and Team Head see the updated status in real time
 
 ### 10.5 Ongoing Weekly Operations
 
 1. Users open their role-specific dashboards during the week
-2. Leaders monitor gaps, declines, and planning status
-3. Volunteers review instructions, equipment notes, and team context
+2. Leaders monitor gaps, non-confirmations, and planning health
+3. Volunteers review instructions, team context, and upcoming service
 4. The system sends scheduled alerts ahead of the event
 
 ### 10.6 Administrative Safety And Cleanup
@@ -223,270 +243,345 @@ Priority scale:
 
 ### RS-F001 - Authentication And Role Access
 
-Priority: `P0`  
-Suggested order: `1`  
-Description: Establish authenticated access and enforce the product's role hierarchy from the first entry point.
+Priority: `P0`
+Suggested order: `1`
+Description: Establish authenticated access and enforce the product's expanded role hierarchy from the first entry point.
 
 Requirements:
 - The product must support email/password authentication for all user roles.
-- The system must support the roles `super_admin`, `dept_head`, `sub_leader`, and `volunteer`, with Senior Leader authority represented within the highest-privilege administrative role model.
+- The system must support six roles: `super_admin`, `all_depts_leader`, `dept_head`, `team_head`, `supporter`, and `volunteer`.
 - Authenticated users must land in a role-appropriate application experience.
 - Unauthenticated users must not access protected programme or roster data.
-- Role-based visibility must match the hierarchy defined in the vision and operating contract.
+- Role-based visibility must cascade correctly: each role sees everything directly beneath them in the hierarchy.
+- A Supporter must mirror their assigned leader's permissions excluding admin-level access.
+- Super Admin must be able to grant or revoke event-creation access for Dept Heads and Team Heads.
 
 Validation:
-1. Sign in as each supported role and verify access to only allowed screens and data.
+1. Sign in as each of the six roles and verify access to only allowed screens and data.
 2. Attempt to open protected routes without a session and confirm access is denied.
-3. Attempt cross-role access, such as a volunteer opening leader-only data, and confirm visibility is blocked.
+3. Attempt cross-role access and confirm visibility is blocked at both UI and data layers.
+4. Confirm a Supporter sees exactly what their assigned leader sees, minus admin functions.
 
 ### RS-F002 - Event Lifecycle Management
 
-Priority: `P0`  
-Suggested order: `2`  
+Priority: `P0`
+Suggested order: `2`
 Description: Allow authorized leaders to create and manage the weekly programme unit that anchors all planning.
 
 Requirements:
-- Authorized admins must be able to create, edit, and view events.
+- Super Admin and All Departments Leaders must be able to create, edit, and view events by default.
+- Dept Heads and Team Heads may create events only if explicitly granted access by Super Admin.
 - Each event must include a title, event type, event date, status, and creator reference.
 - Event status must support `draft`, `published`, and `completed`.
-- Departments, sub-teams, assignments, instructions, and notifications must relate back to an event.
+- Departments, teams, assignments, instructions, and notifications must relate back to an event.
 
 Validation:
-1. Create an event and verify required fields are stored and visible.
-2. Move an event through each allowed status and confirm invalid transitions are rejected.
-3. Confirm that downstream planning records cannot exist without an event reference.
+1. Create an event as Super Admin and All Departments Leader — confirm both succeed.
+2. Attempt to create an event as a Dept Head without grant — confirm it is blocked.
+3. Grant event-creation access to a Dept Head and confirm they can now create events.
+4. Move an event through each allowed status and confirm invalid transitions are rejected.
 
-### RS-F003 - Department And Sub-Team Structure
+### RS-F003 - Department And Team Structure
 
-Priority: `P0`  
-Suggested order: `3`  
-Description: Model the church's planning hierarchy so ownership and visibility map cleanly to the real organization.
+Priority: `P0`
+Suggested order: `3`
+Description: Model the church's planning hierarchy so ownership, team membership, and visibility map cleanly to the real organization.
 
 Requirements:
-- An event must support one or more departments.
-- A department may contain one or more sub-teams.
-- Each department and sub-team must support leader ownership assignment.
-- Department Heads and Sub-Leaders must only manage the structures they are responsible for.
-- Super Admin or Senior Leader users must retain cross-department visibility.
+- A department must support one or more named teams.
+- A team is a named group independent of whether a Team Head is assigned to it.
+- A team may have zero or one Team Head; a Team Head is optional.
+- Each team may have an optional rotation label (e.g. A, B, C) for rotation scheduling.
+- Each team may have a headcount requirement per event type set by the Dept Head or All Departments Leader.
+- Volunteers directly under a Dept Head with no team assignment are valid and report to the Dept Head.
+- Team Heads always belong to a department under a Dept Head unless moved or removed by an authorized leader.
+- Super Admin and All Departments Leaders retain cross-department visibility.
 
 Validation:
-1. Create an event with multiple departments and sub-teams and verify hierarchy rendering.
-2. Sign in as a Department Head and confirm access is limited to the assigned department.
-3. Sign in as a Sub-Leader and confirm access is limited to the delegated scope.
+1. Create a department with multiple named teams, some with Team Heads and some without.
+2. Confirm a team with no Team Head is valid and its members report to the Dept Head.
+3. Set a headcount requirement on a team and verify it is stored and visible in planning.
+4. Assign rotation labels to teams and confirm they are stored correctly.
+5. Sign in as a Dept Head and confirm access is limited to their department.
+6. Sign in as a Team Head and confirm access is limited to their team.
 
 ### RS-F004 - Volunteer Onboarding And Profile Setup
 
-Priority: `P0`  
-Suggested order: `4`  
-Description: Give new volunteers a guided setup path that captures the minimum information needed for rostering.
+Priority: `P0`
+Suggested order: `4`
+Description: Give new volunteers a guided setup path that leads to requesting department membership.
 
 Requirements:
 - New volunteer users must be guided through onboarding before being treated as fully configured.
-- Onboarding must collect general availability preferences, department or sub-team interest, and optional skill submissions.
-- The volunteer profile must retain the information needed for rostering, including basic identifying details relevant to the role.
-- Onboarding completion must lead the volunteer into a role-appropriate dashboard state.
+- Onboarding must collect general availability preferences, department interest (as a request to join), and optional skill submissions.
+- The volunteer profile must retain the information needed for rostering.
+- Onboarding completion must lead the volunteer into their role-appropriate dashboard.
 
 Validation:
 1. Sign in as a new volunteer and verify onboarding is shown before the main dashboard.
-2. Complete onboarding and confirm availability, interests, and optional skills are stored.
-3. Reopen the volunteer experience and confirm onboarding is not forced again once complete unless profile data becomes incomplete by design.
+2. Complete onboarding and confirm availability, department interest requests, and optional skills are stored.
+3. Reopen the volunteer experience and confirm onboarding is not forced again once complete.
 
 ### RS-F005 - Availability And Blockout Management
 
-Priority: `P0`  
-Suggested order: `5`  
-Description: Allow volunteers to express when they can serve and make that information usable in planning.
+Priority: `P0`
+Suggested order: `5`
+Description: Allow volunteers to express when they can serve and make that information usable in planning and auto-suggestions.
 
 Requirements:
 - Volunteers must be able to set available dates and update them over time.
-- The product must support general day or time preferences and blockout-style unavailability where applicable.
-- Leaders must be able to view volunteer availability within their permitted planning scope.
-- Availability must be associated with the relevant volunteer and usable during roster planning.
+- The product must support general day or time preferences and blockout-style unavailability.
+- Leaders must be able to view volunteer availability within their permitted scope.
+- Availability data must be usable in cross-team auto-suggestion logic for gap filling.
 
 Validation:
 1. Create or update availability for a volunteer and confirm it persists.
-2. Sign in as a leader with access to that volunteer's planning scope and verify availability is visible.
+2. Sign in as a leader and verify availability is visible within their permitted scope.
 3. Confirm that volunteers outside the leader's scope are not exposed.
 
-### RS-F006 - Interest Request Management
+### RS-F006 - Request To Join And Permanent Group Membership
 
-Priority: `P1`  
-Suggested order: `6`  
-Description: Allow volunteers to express interest in serving areas and route those requests to the appropriate leader.
+Priority: `P1`
+Suggested order: `6`
+Description: Allow volunteers to request to join departments and create permanent group membership on approval.
 
 Requirements:
-- Volunteers must be able to express interest in departments or sub-teams.
-- The system must record each interest request with a reviewable status.
-- Department Heads must be able to review, approve, or reject relevant requests.
+- Volunteers must be able to submit a request to join a department.
+- The system must record each request with a reviewable status (`pending`, `approved`, `rejected`).
+- Dept Heads must be able to review, approve, or reject relevant requests.
+- On approval, the volunteer must become a permanent member of that department.
+- The Dept Head must then be able to optionally place the approved volunteer into a named team within the department.
+- Permanent membership must persist across all events — leaders always see their group members regardless of whether an event is active.
 - Volunteers must be able to see the current status of their requests.
 
 Validation:
-1. Submit an interest request as a volunteer and confirm it is recorded with a pending status.
-2. Review the request as the appropriate leader and change the status.
-3. Confirm the volunteer sees the updated outcome and unrelated leaders do not.
+1. Submit a request to join a department and confirm it is recorded as pending.
+2. Approve the request as the Dept Head and confirm the volunteer appears as a permanent member of the department.
+3. Place the volunteer into a team and confirm they appear under that team.
+4. Confirm the membership is visible to the Dept Head and Team Head outside of any specific event.
+5. Reject a request and confirm the volunteer is not added to the department.
 
 ### RS-F007 - Skill Profile And Approval
 
-Priority: `P0`  
-Suggested order: `7`  
+Priority: `P0`
+Suggested order: `7`
 Description: Track volunteer skills in a way that supports planning without trusting unreviewed claims.
 
 Requirements:
-- Leaders must be able to define skills associated with departments.
-- Volunteers must be able to add skills to their profiles.
-- Added skills must enter an approval workflow before they affect planning logic.
-- Leaders with the right scope must be able to approve or reject submitted skills.
+- Super Admin must be able to define skills via manual entry or bulk template upload.
+- Volunteers must be able to add skills to their profiles (pending approval).
+- Both Dept Heads and Team Heads must be able to approve, edit, or remove volunteer skill claims within their scope.
 - Only approved skills may be used in skill-gap calculations or planning indicators.
+- Skills are associated with departments; a skill defined for a department applies to all teams within it.
 
 Validation:
-1. Create a department skill and add it to a volunteer profile.
-2. Confirm the new skill remains pending until reviewed.
-3. Approve the skill and confirm it becomes visible as approved in planning.
-4. Reject or leave a skill pending and confirm it does not count toward gap coverage.
+1. Upload skills via admin template and confirm they are created correctly.
+2. Add a skill to a volunteer profile and confirm it remains pending.
+3. Approve the skill as both a Dept Head and a Team Head — confirm both can act on it.
+4. Confirm only approved skills count in gap calculations.
+5. Edit and remove a skill claim as a Dept Head — confirm the change is applied.
 
-### RS-F008 - Roster Planning And Assignment Management
+### RS-F008 - Roster Planning And Request-To-Serve Flow
 
-Priority: `P0`  
-Suggested order: `8`  
-Description: Give leaders a structured way to assign volunteers to events, departments, and sub-teams.
+Priority: `P0`
+Suggested order: `8`
+Description: Give Dept Heads a structured way to select teams for events and send requests to serve to their members.
 
 Requirements:
-- Authorized leaders must be able to create assignments for volunteers within an event.
-- Each assignment must link an event, department, optional sub-team, volunteer, role, status, and creator context.
-- Leaders must be able to update or remove assignments within their permitted scope.
-- The planning flow must expose relevant availability and approved skill context while assigning.
+- Dept Heads must be able to select which team (by rotation label or manually) serves a given event.
+- The system must send a request to serve to the selected Team Head and all team members.
+- Team Heads must be able to confirm or decline their team's request to serve.
+- Volunteers must be able to confirm or decline their individual request to serve.
+- If a Team Head declines, the Dept Head must be able to assign a Team Head from another team for that event.
+- Non-confirmations must be highlighted on the Dept Head dashboard.
 - Assignment removal must be treated as a high-impact action and require confirmation.
 
 Validation:
-1. Create assignments across departments and verify they are stored with the required references.
-2. Edit an assignment and confirm the updated role or placement is reflected correctly.
-3. Remove an assignment and confirm confirmation is required before the change is applied.
+1. Select a team for an event and confirm requests to serve are sent to Team Head and all members.
+2. Confirm as a Team Head and as a volunteer — verify status updates are reflected.
+3. Decline as a Team Head — confirm the Dept Head is alerted and can assign a substitute.
+4. Remove an assignment and confirm confirmation is required before the change is applied.
 
 ### RS-F009 - Skill-Gap Detection And Planning Signals
 
-Priority: `P0`  
-Suggested order: `9`  
-Description: Surface staffing or skill coverage risk early enough for leaders to act before the event.
+Priority: `P0`
+Suggested order: `9`
+Description: Surface staffing, skill, and headcount coverage risk early enough for leaders to act.
 
 Requirements:
-- The system must support comparing rostered or candidate coverage against required skills for a planning scope.
-- Department Heads must be alerted when required skills are not sufficiently covered.
+- The system must compare confirmed coverage against required skills and headcount for each team per event.
+- Dept Heads must be alerted when required skills are not sufficiently covered.
+- Dept Heads must be alerted when confirmed headcount is below the team's required headcount for the event type.
 - Gap detection must use only approved skills.
-- Gap states must be visible in leader planning views before the event occurs.
+- Gap and headcount states must be visible in leader planning views before the event occurs.
 
 Validation:
-1. Define a required skill scenario with insufficient approved coverage and confirm a leader-visible gap state appears.
-2. Add approved coverage and confirm the gap state resolves.
-3. Repeat the test with unapproved skills and confirm the gap state does not resolve incorrectly.
+1. Define a required skill with insufficient approved coverage and confirm a gap state appears.
+2. Add approved coverage and confirm the gap resolves.
+3. Set a headcount requirement and confirm a headcount gap appears when confirmed count is below it.
+4. Confirm unapproved skills do not resolve gap states.
 
 ### RS-F010 - Personalized Weekly Dashboard
 
-Priority: `P0`  
-Suggested order: `10`  
+Priority: `P0`
+Suggested order: `10`
 Description: Provide each role with a weekly operational view that reflects what matters to them.
 
 Requirements:
-- Volunteers must see their upcoming assignments, instructions, team context, and relevant programme details.
-- Leaders must see department or delegated planning status, roster health, declines, and open issues within their scope.
-- Senior leaders or admins must be able to access a broader oversight view.
+- Volunteers must see their upcoming service requests, team context, confirmation status, and instructions.
+- Team Heads must see their team's confirmation status and any skill or headcount gaps for their team.
+- Dept Heads must see all teams' confirmation status, skill gaps, headcount gaps, and non-confirmations within their department.
+- All Departments Leaders must see planning health across all their departments.
+- Super Admins must see a broader oversight view with event-level stats.
 - Dashboard content must be role-specific and must not expose data outside the user's allowed visibility.
-- Updates to assignment state must be reflected quickly enough to support live weekly coordination.
+- Non-confirmations must be visually highlighted for leaders.
 
 Validation:
-1. View the dashboard as each role and verify the content differs appropriately by responsibility.
-2. Change assignment status and confirm the affected dashboard reflects the new state.
-3. Confirm that a volunteer cannot see unrelated departments or teams.
+1. View the dashboard as each role and verify content differs appropriately by responsibility.
+2. Confirm a non-confirming member is highlighted on the Dept Head and Team Head dashboards.
+3. Confirm a volunteer cannot see unrelated departments, teams, or members.
 
 ### RS-F011 - Instructions And Media Sharing
 
-Priority: `P1`  
-Suggested order: `11`  
+Priority: `P1`
+Suggested order: `11`
 Description: Let leaders publish the weekly context volunteers need in order to serve effectively.
 
 Requirements:
-- Leaders must be able to create instructions tied to an event, department, or sub-team.
-- Instructions must support text content and attachment of relevant images or documents.
+- Leaders must be able to create instructions tied to an event, department, or team.
+- Instructions must support text content and attachment of images or documents.
 - Instruction visibility must be limited to the people or teams the content is meant for.
-- Instruction content must support practical operational guidance within the character limits established by the vision.
+- Instruction content must support practical operational guidance within the character limits in the vision.
 
 Validation:
-1. Publish instructions with attachments for a department or sub-team.
-2. Verify assigned volunteers can view the content from their relevant dashboard or assignment view.
+1. Publish instructions with attachments for a department or team.
+2. Verify assigned volunteers can view the content from their dashboard.
 3. Confirm unrelated volunteers cannot access those instructions.
 
-### RS-F012 - Assignment Response Workflow
+### RS-F012 - Request-To-Serve Response Workflow
 
-Priority: `P0`  
-Suggested order: `12`  
-Description: Close the loop between assignment creation and volunteer acknowledgement.
+Priority: `P0`
+Suggested order: `12`
+Description: Close the loop between a request to serve and volunteer or Team Head confirmation.
 
 Requirements:
-- Volunteers must be able to open an assignment and respond with accept or decline actions.
-- Declining an assignment must require confirmation.
-- Assignment status must support `invited`, `accepted`, `declined`, and `served`.
+- Volunteers must be able to confirm or decline a request to serve.
+- Team Heads must be able to confirm or decline their team's request to serve.
+- Declining must require a confirmation dialog.
+- Assignment status must support `requested`, `confirmed`, `declined`, and `served`.
 - Leaders must be able to see response state changes quickly enough to react operationally.
-- The system must support marking an assignment as served when appropriate after the event.
 
 Validation:
-1. Accept an invited assignment and confirm status changes to accepted.
-2. Decline an invited assignment and confirm confirmation is required before status changes.
-3. Verify leader views reflect the accepted or declined result.
-4. Mark the assignment as served after the event and confirm state progression is recorded correctly.
+1. Confirm a request to serve as a volunteer — verify status changes to confirmed.
+2. Decline a request — confirm a confirmation dialog is shown before the status changes.
+3. Confirm as a Team Head — verify it is reflected on the Dept Head dashboard.
+4. Mark an assignment as served after the event and confirm state progression is recorded.
 
 ### RS-F013 - Notifications And Scheduled Alerts
 
-Priority: `P1`  
-Suggested order: `13`  
+Priority: `P1`
+Suggested order: `13`
 Description: Notify the right people at the right times without creating unnecessary noise.
 
 Requirements:
-- The system must send assignment notifications to volunteers when they are assigned.
-- The system must notify relevant leaders when assignments are accepted or declined.
+- The system must send a notification when a request to serve is issued.
+- The system must notify relevant leaders when a request is confirmed or declined.
 - The system must send proactive leader alerts 2 days and 5 days before an event.
-- Notification logic must respect the user's current assignment status and relevant scope.
-- Notification events must be recordable for user-facing or administrative visibility.
+- Notification logic must respect current assignment status and relevant scope.
 
 Validation:
-1. Create an assignment and confirm the volunteer receives an assignment notification.
-2. Accept or decline the assignment and confirm the appropriate leader notification is triggered.
-3. Simulate the scheduled alert windows and confirm alerts are generated at the required offsets.
-4. Confirm notifications are not sent for stale or invalid assignment states.
+1. Issue a request to serve and confirm the recipient receives a notification.
+2. Confirm or decline and verify the appropriate leader notification fires.
+3. Simulate the 2-day and 5-day alert windows and confirm alerts generate correctly.
+4. Confirm notifications are not sent for stale or invalid states.
 
 ### RS-F014 - Admin Oversight, Soft Delete, And Approval Controls
 
-Priority: `P0`  
-Suggested order: `14`  
+Priority: `P0`
+Suggested order: `14`
 Description: Preserve accountability and recoverability for high-impact changes.
 
 Requirements:
 - All deletions must be soft deletions first.
-- Permanent deletion must require an admin approval path.
-- Super Admin or Senior Leader users must be able to review and act on pending destructive changes.
-- Soft-deleted records must be removed from normal operational views while still remaining reviewable by authorized admins.
-- High-impact administrative actions must be traceable enough to support oversight.
+- Permanent deletion must require a Super Admin approval path.
+- Soft-deleted records must be removed from normal operational views while remaining reviewable by admins.
+- High-impact administrative actions must be traceable.
 
 Validation:
-1. Delete a department, sub-team, or event candidate and confirm it enters a pending state instead of being permanently removed.
-2. Review the pending deletion as an authorized admin and confirm approval is required for permanent removal.
-3. Confirm normal planning views no longer treat the soft-deleted item as active.
+1. Delete a department, team, or event and confirm it enters a pending soft-delete state.
+2. Review as Super Admin and confirm approval is required for permanent removal.
+3. Confirm normal views no longer show the soft-deleted item as active.
 
 ### RS-F015 - Error Handling And Support Escalation
 
-Priority: `P2`  
-Suggested order: `15`  
-Description: Keep failures understandable and recoverable for church teams using the system during live operations.
+Priority: `P2`
+Suggested order: `15`
+Description: Keep failures understandable and recoverable for church teams during live operations.
 
 Requirements:
-- User-facing errors must use calm, human language consistent with the design system and vision.
+- User-facing errors must use calm, human language consistent with the design system.
 - Error states must provide a clear next step where possible.
-- Error states must offer a path to contact the relevant leader or department head via WhatsApp link where applicable.
+- Error states must offer a WhatsApp contact path to the relevant leader.
 - Error states must offer a bug-report path for developer follow-up.
-- Failure states must not expose protected data or break role-based boundaries.
+- Failure states must not expose protected data or break role boundaries.
 
 Validation:
-1. Trigger a recoverable error and confirm the UI shows a human-readable message and next step.
-2. Confirm the error state includes the expected support or contact path.
-3. Confirm technical failure details are not exposed to unauthorized users.
+1. Trigger a recoverable error and confirm a human-readable message and next step appear.
+2. Confirm the error state includes the expected support path.
+3. Confirm technical details are not exposed to unauthorized users.
+
+### RS-F016 - Team Rotation Scheduling
+
+Priority: `P1`
+Suggested order: `16`
+Description: Allow Dept Heads to schedule team rotation across recurring events automatically or manually.
+
+Requirements:
+- Dept Heads and All Departments Leaders must be able to assign rotation labels (e.g. A, B, C) to teams within a department.
+- The system must support automatic rotation — cycling through teams in label order across consecutive events of the same type.
+- Dept Heads must also be able to manually override rotation and select a specific team for any event.
+- The rotation schedule must be visible on the Dept Head dashboard.
+
+Validation:
+1. Assign rotation labels to three teams and enable automatic rotation.
+2. Create three consecutive events of the same type and confirm teams are assigned in rotation order.
+3. Override rotation for one event and confirm the manual selection takes effect without disrupting the rotation sequence for subsequent events.
+
+### RS-F017 - Cross-Team Auto-Suggestions For Gap Filling
+
+Priority: `P1`
+Suggested order: `17`
+Description: When a team member cannot confirm, surface available members from other teams as suggested replacements.
+
+Requirements:
+- When a team member or Team Head declines or does not confirm, the system must generate a ranked list of suggested replacements from other teams in the same department.
+- Suggestions must be based on skill match against the team's required skills and volunteer availability.
+- Suggestions must only include permanent members of the department who are not already assigned to that event.
+- Dept Heads must be able to review and act on suggestions — accepting a suggestion creates an assignment for that volunteer.
+- Auto-suggestions must not automatically assign anyone; all suggestions require Dept Head confirmation.
+
+Validation:
+1. Create a gap by having a team member decline and confirm auto-suggestions appear on the Dept Head dashboard.
+2. Verify suggestions are ranked by skill match and availability.
+3. Confirm suggestions do not include volunteers already assigned to the event.
+4. Accept a suggestion and confirm the assignment is created with Dept Head confirmation recorded.
+
+### RS-F018 - Supporter / Secretary Role Management
+
+Priority: `P1`
+Suggested order: `18`
+Description: Allow leaders to delegate operational access to a supporter who acts on their behalf.
+
+Requirements:
+- A Super Admin must be able to assign a Supporter to a specific leader (Dept Head, Team Head, or All Departments Leader).
+- A Supporter must have the same operational permissions as their assigned leader, excluding admin-level access.
+- A Supporter must be explicitly linked to one leader at a time.
+- The system must clearly indicate in audit trails and visible contexts that an action was performed by a Supporter on behalf of their leader.
+
+Validation:
+1. Assign a Supporter to a Dept Head and confirm the Supporter can perform all Dept Head actions.
+2. Confirm the Supporter cannot access admin functions (permanent deletion, user management, bulk skill upload).
+3. Confirm actions taken by the Supporter are attributed correctly in audit context.
 
 ## 12. Hard Acceptance Conditions
 
@@ -495,18 +590,35 @@ The implementation is not acceptable unless all of the following remain true:
 - The canonical design-system document remains the visual and interaction source of truth
 - Volunteer experiences feel warm and approachable while leader experiences feel calm and structured
 - The product works on both mobile and desktop
-- Role-based visibility is enforced consistently across data and UI
-- Volunteers cannot see departments, sub-teams, or contact details outside their allowed context
+- Role-based visibility is enforced consistently across data and UI for all six roles
+- Volunteers cannot see departments, teams, or contact details outside their allowed context
+- Permanent group membership persists across events and is never reset by event-level actions
 - All destructive or high-impact actions require confirmation
 - All deletions follow soft-delete and admin approval rules before permanent removal
 - Only approved skills count in planning and gap detection
-- Assignment status progression remains controlled and observable
-- Leaders receive enough planning visibility to detect declines and gaps before the event
+- Headcount requirements are visible and factored into gap signals
+- Request-to-serve status progression remains controlled and observable
+- Auto-suggestions never automatically assign anyone — Dept Head confirmation is always required
+- Leaders receive enough planning visibility to detect non-confirmations and gaps before the event
 - Notifications do not fire without checking relevant assignment state
 - Error handling includes a friendly support path and bug-report option
 
-## 13. Notes For The Next Planning Step
+## 13. Impacted Features — Revision Required
 
-This PRD is intended to drive the canonical feature list next.
+The following already-built features require revision plans before their implementations are considered complete against this PRD:
 
-The functional requirement IDs already use the established `RS-F###` convention so they can map directly into the next documentation layer without renumbering.
+| Feature | Revision needed |
+|---|---|
+| RS-F001 | Add `all_depts_leader`, `team_head`, `supporter` roles; update RLS and route guards |
+| RS-F002 | Restrict event creation to Super Admin + All Departments Leader by default; add grant mechanism |
+| RS-F003 | Rename sub-teams to teams; add rotation labels, headcount requirements, permanent membership model |
+| RS-F006 | Change outcome of approval to create permanent group membership; add team placement step |
+| RS-F007 | Add Team Head as an approver/editor/remover of volunteer skills |
+| RS-F008 | Replace individual assignment creation with request-to-serve team selection flow |
+| RS-F009 | Add headcount gap detection alongside skill gap detection |
+| RS-F010 | Update dashboards for new roles and permanent membership visibility |
+
+New features to plan and implement in order after existing revisions:
+- RS-F016: Team Rotation Scheduling
+- RS-F017: Cross-Team Auto-Suggestions
+- RS-F018: Supporter / Secretary Role Management

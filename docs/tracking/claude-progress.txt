@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-04-05 (session 13)
-Project phase: Feature implementation
-Repo baseline: Runnable workspace with auth + event + department/sub-team + volunteer onboarding + availability/blockout + interest request + skill profile/approval + roster planning/assignment + skill-gap detection + personalized weekly dashboard (implementation done, validation outstanding); RS-F001–RS-F009 passed; RS-F010 in_review
+Last updated: 2026-04-07 (session 14)
+Project phase: Product revision — vision and PRD revised; feature revisions required
+Repo baseline: Codebase unchanged — all revision work is doc-only this session
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,86 +9,84 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- RS-F010: Personalized weekly dashboard — IMPLEMENTED, manual validation outstanding (2026-04-05)
-  - PR #15 merged: implementation plan docs
-  - PR #16 merged: full feature implementation
-      lib/dashboard/types.ts — 4 role data shapes + supporting types
-      lib/dashboard/queries.ts — 4 role query functions (noStore, server-client)
-      app/(app)/dashboard/page.tsx — replaced placeholder with role-branching server component
-      _components/volunteer-dashboard.tsx
-      _components/dept-head-dashboard.tsx
-      _components/sub-leader-dashboard.tsx
-      _components/super-admin-dashboard.tsx
-      _components/assignment-card.tsx
-      _components/roster-health-bar.tsx
-  - Post-merge hotfix (commit 52470c7): removed invalid PostgREST .order() calls on embedded resources (caused empty dashboards)
-  - Migration 00018 (commit ea58d63): volunteer events + sub_teams RLS — two SECURITY DEFINER helpers + two SELECT policies; was omitted from PR #16, committed in session 13 wrap-up
+- Vision document revised (VisionDocument_ChurchRosterApp.md) — 2026-04-07
+  Key changes:
+  - Role hierarchy expanded to 6: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer
+  - Permanent group membership model: volunteers join Team A/B/C permanently; membership ≠ automatic event assignment
+  - Team rotation: automatic (system cycles A→B→C) or manual (Dept Head selects per event)
+  - Request-to-serve flow replaces invitation model throughout
+  - Cross-team auto-suggestions for gap filling (analytics-based, Dept Head confirmation required)
+  - Team Head is optional at team level; Dept Head is always required
+  - Teams are named groups independent of whether a Team Head exists
+  - Skills created by Super Admin (manual or bulk upload); Dept Head and Team Head both approve/edit/remove volunteer skills
+  - Event creation: Super Admin + All Departments Leader by default; Dept Head/Team Head by admin grant only
 
-AUTOMATED CHECKS
-- npm run typecheck — PASS
-- npm run lint — PASS
-- npm run build — PASS
+- PRD revised (docs/prd/prd.md) — 2026-04-07
+  - All 8 primary users updated for new role model
+  - Core workflows rewritten for request-to-serve and permanent membership
+  - RS-F001–RS-F010 requirements updated
+  - RS-F016 (Team Rotation Scheduling) added
+  - RS-F017 (Cross-Team Auto-Suggestions) added
+  - RS-F018 (Supporter/Secretary Role Management) added
+  - Section 13 added: revision table for all impacted features
 
-MANUAL VALIDATION OUTSTANDING (checks 1–8)
-  1. Volunteer dashboard shows correct upcoming assignments (14-day window), correct context chips, pending skill/interest counts
-  2. Dept-head view shows correct invited/accepted/declined per owned dept, gap badge count matches dept-detail page
-  3. Sub-leader view shows correct sub-team roster cards and gap badges
-  4. Super-admin view shows correct event table with dept + volunteer counts
-  5. Zero-scope cross-account check (volunteer A cannot see volunteer B's data)
-  6. State-change check (invited → accepted reflects on next dashboard load)
-  7. Empty-state check (each role shows calm empty message when no upcoming data)
-  8. Design-fidelity review (surface tints per role, chip tokens, gap badge amber, card spacing, heading hierarchy)
+- Feature list v2 published (docs/features/feature-list.json) — 2026-04-07
+  - Total features: 18 (was 15)
+  - passes=true: RS-F005 only
+  - revision_required=true: RS-F001, RS-F002, RS-F003, RS-F004, RS-F006, RS-F007, RS-F008, RS-F009, RS-F010
+  - New features: RS-F016, RS-F017, RS-F018
 
-KNOWN FOLLOW-UP (not blocking RS-F010 validation, but before RS-F012)
-- Two sibling soft-delete re-check bugs from RS-F007 code review:
-    "Dept heads can soft-delete own department skills" on department_skills
-    "Volunteers can withdraw own pending skill claims" on volunteer_skills
-  Latent — no user-facing breakage confirmed — address before RS-F012.
+CODEBASE STATUS
+- No code was changed this session — all changes are docs only
+- Existing implementation (RS-F001 through RS-F010 code) is still in main but is now out of sync with the revised PRD
+- Do NOT continue building new features on top of the existing code until revisions are planned and approved
+- The local dev environment is running (Supabase + Next.js at localhost:3000) with test data seeded
 
 TEST STATUS
-- RS-F001–RS-F009: passed
-- RS-F010: in_review (implementation done; manual validation outstanding)
-- RS-F011+: not_started
+- RS-F005: passes=true (availability feature not affected by revision)
+- All other features: revision_required — not valid against PRD v2
 
 BLOCKERS
-- None
+- None — revision sequencing is a planning decision, not a blocker
 
-ACTIVE FEATURE
-- RS-F010 (validation phase)
+PENDING ITEMS FROM PRE-REVISION SESSION
+- Status chip label "invited" → should reflect "requested to serve" terminology (label polish, tracked)
+- Permanent membership note: logged as addressed in PRD v2
+- Multiple team options (Team A/B/C): logged as addressed in PRD v2
 
 NEXT REQUIRED ACTION
-1. Run RS-F010 manual validation checks 1–8 in a live environment
-   - Check list: docs/plans/plan-rs-f010-weekly-dashboard.md → "Validation Plan" section
-   - If all pass: mark RS-F010.passes = true in docs/features/feature-list.json, update progress.md status to `passed`, update plan status to `Implemented and Validated`, update claude-progress.txt
-2. Begin RS-F011 (Instructions and media sharing, P1)
-   - Plan file to create: docs/plans/plan-rs-f011-instructions-media.md
-   - Depends on: RS-F002, RS-F003, RS-F008 (all passed)
+1. Decide revision order — recommended sequence (each depends on the previous):
+   a. RS-F001 — role hierarchy is the foundation; all other revisions depend on new roles existing
+   b. RS-F003 — team/sub-team rename + headcount + rotation labels
+   c. RS-F002 — event creation authority + grant mechanism
+   d. RS-F006 — permanent membership outcome
+   e. RS-F007 — Team Head as approver
+   f. RS-F008 — request-to-serve flow
+   g. RS-F009 — headcount gap detection
+   h. RS-F004 — onboarding update
+   i. RS-F010 — dashboard for new roles
+2. For each revision: write plan → Codex advisory review → implement → Codex code review → validate → mark passed
+3. New features (RS-F016, RS-F017, RS-F018) come after all revisions are complete
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- Last merged branch: codex/rs-f010-weekly-dashboard (deleted after merge, PR #16)
-- Next likely branch: codex/rs-f011-instructions-media
+- Last merged branch: codex/rs-f010-weekly-dashboard (pre-revision)
+- Next likely branch: codex/rs-f001-role-hierarchy-revision
 
 PLAN STATUS
-- RS-F010 plan: IMPLEMENTED — VALIDATION OUTSTANDING
-  - Plan file: docs/plans/plan-rs-f010-weekly-dashboard.md
-- RS-F011 plan: NOT STARTED
-  - Plan file (to create): docs/plans/plan-rs-f011-instructions-media.md
-
-MIGRATION STATUS
-- 00018_volunteer_event_subteam_read.sql: committed to main (ea58d63), pushed to origin; must be applied to production Supabase before the volunteer dashboard works end-to-end
+- All existing plans in docs/plans/ are now partially outdated — they predate the PRD v2 revision
+- Do not reuse old plans for revised features; write new revision plans
 
 CANONICAL DOCS
-- PRD: docs/prd/prd.md
-- Feature registry: docs/features/feature-list.json
+- Vision: VisionDocument_ChurchRosterApp.md (revised 2026-04-07)
+- PRD: docs/prd/prd.md (revised 2026-04-07)
+- Feature registry: docs/features/feature-list.json (v2, 2026-04-07)
 - Progress tracker: docs/tracking/progress.md
 - Session handoff: docs/tracking/claude-progress.txt
-- Plan rules: docs/plans/README.md
-- RS-F010 plan: docs/plans/plan-rs-f010-weekly-dashboard.md
 
 CARRY-OVER EXECUTION NOTES
 - Follow the canonical design system for all UI work
-- Keep feature execution aligned to the registry order unless an approved plan justifies exception
-- Mark a feature as passed only when its validation is genuinely satisfied
-- Owner/scope invariants must be enforced at both server-action and DB-policy layers
+- Permanent membership persists across events — never reset by event-level actions
+- Team Head is optional; Dept Head is always required for a volunteer
+- Auto-suggestions never auto-assign — Dept Head confirmation always required
 - Do not commit directly to main; use a clean branch per feature
