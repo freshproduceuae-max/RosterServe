@@ -27,13 +27,12 @@
       "ui": true,
       "surface": ["auth", "admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
       "revisionRequired": true,
-      "revisionNote": "Add all_depts_leader, team_head, supporter roles; update RLS policies, route guards, and role-based entry points for all six roles.",
+      "revisionNote": "Add all_depts_leader, team_head, supporter roles; update RLS policies, route guards, and role-based entry points for all six roles. Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002.",
       "steps": [
-        "Support six roles: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer.",
-        "Route each role into a role-appropriate entry experience.",
-        "Enforce role-scoped access across all protected views and data.",
-        "Allow Super Admin to grant or revoke event-creation access for Dept Heads and Team Heads.",
-        "Supporter mirrors their assigned leader's permissions excluding admin-level access."
+        "Support six roles: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer in the database enum and TypeScript type system.",
+        "Route each role into a role-appropriate entry experience on sign-in.",
+        "Enforce role-scoped access across all protected views and data using baseline RLS policies.",
+        "Provide dashboard stubs for all_depts_leader, team_head, and supporter; full dashboard content is covered by RS-F010."
       ],
       "passes": false
     },
