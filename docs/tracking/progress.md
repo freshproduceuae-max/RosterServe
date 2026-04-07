@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-08 (session 15)
-Current phase: Product revision — vision and PRD updated; feature revisions required before resuming implementation
-Current build stage: RS-F001 revision implemented and partially validated; browser validation for new roles remains outstanding before pass
+Last updated: 2026-04-08 (session 16)
+Current phase: Active revision cycle — RS-F001 passed; RS-F002 revision next
+Current build stage: 2 features passed (RS-F001, RS-F005); RS-F002 revision plan not yet started
 
 ## Execution Gate
 
@@ -69,12 +69,15 @@ For this repo state:
   - `npx supabase db reset`: all 20 migrations apply cleanly
   - `SELECT policyname FROM pg_policies WHERE policyname ILIKE '%sub_leader%'`: 0 rows
   - `npm run typecheck`, `npm run lint`, `npm run build`: all pass
-  - Manual browser checks (login as `team_head` / `all_depts_leader` / `supporter`): deferred - requires seeded test accounts with new roles
+  - Manual browser checks (login as `team_head` / `all_depts_leader` / `supporter`): confirmed passed (2026-04-08)
+    - `team_head`: signs in → `/dashboard` renders, `/events` visible (no Create CTA), `/events/new` blocked → redirects to `/events`, `/availability` accessible
+    - `all_depts_leader`: signs in → `/dashboard` stub renders, `/events` shows Create CTA, `/events/new` accessible
+    - `supporter`: signs in → `/dashboard` stub renders, Events nav link absent, 0 JS errors
+  - All 11 validation checks passed — RS-F001 marked `passes=true`
 
 ## Next Up
 
-- Finish RS-F001 browser validation for `team_head`, `all_depts_leader`, and `supporter`, then mark RS-F001 passed if all checks clear
-- RS-F002 revision: event lifecycle management - next feature after RS-F001 validation completes
+- RS-F002 revision: event lifecycle management — restrict creation to super_admin + all_depts_leader by default; add grant mechanism for dept_head / team_head
 - Each revision requires its own plan → Codex advisory review → implementation → Codex blocking code review → user approval → validation cycle
 
 ## Status Legend
@@ -89,7 +92,7 @@ Update rule:
 
 | Order | ID | Feature | Priority | Status |
 |---|---|---|---|---|
-| 1 | RS-F001 | Authentication and role access | P0 | in_review |
+| 1 | RS-F001 | Authentication and role access | P0 | passed |
 | 2 | RS-F002 | Event lifecycle management | P0 | revision_required |
 | 3 | RS-F003 | Department and team structure | P0 | revision_required |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | revision_required |

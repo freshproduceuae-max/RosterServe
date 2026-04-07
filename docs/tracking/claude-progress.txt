@@ -1,6 +1,6 @@
 ROSTERSERVE SESSION HANDOFF
 Last updated: 2026-04-08 (session 15)
-Project phase: Active revision cycle — RS-F001 revision implemented; browser validation outstanding
+Project phase: Active revision cycle — RS-F001 passed; RS-F002 revision next
 Repo baseline: main is clean and up to date; 20 migrations apply cleanly
 
 HANDOFF RULE
@@ -23,13 +23,15 @@ RS-F001 revision — role hierarchy expansion
     - Root cause: SQLSTATE 55P04 — PostgreSQL disallows using a new enum value in the same transaction it was added
     - Fix: 00019 contains only ALTER TYPE ADD VALUE; 00020 contains all downstream work
 
-VALIDATION RESULTS (run after PR #19 merge)
-  - npx supabase db reset: all 20 migrations apply cleanly
-  - SELECT policyname ... ILIKE '%sub_leader%': 0 rows
-  - npm run typecheck: PASS
-  - npm run lint: PASS
-  - npm run build: PASS
-  - Manual browser checks (login as team_head/all_depts_leader/supporter): deferred - requires seeded test accounts with new roles
+VALIDATION RESULTS (all checks confirmed 2026-04-08)
+  - npx supabase db reset: all 20 migrations apply cleanly ✓
+  - SELECT policyname ... ILIKE '%sub_leader%': 0 rows ✓
+  - npm run typecheck: PASS ✓
+  - npm run lint: PASS ✓
+  - npm run build: PASS ✓
+  - team_head browser: signs in → /dashboard renders, /events visible (no Create CTA), /events/new blocked ✓
+  - all_depts_leader browser: signs in → /dashboard stub, /events shows Create CTA, /events/new accessible ✓
+  - supporter browser: signs in → /dashboard stub, no Events nav link, 0 JS errors ✓
 
 CODEBASE STATUS
 - 20 migrations applied cleanly on db reset
@@ -40,7 +42,7 @@ CODEBASE STATUS
 - hasMinimumRole(role, "all_depts_leader") gates event creation — covers super_admin + all_depts_leader
 
 FEATURE STATUS SUMMARY
-- RS-F001: in_review — code and migration work landed; browser validation still required before passes=true
+- RS-F001: passed ✅
 - RS-F005: passed ✅
 - RS-F002–RS-F004, RS-F006–RS-F010: revision_required
 - RS-F011–RS-F018: not_started
@@ -49,19 +51,16 @@ BLOCKERS
 - None
 
 NEXT REQUIRED ACTION
-1. Finish RS-F001 browser validation
-   - Seed or create test accounts for team_head, all_depts_leader, and supporter
-   - Verify each can sign in and reach the expected dashboard surface
-   - If all checks pass: set RS-F001 passes=true and update tracking docs
-2. Then start RS-F002 revision: event lifecycle management
-   - Restrict event creation to super_admin + all_depts_leader by default
-   - Add grant mechanism for dept_head / team_head
-3. Follow full cycle: write plan -> Codex advisory review -> implement -> Codex blocking code review -> user approval -> validate
+1. RS-F002 revision: event lifecycle management
+   - Restrict event creation to super_admin + all_depts_leader by default (event creation gate already correct in code from PR #18)
+   - Add grant mechanism allowing super_admin to grant dept_head / team_head event-creation access
+   - Maintain event lifecycle states: draft, published, completed
+2. Follow full cycle: write plan -> Codex advisory review -> implement -> Codex blocking code review -> user approval -> validate
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
 - Last merged branches: codex/rs-f001-role-hierarchy-revision-impl (PR #18), fix/rs-f001-migration-split (PR #19)
-- Next branch: codex/rs-f001-browser-validation or codex/rs-f002-event-lifecycle-revision
+- Next branch: codex/rs-f002-event-lifecycle-revision
 
 PLAN STATUS
 - docs/plans/plan-rs-f001-role-hierarchy-revision.md: implemented; validation outstanding

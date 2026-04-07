@@ -1,6 +1,6 @@
 # Implementation Plan: RS-F001 — Role Hierarchy Revision
 
-**Status:** Implemented — browser validation outstanding  
+**Status:** Passed — all 11 validation checks confirmed (2026-04-08)  
 **Feature:** RS-F001 Authentication and role access  
 **Revision:** PRD v2 (2026-04-07) — expand from 4 roles to 6 roles  
 **Branch:** `codex/rs-f001-role-hierarchy-revision`  

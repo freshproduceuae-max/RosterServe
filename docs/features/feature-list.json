@@ -27,14 +27,14 @@
       "ui": true,
       "surface": ["auth", "admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
       "revisionRequired": false,
-      "revisionNote": "Revised 2026-04-08 (PR #17 plan, PR #18 + PR #19 implementation). Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002. Code and migration work landed, but browser validation for team_head / all_depts_leader / supporter remains outstanding before passes can be set true.",
+      "revisionNote": "Revised 2026-04-08 (PR #17 plan, PR #18 + PR #19 implementation). Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002. Browser validation confirmed 2026-04-08: team_head, all_depts_leader, supporter all sign in and reach correct dashboard surfaces; event creation gate verified for both roles.",
       "steps": [
         "Support six roles: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer in the database enum and TypeScript type system.",
         "Route each role into a role-appropriate entry experience on sign-in.",
         "Enforce role-scoped access across all protected views and data using baseline RLS policies.",
         "Provide dashboard stubs for all_depts_leader, team_head, and supporter; full dashboard content is covered by RS-F010."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F002",
