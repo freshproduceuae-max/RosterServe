@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-07 (session 14)
+Last updated: 2026-04-08 (session 15)
 Current phase: Product revision — vision and PRD updated; feature revisions required before resuming implementation
-Current build stage: Vision and PRD revised (2026-04-07); feature-list.json v2 published; 8 features reset to passes=false pending revision; 3 new features added (RS-F016, RS-F017, RS-F018)
+Current build stage: RS-F001 revision implemented and partially validated; browser validation for new roles remains outstanding before pass
 
 ## Execution Gate
 
@@ -61,11 +61,21 @@ For this repo state:
 - Vision document revised (2026-04-07): role hierarchy expanded to 6 roles, permanent group membership model added, team rotation added, request-to-serve flow replaces invitation model, terminology corrected
 - PRD revised (2026-04-07): all sections updated; RS-F016 (team rotation), RS-F017 (auto-suggestions), RS-F018 (supporter role) added
 - Feature list v2 published (2026-04-07): 8 features reset to passes=false with revision notes; RS-F005 remains passes=true; RS-F016–RS-F018 added
+- RS-F001 revision plan drafted, Codex advisory reviewed (NEEDS_DISCUSSION resolved), approved, and merged via PR #17 (2026-04-08)
+  - Scope narrowed in PRD and feature-list.json: Supporter mirroring → RS-F018; event-creation grant → RS-F002
+- RS-F001 revision implemented: migration 00019 (enum ADD VALUE) + 00020 (data migration, supporter_of column, CHECK constraint, trigger, 11 RLS policy updates); TypeScript 6-role types, dashboard stubs for all_depts_leader/team_head/supporter, all_depts_leader event creation access; PR #18 reviewed (3 Codex rounds), approved, and merged to main (2026-04-08)
+- RS-F001 migration split hotfix: PR #19 merged (2026-04-08) — 00019 retains only ALTER TYPE ADD VALUE; 00020 has all downstream work (required because PostgreSQL disallows using a new enum value in the same transaction it was added)
+- RS-F001 post-merge validation (2026-04-08):
+  - `npx supabase db reset`: all 20 migrations apply cleanly
+  - `SELECT policyname FROM pg_policies WHERE policyname ILIKE '%sub_leader%'`: 0 rows
+  - `npm run typecheck`, `npm run lint`, `npm run build`: all pass
+  - Manual browser checks (login as `team_head` / `all_depts_leader` / `supporter`): deferred - requires seeded test accounts with new roles
 
 ## Next Up
 
-- Decide revision sequencing: which feature to revise first (recommended: RS-F001 — role hierarchy is the foundation everything else depends on)
-- Each revision requires its own plan → Codex review → implementation → code review → validation cycle
+- Finish RS-F001 browser validation for `team_head`, `all_depts_leader`, and `supporter`, then mark RS-F001 passed if all checks clear
+- RS-F002 revision: event lifecycle management - next feature after RS-F001 validation completes
+- Each revision requires its own plan → Codex advisory review → implementation → Codex blocking code review → user approval → validation cycle
 
 ## Status Legend
 
@@ -79,7 +89,7 @@ Update rule:
 
 | Order | ID | Feature | Priority | Status |
 |---|---|---|---|---|
-| 1 | RS-F001 | Authentication and role access | P0 | revision_required |
+| 1 | RS-F001 | Authentication and role access | P0 | in_review |
 | 2 | RS-F002 | Event lifecycle management | P0 | revision_required |
 | 3 | RS-F003 | Department and team structure | P0 | revision_required |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | revision_required |

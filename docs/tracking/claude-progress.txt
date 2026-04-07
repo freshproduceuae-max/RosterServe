@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-04-07 (session 14)
-Project phase: Product revision — vision and PRD revised; feature revisions required
-Repo baseline: Codebase unchanged — all revision work is doc-only this session
+Last updated: 2026-04-08 (session 15)
+Project phase: Active revision cycle — RS-F001 revision implemented; browser validation outstanding
+Repo baseline: main is clean and up to date; 20 migrations apply cleanly
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -9,80 +9,63 @@ HANDOFF RULE
 - Keep the "next required action" section precise enough for a fresh agent to continue immediately.
 
 LATEST COMPLETED WORK
-- Vision document revised (VisionDocument_ChurchRosterApp.md) — 2026-04-07
-  Key changes:
-  - Role hierarchy expanded to 6: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer
-  - Permanent group membership model: volunteers join Team A/B/C permanently; membership ≠ automatic event assignment
-  - Team rotation: automatic (system cycles A→B→C) or manual (Dept Head selects per event)
-  - Request-to-serve flow replaces invitation model throughout
-  - Cross-team auto-suggestions for gap filling (analytics-based, Dept Head confirmation required)
-  - Team Head is optional at team level; Dept Head is always required
-  - Teams are named groups independent of whether a Team Head exists
-  - Skills created by Super Admin (manual or bulk upload); Dept Head and Team Head both approve/edit/remove volunteer skills
-  - Event creation: Super Admin + All Departments Leader by default; Dept Head/Team Head by admin grant only
 
-- PRD revised (docs/prd/prd.md) — 2026-04-07
-  - All 8 primary users updated for new role model
-  - Core workflows rewritten for request-to-serve and permanent membership
-  - RS-F001–RS-F010 requirements updated
-  - RS-F016 (Team Rotation Scheduling) added
-  - RS-F017 (Cross-Team Auto-Suggestions) added
-  - RS-F018 (Supporter/Secretary Role Management) added
-  - Section 13 added: revision table for all impacted features
+RS-F001 revision — role hierarchy expansion
+  PR #17 (plan): docs/prd/prd.md + docs/features/feature-list.json narrowed RS-F001 scope
+    - Supporter mirroring deferred to RS-F018
+    - Event-creation grant deferred to RS-F002
+    - RS-F001 = structural foundation only (enum, types, RLS, dashboard stubs)
+  PR #18 (implementation): 2 migrations + full TypeScript + 6 role dashboard stubs
+    - Migrations: 00019 (ALTER TYPE ADD VALUE for 3 new roles) + 00020 (data migration, supporter_of column, RLS)
+    - 3 Codex blocking review rounds before APPROVED
+    - Fixes applied: removed DROP TYPE attempt; fixed event creation gate; cleaned sub_leader identifier remnants
+  PR #19 (hotfix): migration split for reset safety
+    - Root cause: SQLSTATE 55P04 — PostgreSQL disallows using a new enum value in the same transaction it was added
+    - Fix: 00019 contains only ALTER TYPE ADD VALUE; 00020 contains all downstream work
 
-- Feature list v2 published (docs/features/feature-list.json) — 2026-04-07
-  - Total features: 18 (was 15)
-  - passes=true: RS-F005 only
-  - revision_required=true: RS-F001, RS-F002, RS-F003, RS-F004, RS-F006, RS-F007, RS-F008, RS-F009, RS-F010
-  - New features: RS-F016, RS-F017, RS-F018
+VALIDATION RESULTS (run after PR #19 merge)
+  - npx supabase db reset: all 20 migrations apply cleanly
+  - SELECT policyname ... ILIKE '%sub_leader%': 0 rows
+  - npm run typecheck: PASS
+  - npm run lint: PASS
+  - npm run build: PASS
+  - Manual browser checks (login as team_head/all_depts_leader/supporter): deferred - requires seeded test accounts with new roles
 
 CODEBASE STATUS
-- No code was changed this session — all changes are docs only
-- Existing implementation (RS-F001 through RS-F010 code) is still in main but is now out of sync with the revised PRD
-- Do NOT continue building new features on top of the existing code until revisions are planned and approved
-- The local dev environment is running (Supabase + Next.js at localhost:3000) with test data seeded
+- 20 migrations applied cleanly on db reset
+- sub_leader enum value: intentionally left in PostgreSQL type as deprecated dead value (removing it requires dropping all dependent functions/policies; no row carries sub_leader after migration)
+- supporter_of column added to profiles (nullable FK) — used by RS-F018 (permission mirroring), not wired yet
+- all_depts_leader and supporter dashboard stubs are placeholders; full content is RS-F010's responsibility
+- isLeaderRole() excludes supporter (their access is derived from supporter_of FK, not structural scope)
+- hasMinimumRole(role, "all_depts_leader") gates event creation — covers super_admin + all_depts_leader
 
-TEST STATUS
-- RS-F005: passes=true (availability feature not affected by revision)
-- All other features: revision_required — not valid against PRD v2
+FEATURE STATUS SUMMARY
+- RS-F001: in_review — code and migration work landed; browser validation still required before passes=true
+- RS-F005: passed ✅
+- RS-F002–RS-F004, RS-F006–RS-F010: revision_required
+- RS-F011–RS-F018: not_started
 
 BLOCKERS
-- None — revision sequencing is a planning decision, not a blocker
-
-PENDING ITEMS FROM PRE-REVISION SESSION
-- Status chip label "invited" → should reflect "requested to serve" terminology (label polish, tracked)
-- Permanent membership note: logged as addressed in PRD v2
-- Multiple team options (Team A/B/C): logged as addressed in PRD v2
+- None
 
 NEXT REQUIRED ACTION
-1. Decide revision order — recommended sequence (each depends on the previous):
-   a. RS-F001 — role hierarchy is the foundation; all other revisions depend on new roles existing
-   b. RS-F003 — team/sub-team rename + headcount + rotation labels
-   c. RS-F002 — event creation authority + grant mechanism
-   d. RS-F006 — permanent membership outcome
-   e. RS-F007 — Team Head as approver
-   f. RS-F008 — request-to-serve flow
-   g. RS-F009 — headcount gap detection
-   h. RS-F004 — onboarding update
-   i. RS-F010 — dashboard for new roles
-2. For each revision: write plan → Codex advisory review → implement → Codex code review → validate → mark passed
-3. New features (RS-F016, RS-F017, RS-F018) come after all revisions are complete
+1. Finish RS-F001 browser validation
+   - Seed or create test accounts for team_head, all_depts_leader, and supporter
+   - Verify each can sign in and reach the expected dashboard surface
+   - If all checks pass: set RS-F001 passes=true and update tracking docs
+2. Then start RS-F002 revision: event lifecycle management
+   - Restrict event creation to super_admin + all_depts_leader by default
+   - Add grant mechanism for dept_head / team_head
+3. Follow full cycle: write plan -> Codex advisory review -> implement -> Codex blocking code review -> user approval -> validate
 
 BRANCH CONVENTION
 - Use codex/<feature-id>-<short-slug>
-- Last merged branch: codex/rs-f010-weekly-dashboard (pre-revision)
-- Next likely branch: codex/rs-f001-role-hierarchy-revision
+- Last merged branches: codex/rs-f001-role-hierarchy-revision-impl (PR #18), fix/rs-f001-migration-split (PR #19)
+- Next branch: codex/rs-f001-browser-validation or codex/rs-f002-event-lifecycle-revision
 
 PLAN STATUS
-- All existing plans in docs/plans/ are now partially outdated — they predate the PRD v2 revision
-- Do not reuse old plans for revised features; write new revision plans
-
-CANONICAL DOCS
-- Vision: VisionDocument_ChurchRosterApp.md (revised 2026-04-07)
-- PRD: docs/prd/prd.md (revised 2026-04-07)
-- Feature registry: docs/features/feature-list.json (v2, 2026-04-07)
-- Progress tracker: docs/tracking/progress.md
-- Session handoff: docs/tracking/claude-progress.txt
+- docs/plans/plan-rs-f001-role-hierarchy-revision.md: implemented; validation outstanding
+- All pre-revision plans (RS-F002 through RS-F010) are outdated — write new revision plans
 
 CARRY-OVER EXECUTION NOTES
 - Follow the canonical design system for all UI work
@@ -90,3 +73,11 @@ CARRY-OVER EXECUTION NOTES
 - Team Head is optional; Dept Head is always required for a volunteer
 - Auto-suggestions never auto-assign — Dept Head confirmation always required
 - Do not commit directly to main; use a clean branch per feature
+- The sub_leader enum value is deprecated dead; do not introduce it into new code or policies
+
+CANONICAL DOCS
+- Vision: VisionDocument_ChurchRosterApp.md (revised 2026-04-07)
+- PRD: docs/prd/prd.md (revised 2026-04-07, RS-F001 scope narrowed 2026-04-08)
+- Feature registry: docs/features/feature-list.json (v2; RS-F001 in_review pending browser validation)
+- Progress tracker: docs/tracking/progress.md
+- Session handoff: docs/tracking/claude-progress.txt

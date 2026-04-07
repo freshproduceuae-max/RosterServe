@@ -26,8 +26,8 @@
       "dependsOn": [],
       "ui": true,
       "surface": ["auth", "admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
-      "revisionRequired": true,
-      "revisionNote": "Add all_depts_leader, team_head, supporter roles; update RLS policies, route guards, and role-based entry points for all six roles. Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08 (PR #17 plan, PR #18 + PR #19 implementation). Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002. Code and migration work landed, but browser validation for team_head / all_depts_leader / supporter remains outstanding before passes can be set true.",
       "steps": [
         "Support six roles: super_admin, all_depts_leader, dept_head, team_head, supporter, volunteer in the database enum and TypeScript type system.",
         "Route each role into a role-appropriate entry experience on sign-in.",

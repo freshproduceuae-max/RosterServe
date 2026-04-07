@@ -1,6 +1,6 @@
 # Implementation Plan: RS-F001 — Role Hierarchy Revision
 
-**Status:** Codex advisory review complete — approved with addendums incorporated  
+**Status:** Implemented — browser validation outstanding  
 **Feature:** RS-F001 Authentication and role access  
 **Revision:** PRD v2 (2026-04-07) — expand from 4 roles to 6 roles  
 **Branch:** `codex/rs-f001-role-hierarchy-revision`  
@@ -11,6 +11,11 @@
 ## 1. Revision Summary
 
 The existing implementation supports four roles: `super_admin`, `dept_head`, `sub_leader`, `volunteer`.
+
+Implementation outcome (2026-04-08):
+- Merged via PR #18 with follow-up migration split in PR #19
+- Final migration shape differs from the original draft: `00019_role_hierarchy_revision.sql` now contains only enum value additions, and `00020_role_hierarchy_followup.sql` contains the row migration, `supporter_of` column, constraint/trigger updates, and policy recreation
+- Browser validation for `team_head`, `all_depts_leader`, and `supporter` is still outstanding
 
 PRD v2 requires six roles:
 
