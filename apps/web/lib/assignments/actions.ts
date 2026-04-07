@@ -12,7 +12,7 @@ function rosterPath(eventId: string, deptId: string) {
 /**
  * createAssignment
  * Dept_head: assigns a volunteer to their department (sub-team optional).
- * Sub_leader: assigns a volunteer to one of their owned sub-teams (required).
+ * Team_head: assigns a volunteer to one of their owned sub-teams (required).
  * Both: volunteer must have an approved interest in the department.
  */
 export async function createAssignment(
@@ -108,7 +108,7 @@ export async function createAssignment(
 /**
  * updateAssignment
  * Dept_head: update role and/or sub-team placement for an assignment in an owned dept.
- * Sub_leader: update role (not to dept_head) and/or sub-team in an owned sub-team.
+ * Team_head: update role (not to dept_head) and/or sub-team in an owned sub-team.
  */
 export async function updateAssignment(
   assignmentId: string,
@@ -195,7 +195,7 @@ export async function updateAssignment(
 /**
  * removeAssignment
  * Dept_head: soft-delete an assignment in an owned department.
- * Sub_leader: soft-delete an assignment in one of their owned sub-teams
+ * Team_head: soft-delete an assignment in one of their owned sub-teams
  *   (sub_team_id must not be NULL).
  * Confirmation is enforced in the UI; this action performs the soft-delete
  * unconditionally once called.
