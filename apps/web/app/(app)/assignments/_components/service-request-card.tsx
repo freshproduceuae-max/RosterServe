@@ -33,24 +33,34 @@ export function ServiceRequestCard({
   assignment: AssignmentForVolunteer;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [pendingResponse, setPendingResponse] = useState<
+    "accepted" | "declined" | null
+  >(null);
   const [isPending, startTransition] = useTransition();
 
   function handleResponse(response: "accepted" | "declined") {
     setError(null);
+    setPendingResponse(response);
     startTransition(async () => {
       const result = await respondToServiceRequest(assignment.id, response);
-      if (result.error) setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        setPendingResponse(null);
+      }
     });
   }
 
-  const formattedDate = assignment.event_date
-    ? new Date(assignment.event_date + "T00:00:00").toLocaleDateString("en-AU", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "";
+  const formattedDate = (() => {
+    if (!assignment.event_date) return "";
+    const date = new Date(assignment.event_date + "T00:00:00");
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("en-AU", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  })();
 
   return (
     <div className="flex flex-col gap-200 rounded-300 border border-neutral-300 bg-neutral-0 p-400">
@@ -83,14 +93,14 @@ export function ServiceRequestCard({
             disabled={isPending}
             className="rounded-200 bg-semantic-success px-300 py-150 text-body-sm font-semibold text-neutral-0 transition-opacity duration-fast hover:opacity-90 disabled:opacity-50"
           >
-            {isPending ? "Saving…" : "Accept"}
+            {pendingResponse === "accepted" ? "Saving…" : "Accept"}
           </button>
           <button
             onClick={() => handleResponse("declined")}
             disabled={isPending}
             className="rounded-200 border border-neutral-300 px-300 py-150 text-body-sm font-medium text-neutral-700 transition-colors duration-fast hover:border-neutral-400 hover:text-neutral-950 disabled:opacity-50"
           >
-            {isPending ? "Saving…" : "Decline"}
+            {pendingResponse === "declined" ? "Saving…" : "Decline"}
           </button>
         </div>
       )}
