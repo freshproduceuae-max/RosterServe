@@ -166,8 +166,8 @@
       "dependsOn": ["RS-F002", "RS-F003", "RS-F005", "RS-F007"],
       "ui": true,
       "surface": ["dept_head", "team_head", "all_depts_leader"],
-      "revisionRequired": true,
-      "revisionNote": "Replace individual assignment creation with team-selection and request-to-serve flow. Add Team Head confirmation step. Add substitute Team Head selection when a Team Head declines.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08. Replaced individual assignment creation with team-selection and bulk-invite flow (selectTeamForEvent). Added accept/decline for team heads (roster page) and volunteers (/assignments page). Substitute team head selection on decline (assignSubstituteTeamHead). Non-confirmations panel on Dept Head roster. all_depts_leader read-only roster access. Migration 00027 adds self-response RLS + all_depts_leader read.",
       "steps": [
         "Allow Dept Head to select which team serves a given event (manually or via rotation label).",
         "Send a request to serve to the selected Team Head and all team members.",
@@ -177,7 +177,7 @@
         "Highlight non-confirmations on the Dept Head dashboard.",
         "Treat removal of a request as a high-impact action requiring confirmation."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F009",
