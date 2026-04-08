@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { InterestWithVolunteer, InterestStatus } from "@/lib/interests/types";
+import type { DeptTeam, InterestWithVolunteer, InterestStatus } from "@/lib/interests/types";
 import { approveInterest, rejectInterest } from "@/lib/interests/actions";
 
 function formatDate(isoString: string): string {
@@ -32,18 +32,23 @@ function StatusBadge({ status }: { status: InterestStatus }) {
   );
 }
 
-function ActionControls({ interestId }: { interestId: string }) {
+function ActionControls({
+  interestId,
+  teams,
+}: {
+  interestId: string;
+  teams: DeptTeam[];
+}) {
   const [rejecting, setRejecting] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleApprove() {
     setError(null);
     startTransition(async () => {
-      const result = await approveInterest(interestId);
-      if (result.error) {
-        setError(result.error);
-      }
+      const result = await approveInterest(interestId, selectedTeam || null);
+      if (result.error) setError(result.error);
     });
   }
 
@@ -51,14 +56,34 @@ function ActionControls({ interestId }: { interestId: string }) {
     setError(null);
     startTransition(async () => {
       const result = await rejectInterest(interestId);
-      if (result.error) {
-        setError(result.error);
-      }
+      if (result.error) setError(result.error);
     });
   }
 
   return (
-    <div className="flex flex-col gap-100">
+    <div className="flex flex-col gap-200">
+      {teams.length > 0 && !rejecting && (
+        <div className="flex items-center gap-200">
+          <label htmlFor={`team-${interestId}`} className="text-body-sm text-neutral-600 shrink-0">
+            Place in team:
+          </label>
+          <select
+            id={`team-${interestId}`}
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
+            disabled={isPending}
+            className="flex-1 rounded-200 border border-neutral-300 bg-neutral-0 px-200 py-100 text-body-sm text-neutral-950 focus:border-brand-calm-600 focus:outline-none disabled:opacity-50"
+          >
+            <option value="">No team (dept-level)</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {rejecting ? (
         <div className="flex items-center gap-200">
           <span className="text-body-sm text-neutral-600">Reject this request?</span>
@@ -103,13 +128,14 @@ function ActionControls({ interestId }: { interestId: string }) {
 export function InterestRequestCard({
   interest,
   canReview,
+  teams = [],
 }: {
   interest: InterestWithVolunteer;
   canReview: boolean;
+  teams?: DeptTeam[];
 }) {
   return (
     <div className="flex flex-col gap-200 rounded-200 border border-neutral-300 bg-neutral-0 p-300">
-      {/* Header row: volunteer name + status badge */}
       <div className="flex items-start justify-between gap-200">
         <div className="flex flex-col gap-50">
           <span className="text-body font-semibold text-neutral-950">{interest.display_name}</span>
@@ -117,15 +143,11 @@ export function InterestRequestCard({
         </div>
         <StatusBadge status={interest.status} />
       </div>
-
-      {/* Request date */}
       <p className="text-body-sm text-neutral-600">
         Requested {formatDate(interest.created_at)}
       </p>
-
-      {/* Actions — only if canReview and status === "pending" */}
       {canReview && interest.status === "pending" && (
-        <ActionControls interestId={interest.id} />
+        <ActionControls interestId={interest.id} teams={teams} />
       )}
     </div>
   );

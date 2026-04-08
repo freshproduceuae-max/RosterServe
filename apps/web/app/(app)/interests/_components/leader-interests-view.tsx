@@ -1,12 +1,14 @@
 "use client";
 
-import type { InterestWithVolunteer } from "@/lib/interests/types";
+import type { DeptTeam, InterestWithVolunteer } from "@/lib/interests/types";
 import { InterestRequestCard } from "./interest-request-card";
 
 export function LeaderInterestsView({
   interests,
+  departmentTeams,
 }: {
   interests: InterestWithVolunteer[];
+  departmentTeams: Record<string, DeptTeam[]>;
 }) {
   if (interests.length === 0) {
     return (
@@ -27,11 +29,14 @@ export function LeaderInterestsView({
     );
   }
 
-  const grouped = interests.reduce<Record<string, InterestWithVolunteer[]>>((acc, interest) => {
-    const dept = interest.department_name;
-    acc[dept] = [...(acc[dept] ?? []), interest];
-    return acc;
-  }, {});
+  const grouped = interests.reduce<Record<string, InterestWithVolunteer[]>>(
+    (acc, interest) => {
+      const dept = interest.department_name;
+      acc[dept] = [...(acc[dept] ?? []), interest];
+      return acc;
+    },
+    {},
+  );
   const departments = Object.keys(grouped).sort();
 
   return (
@@ -44,7 +49,9 @@ export function LeaderInterestsView({
       </div>
       <div className="flex flex-col gap-600">
         {departments.map((dept) => {
-          const pendingCount = grouped[dept].filter((i) => i.status === "pending").length;
+          const pendingCount = grouped[dept].filter(
+            (i) => i.status === "pending",
+          ).length;
           return (
             <section key={dept} className="flex flex-col gap-300">
               <div className="flex items-baseline gap-200">
@@ -55,7 +62,12 @@ export function LeaderInterestsView({
               </div>
               <div className="grid gap-300 sm:grid-cols-2 lg:grid-cols-3">
                 {grouped[dept].map((interest) => (
-                  <InterestRequestCard key={interest.id} interest={interest} canReview={true} />
+                  <InterestRequestCard
+                    key={interest.id}
+                    interest={interest}
+                    canReview={true}
+                    teams={departmentTeams[interest.department_id] ?? []}
+                  />
                 ))}
               </div>
             </section>

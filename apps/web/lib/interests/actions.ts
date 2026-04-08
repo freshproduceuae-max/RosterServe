@@ -75,7 +75,8 @@ export async function withdrawInterest(
 }
 
 export async function approveInterest(
-  interestId: string
+  interestId: string,
+  teamId?: string | null,
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await getSessionWithProfile();
   if (!session || session.profile.role !== "dept_head") {
@@ -84,42 +85,23 @@ export async function approveInterest(
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: existing } = await supabase
-    .from("volunteer_interests")
-    .select("id, volunteer_id, department_id, status, deleted_at")
-    .eq("id", interestId)
-    .maybeSingle();
-
-  if (!existing || existing.deleted_at !== null) {
-    return { error: "Interest not found" };
-  }
-
-  const { data: department } = await supabase
-    .from("departments")
-    .select("id")
-    .eq("id", existing.department_id)
-    .eq("owner_id", session.profile.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (!department) {
-    return { error: "Unauthorized" };
-  }
-
-  const { error } = await supabase
-    .from("volunteer_interests")
-    .update({
-      status: "approved",
-      reviewed_by: session.profile.id,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq("id", interestId);
+  const { error } = await supabase.rpc("approve_and_create_membership", {
+    p_interest_id: interestId,
+    p_team_id: teamId ?? null,
+  });
 
   if (error) {
-    return { error: "Failed to approve interest. Please try again." };
+    if (error.message === "Only pending interests can be approved") {
+      return { error: "This request has already been reviewed." };
+    }
+    if (error.message === "Permission denied") {
+      return { error: "Unauthorized" };
+    }
+    return { error: "Failed to approve request. Please try again." };
   }
 
   revalidatePath("/interests");
+  revalidatePath("/departments");
   return { success: true };
 }
 
