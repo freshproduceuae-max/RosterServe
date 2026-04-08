@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { AssignmentWithContext, VolunteerForAssignment } from "@/lib/assignments/types";
+import type {
+  AssignmentWithContext,
+  TeamHeadOption,
+  VolunteerForAssignment,
+} from "@/lib/assignments/types";
 import type { DepartmentWithTeams } from "@/lib/departments/types";
 import { AssignmentList } from "./assignment-list";
-import { AssignVolunteerForm } from "./assign-volunteer-form";
+import { TeamSelectionForm } from "./team-selection-form";
+import { NonConfirmationsSection } from "./non-confirmations-section";
 import { GapSummary } from "./gap-summary";
 import type { RosterGapSummary } from "@/lib/skills/gap-types";
 
@@ -16,6 +21,7 @@ interface DeptHeadRosterViewProps {
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
   gapSummary: RosterGapSummary;
+  substituteOptions: TeamHeadOption[];
 }
 
 export function DeptHeadRosterView({
@@ -24,12 +30,11 @@ export function DeptHeadRosterView({
   eventTitle,
   department,
   assignments,
-  volunteers,
   gapSummary,
+  substituteOptions,
 }: DeptHeadRosterViewProps) {
-  const [showForm, setShowForm] = useState(false);
-
-  const subTeams = department.teams.filter((st) => st.deleted_at === null);
+  const [showTeamForm, setShowTeamForm] = useState(false);
+  const subTeams = department.teams.filter((t) => t.deleted_at === null);
 
   return (
     <div className="flex flex-col gap-400">
@@ -43,28 +48,31 @@ export function DeptHeadRosterView({
         </div>
         <button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => setShowTeamForm((v) => !v)}
           className="self-start rounded-200 bg-brand-calm-600 px-400 py-200 text-body-sm font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90"
         >
-          {showForm ? "Cancel" : "Assign volunteer"}
+          {showTeamForm ? "Cancel" : "Select team"}
         </button>
       </div>
 
       <GapSummary summary={gapSummary} />
 
-      {/* Assign form */}
-      {showForm && (
-        <AssignVolunteerForm
+      {/* Team selection form */}
+      {showTeamForm && (
+        <TeamSelectionForm
           eventId={eventId}
           deptId={deptId}
-          volunteers={volunteers}
-          subTeams={subTeams}
-          requireSubTeam={false}
-          requiredSkills={gapSummary.required}
+          teams={subTeams}
         />
       )}
 
-      {/* Assignment list */}
+      {/* Non-confirmations panel */}
+      <NonConfirmationsSection
+        assignments={assignments}
+        substituteOptions={substituteOptions}
+      />
+
+      {/* Full assignment list */}
       <AssignmentList
         assignments={assignments}
         readOnly={false}

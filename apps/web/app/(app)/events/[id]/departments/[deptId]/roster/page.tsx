@@ -53,6 +53,7 @@ export default async function RosterPage({
           assignments={assignments}
           volunteers={volunteers}
           gapSummary={gapSummary}
+          substituteOptions={[]}
         />
       </PageShell>
     );
