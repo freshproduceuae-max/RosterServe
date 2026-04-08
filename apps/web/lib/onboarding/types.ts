@@ -27,7 +27,6 @@ export type VolunteerSkill = {
 export type DepartmentForInterests = {
   id: string;
   name: string;
-  event_title: string;
 };
 
 export type OnboardingState = {

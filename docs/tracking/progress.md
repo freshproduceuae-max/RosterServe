@@ -84,11 +84,16 @@ For this repo state:
   - `npm run typecheck`, `npm run lint`: all pass
   - Browser checks 5–16: all pass (grant/revoke cycle, ownership enforcement, status machine, all_depts_leader cross-dept visibility)
   - All 16 validation checks passed — RS-F002 marked `passes=true`
+- RS-F003 revision implemented and validated (2026-04-08): migration 00024 (rename sub_teams→teams, decouple depts from events, rotation_label, headcount requirements, updated RLS); full /departments CRUD, Departments nav link; PR #22 reviewed and merged to main
+- RS-F003 marked passes=true
+- RS-F004 revision implemented (2026-04-08): getActiveDepartmentsForInterests() updated to org-level departments (no event join); event_title removed from type and UI; no migration needed
+- RS-F004 marked passes=true
 
 ## Next Up
 
-- RS-F003 revision: department and team structure
-- Each revision requires its own plan → Codex advisory review → implementation → Codex blocking code review → user approval → validation cycle
+- RS-F005: Already passed — verify it still works after RS-F003 schema changes (departments decoupled from events)
+- RS-F006 revision: request-to-join flow (replaces loose interest signal with permanent membership model)
+- Each revision requires its own plan → agent hierarchy review → implementation → PR → merge
 
 ## Status Legend
 
@@ -104,8 +109,8 @@ Update rule:
 |---|---|---|---|---|
 | 1 | RS-F001 | Authentication and role access | P0 | passed |
 | 2 | RS-F002 | Event lifecycle management | P0 | passed |
-| 3 | RS-F003 | Department and team structure | P0 | revision_required |
-| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | revision_required |
+| 3 | RS-F003 | Department and team structure | P0 | passed |
+| 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Request to join and permanent group membership | P1 | revision_required |
 | 7 | RS-F007 | Skill profile and approval | P0 | revision_required |

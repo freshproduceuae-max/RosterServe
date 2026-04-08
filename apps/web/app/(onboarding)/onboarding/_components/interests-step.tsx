@@ -50,18 +50,15 @@ export function InterestsStep({ departments, existing, onAdvance }: InterestsSte
         <form action={formAction} className="mb-400 flex flex-col gap-500">
           <div className="flex flex-col gap-200">
             {departments.map((dept) => (
-              <label key={dept.id} className="flex cursor-pointer items-start gap-200">
+              <label key={dept.id} className="flex cursor-pointer items-center gap-200">
                 <input
                   type="checkbox"
                   name="department_id"
                   value={dept.id}
                   defaultChecked={existingDeptIds.has(dept.id)}
-                  className="mt-100 h-400 w-400 shrink-0 rounded-200 border-neutral-300 accent-brand-warm-500"
+                  className="h-400 w-400 shrink-0 rounded-200 border-neutral-300 accent-brand-warm-500"
                 />
-                <span className="flex flex-col">
-                  <span className="text-body text-neutral-950">{dept.name}</span>
-                  <span className="text-body-sm text-neutral-600">{dept.event_title}</span>
-                </span>
+                <span className="text-body text-neutral-950">{dept.name}</span>
               </label>
             ))}
           </div>

@@ -6,18 +6,15 @@ export async function getActiveDepartmentsForInterests(): Promise<DepartmentForI
 
   const { data, error } = await supabase
     .from("departments")
-    .select("id, name, events!inner(title)")
+    .select("id, name")
     .is("deleted_at", null)
     .order("name");
 
   if (error || !data) return [];
 
-  return (
-    data as unknown as Array<{ id: string; name: string; events: { title: string } }>
-  ).map((d) => ({
+  return (data as Array<{ id: string; name: string }>).map((d) => ({
     id: d.id,
     name: d.name,
-    event_title: d.events.title,
   }));
 }
 

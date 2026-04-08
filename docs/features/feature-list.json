@@ -66,8 +66,8 @@
       "dependsOn": ["RS-F001", "RS-F002"],
       "ui": true,
       "surface": ["admin", "all_depts_leader", "dept_head", "team_head"],
-      "revisionRequired": true,
-      "revisionNote": "Rename sub-teams to teams. Add rotation labels (A/B/C), headcount requirements per team per event type, permanent membership model. Team Head is optional at team level.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08 via PR #22. Renamed sub_teams to teams, added rotation_label (A/B/C), decoupled departments from events (org-level permanent structures), added team_headcount_requirements table, added /departments CRUD route with headcount management. DB validated: all 24 migrations apply cleanly.",
       "steps": [
         "Model named teams within departments; a team is independent of whether a Team Head is assigned.",
         "Support optional rotation labels (A, B, C) per team for rotation scheduling.",
@@ -76,7 +76,7 @@
         "Team Heads always sit under a Dept Head unless moved or removed by an authorized leader.",
         "Restrict structure management to authorized planning scopes."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F004",
@@ -88,14 +88,14 @@
       "dependsOn": ["RS-F001"],
       "ui": true,
       "surface": ["volunteer"],
-      "revisionRequired": true,
-      "revisionNote": "Onboarding department interest now creates a formal request to join (RS-F006 flow) rather than a loose interest signal. Update onboarding outcome to reflect the permanent membership model.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08. getActiveDepartmentsForInterests() updated to query org-level departments directly (no event join); event_title removed from DepartmentForInterests type and InterestsStep UI. No migration needed — INSERT RLS policy already updated in migration 00024.",
       "steps": [
         "Gate new volunteer users into an onboarding path before the main dashboard.",
         "Capture availability preferences, department interest as a formal request to join, and optional skill input.",
         "Transition completed volunteers into the role-appropriate dashboard experience."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F005",
