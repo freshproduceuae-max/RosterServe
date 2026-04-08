@@ -209,15 +209,15 @@
       "dependsOn": ["RS-F001", "RS-F008", "RS-F009"],
       "ui": true,
       "surface": ["admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
-      "revisionRequired": true,
-      "revisionNote": "Add dashboard views for all_depts_leader, team_head, and supporter. Highlight non-confirmations. Show permanent membership context to leaders outside of event context.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-09. Built AllDeptsLeaderDashboard (full cross-dept event health view with non-confirmation counts). Built SupporterDashboard (own service requests + leader context). TeamHeadDashboard: added own invitation cards with accept/decline. DeptHeadDashboard: added pending_team_heads highlight in RosterHealthBar. getDeptHeadDashboardData rewritten to use assignments→events join (schema-safe). New queries: getAllDeptsLeaderDashboardData, getSupporterDashboardData, updated getTeamHeadDashboardData.",
       "steps": [
         "Build role-specific weekly dashboard states for all six roles.",
         "Populate dashboards with scoped requests to serve, planning health, non-confirmations, and relevant context.",
         "Highlight non-confirming Team Heads and volunteers for Dept Heads.",
         "Reflect request-to-serve and planning state changes quickly enough for weekly coordination."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F011",
