@@ -95,10 +95,15 @@ export async function getProfilesByRole(
 
   const supabase = await createSupabaseServerClient();
 
+  // dept_head may only browse team_head profiles (for assigning team owners).
+  // Prevent a dept_head from enumerating all other dept_heads by role.
+  const effectiveRole =
+    hasMinimumRole(session.profile.role, "super_admin") ? role : "team_head";
+
   const { data, error } = await supabase
     .from("profiles")
     .select("id, display_name, role")
-    .eq("role", role)
+    .eq("role", effectiveRole)
     .is("deleted_at", null)
     .order("display_name", { ascending: true });
 

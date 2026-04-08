@@ -139,6 +139,19 @@ export async function softDeleteDepartment(
   const supabase = await createSupabaseServerClient();
   const now = new Date().toISOString();
 
+  // Stamp teams first — if this fails, the department remains live and the
+  // user can retry. Reversing the order avoids a state where the department
+  // is hidden but its teams are still active with no recovery path.
+  const { error: teamError } = await supabase
+    .from("teams")
+    .update({ deleted_at: now })
+    .eq("department_id", id)
+    .is("deleted_at", null);
+
+  if (teamError) {
+    return { error: "Could not delete department. Please try again." };
+  }
+
   const { error: deptError } = await supabase
     .from("departments")
     .update({ deleted_at: now })
@@ -147,19 +160,6 @@ export async function softDeleteDepartment(
 
   if (deptError) {
     return { error: "Could not delete department. Please try again." };
-  }
-
-  const { error: teamError } = await supabase
-    .from("teams")
-    .update({ deleted_at: now })
-    .eq("department_id", id)
-    .is("deleted_at", null);
-
-  if (teamError) {
-    return {
-      error:
-        "Department was deleted but some teams could not be removed. Please contact your admin.",
-    };
   }
 
   redirect("/departments");
@@ -406,6 +406,21 @@ export async function setTeamHeadcountRequirement(
 
   const supabase = await createSupabaseServerClient();
 
+  // dept_head may only manage teams in departments they own
+  if (role === "dept_head") {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("department_id")
+      .eq("id", parsed.data.teamId)
+      .is("deleted_at", null)
+      .single();
+
+    if (!team) return { error: "Team not found." };
+
+    const owns = await verifyDeptHeadOwnership(supabase, team.department_id, session.user.id);
+    if (!owns) return { error: "You do not have permission to manage this team." };
+  }
+
   const { error } = await supabase
     .from("team_headcount_requirements")
     .upsert(
@@ -448,6 +463,29 @@ export async function deleteTeamHeadcountRequirement(
   }
 
   const supabase = await createSupabaseServerClient();
+
+  // dept_head may only manage headcount reqs for teams in their own departments
+  if (role === "dept_head") {
+    const { data: req } = await supabase
+      .from("team_headcount_requirements")
+      .select("team_id")
+      .eq("id", id)
+      .single();
+
+    if (!req) return { error: "Requirement not found." };
+
+    const { data: team } = await supabase
+      .from("teams")
+      .select("department_id")
+      .eq("id", req.team_id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!team) return { error: "Team not found." };
+
+    const owns = await verifyDeptHeadOwnership(supabase, team.department_id, session.user.id);
+    if (!owns) return { error: "You do not have permission to manage this team." };
+  }
 
   const { error } = await supabase
     .from("team_headcount_requirements")
