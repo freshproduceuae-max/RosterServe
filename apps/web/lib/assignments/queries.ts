@@ -14,7 +14,7 @@ export async function getAssignmentsForRoster(
   const { data, error } = await supabase
     .from("assignments")
     .select(
-      "*, volunteer:profiles!volunteer_id(display_name), sub_team:sub_teams!sub_team_id(name)",
+      "*, volunteer:profiles!volunteer_id(display_name), sub_team:teams!sub_team_id(name)",
     )
     .eq("event_id", eventId)
     .eq("department_id", deptId)
@@ -50,7 +50,7 @@ export async function getTeamHeadAssignments(
   const { data, error } = await supabase
     .from("assignments")
     .select(
-      "*, volunteer:profiles!volunteer_id(display_name), sub_team:sub_teams!sub_team_id(name)",
+      "*, volunteer:profiles!volunteer_id(display_name), sub_team:teams!sub_team_id(name)",
     )
     .eq("event_id", eventId)
     .eq("department_id", deptId)
@@ -85,7 +85,7 @@ export async function getAllAssignmentsForEventDept(
   const { data, error } = await supabase
     .from("assignments")
     .select(
-      "*, volunteer:profiles!volunteer_id(display_name), sub_team:sub_teams!sub_team_id(name)",
+      "*, volunteer:profiles!volunteer_id(display_name), sub_team:teams!sub_team_id(name)",
     )
     .eq("event_id", eventId)
     .eq("department_id", deptId)

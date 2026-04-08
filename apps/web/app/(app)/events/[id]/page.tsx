@@ -1,11 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { isLeaderRole, hasMinimumRole, canManageThisEvent } from "@/lib/auth/roles";
+import { isLeaderRole, canManageThisEvent } from "@/lib/auth/roles";
 import { getEventById } from "@/lib/events/queries";
-import { getDepartmentsByEventId, getOwnerDisplayNames } from "@/lib/departments/queries";
 import { EventDetailCard } from "../_components/event-detail-card";
-import { DepartmentListSection } from "./departments/_components/department-list-section";
 
 export default async function EventDetailPage({
   params,
@@ -17,20 +15,10 @@ export default async function EventDetailPage({
   if (!isLeaderRole(session.profile.role)) redirect("/dashboard");
 
   const { id } = await params;
-  const [event, departments] = await Promise.all([
-    getEventById(id),
-    getDepartmentsByEventId(id),
-  ]);
+  const event = await getEventById(id);
   if (!event) notFound();
 
-  const isSuperAdmin = hasMinimumRole(session.profile.role, "super_admin");
   const canManage = canManageThisEvent(session.profile, event);
-
-  // Build owner display name map from the actual owner IDs present in this event's departments
-  const ownerIds = departments
-    .map((d) => d.owner_id)
-    .filter((id): id is string => id !== null);
-  const ownerNames = await getOwnerDisplayNames(ownerIds);
 
   return (
     <div className="flex flex-col gap-400">
@@ -42,13 +30,6 @@ export default async function EventDetailPage({
       </Link>
 
       <EventDetailCard event={event} canManage={canManage} />
-
-      <DepartmentListSection
-        eventId={id}
-        departments={departments}
-        ownerNames={ownerNames}
-        isSuperAdmin={isSuperAdmin}
-      />
     </div>
   );
 }

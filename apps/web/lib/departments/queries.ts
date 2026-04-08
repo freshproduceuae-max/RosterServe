@@ -1,11 +1,9 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
-import type { DepartmentWithSubTeams, SubTeam, OwnerProfile } from "./types";
+import type { DepartmentWithTeams, Team, OwnerProfile, TeamHeadcountRequirement } from "./types";
 
-export async function getDepartmentsByEventId(
-  eventId: string
-): Promise<DepartmentWithSubTeams[]> {
+export async function getAllDepartments(): Promise<DepartmentWithTeams[]> {
   const session = await getSessionWithProfile();
   if (!session || !isLeaderRole(session.profile.role)) return [];
 
@@ -13,23 +11,21 @@ export async function getDepartmentsByEventId(
 
   const { data, error } = await supabase
     .from("departments")
-    .select("*, sub_teams(*)")
-    .eq("event_id", eventId)
+    .select("*, teams(*)")
     .is("deleted_at", null)
-    .order("created_at", { ascending: true });
+    .order("name", { ascending: true });
 
   if (error || !data) return [];
 
-  // Filter out soft-deleted sub-teams (RLS handles visibility, but guard at query layer too)
   return data.map((dept) => ({
     ...dept,
-    sub_teams: (dept.sub_teams as SubTeam[]).filter((st) => st.deleted_at === null),
-  })) as DepartmentWithSubTeams[];
+    teams: (dept.teams as Team[]).filter((t) => t.deleted_at === null),
+  })) as DepartmentWithTeams[];
 }
 
 export async function getDepartmentById(
   id: string
-): Promise<DepartmentWithSubTeams | null> {
+): Promise<DepartmentWithTeams | null> {
   const session = await getSessionWithProfile();
   if (!session || !isLeaderRole(session.profile.role)) return null;
 
@@ -37,7 +33,7 @@ export async function getDepartmentById(
 
   const { data, error } = await supabase
     .from("departments")
-    .select("*, sub_teams(*)")
+    .select("*, teams(*)")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
@@ -46,25 +42,43 @@ export async function getDepartmentById(
 
   return {
     ...data,
-    sub_teams: (data.sub_teams as SubTeam[]).filter((st) => st.deleted_at === null),
-  } as DepartmentWithSubTeams;
+    teams: (data.teams as Team[]).filter((t) => t.deleted_at === null),
+  } as DepartmentWithTeams;
 }
 
-export async function getSubTeamById(id: string): Promise<SubTeam | null> {
+export async function getTeamById(id: string): Promise<Team | null> {
   const session = await getSessionWithProfile();
   if (!session || !isLeaderRole(session.profile.role)) return null;
 
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from("sub_teams")
+    .from("teams")
     .select("*")
     .eq("id", id)
     .is("deleted_at", null)
-    .single<SubTeam>();
+    .single<Team>();
 
   if (error || !data) return null;
   return data;
+}
+
+export async function getTeamHeadcountRequirements(
+  teamId: string
+): Promise<TeamHeadcountRequirement[]> {
+  const session = await getSessionWithProfile();
+  if (!session || !isLeaderRole(session.profile.role)) return [];
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("team_headcount_requirements")
+    .select("*")
+    .eq("team_id", teamId)
+    .order("event_type", { ascending: true });
+
+  if (error || !data) return [];
+  return data as TeamHeadcountRequirement[];
 }
 
 export async function getProfilesByRole(
@@ -81,10 +95,15 @@ export async function getProfilesByRole(
 
   const supabase = await createSupabaseServerClient();
 
+  // dept_head may only browse team_head profiles (for assigning team owners).
+  // Prevent a dept_head from enumerating all other dept_heads by role.
+  const effectiveRole =
+    hasMinimumRole(session.profile.role, "super_admin") ? role : "team_head";
+
   const { data, error } = await supabase
     .from("profiles")
     .select("id, display_name, role")
-    .eq("role", role)
+    .eq("role", effectiveRole)
     .is("deleted_at", null)
     .order("display_name", { ascending: true });
 
@@ -92,9 +111,6 @@ export async function getProfilesByRole(
   return data as OwnerProfile[];
 }
 
-// Fetch display names for a specific set of profile IDs.
-// Available to all leader roles — used for owner display in detail views,
-// not for building owner-selection dropdowns.
 export async function getOwnerDisplayNames(
   ids: string[]
 ): Promise<Record<string, string>> {

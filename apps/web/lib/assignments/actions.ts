@@ -46,7 +46,7 @@ export async function createAssignment(
     // If sub-team provided, verify it belongs to this dept
     if (subTeamId) {
       const { data: st } = await supabase
-        .from("sub_teams")
+        .from("teams")
         .select("id")
         .eq("id", subTeamId)
         .eq("department_id", deptId)
@@ -61,7 +61,7 @@ export async function createAssignment(
 
     // Verify sub-team ownership and that it belongs to this dept
     const { data: st } = await supabase
-      .from("sub_teams")
+      .from("teams")
       .select("id")
       .eq("id", subTeamId)
       .eq("department_id", deptId)
@@ -148,7 +148,7 @@ export async function updateAssignment(
     // If updating sub-team, verify it belongs to this dept
     if (updates.subTeamId) {
       const { data: st } = await supabase
-        .from("sub_teams")
+        .from("teams")
         .select("id")
         .eq("id", updates.subTeamId)
         .eq("department_id", assignment.department_id)
@@ -165,7 +165,7 @@ export async function updateAssignment(
       return { error: "Unauthorized" };
     }
     const { data: st } = await supabase
-      .from("sub_teams")
+      .from("teams")
       .select("id")
       .eq("id", assignment.sub_team_id)
       .eq("department_id", assignment.department_id)
@@ -238,7 +238,7 @@ export async function removeAssignment(
       return { error: "Unauthorized" };
     }
     const { data: st } = await supabase
-      .from("sub_teams")
+      .from("teams")
       .select("id")
       .eq("id", assignment.sub_team_id)
       .eq("department_id", assignment.department_id)

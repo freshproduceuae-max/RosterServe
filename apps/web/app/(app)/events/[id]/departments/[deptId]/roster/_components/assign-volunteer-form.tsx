@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { VolunteerForAssignment, AssignmentRole } from "@/lib/assignments/types";
-import type { SubTeam } from "@/lib/departments/types";
+import type { Team } from "@/lib/departments/types";
 import { createAssignment } from "@/lib/assignments/actions";
 import { VolunteerSelector } from "./volunteer-selector";
 
@@ -13,7 +13,7 @@ interface AssignVolunteerFormProps {
   /** All sub-teams available for selection — already scoped by caller.
    *  Dept_head: all dept sub-teams.
    *  Sub_leader: owned sub-teams only (required, no "No sub-team" option). */
-  subTeams: Pick<SubTeam, "id" | "name">[];
+  subTeams: Pick<Team, "id" | "name">[];
   /** When true the sub-team field is required and "No sub-team" is omitted. */
   requireSubTeam: boolean;
   requiredSkills?: string[];

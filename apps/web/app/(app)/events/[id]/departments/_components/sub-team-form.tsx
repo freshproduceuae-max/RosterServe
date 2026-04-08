@@ -2,24 +2,24 @@
 
 import { useActionState } from "react";
 import type { DepartmentActionResult } from "@/lib/departments/actions";
-import type { SubTeam, OwnerProfile } from "@/lib/departments/types";
+import type { Team, OwnerProfile } from "@/lib/departments/types";
 
-interface SubTeamFormProps {
+interface TeamFormProps {
   departmentId: string;
   ownerProfiles: OwnerProfile[];
   action: (
     prev: DepartmentActionResult,
     formData: FormData
   ) => Promise<DepartmentActionResult>;
-  existing?: SubTeam;
+  existing?: Team;
 }
 
-export function SubTeamForm({
+export function TeamForm({
   departmentId,
   ownerProfiles,
   action,
   existing,
-}: SubTeamFormProps) {
+}: TeamFormProps) {
   const [state, formAction, isPending] = useActionState(action, undefined);
   const isEdit = !!existing;
 

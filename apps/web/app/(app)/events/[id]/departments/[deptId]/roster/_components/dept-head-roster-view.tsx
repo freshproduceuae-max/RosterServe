@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AssignmentWithContext, VolunteerForAssignment } from "@/lib/assignments/types";
-import type { DepartmentWithSubTeams } from "@/lib/departments/types";
+import type { DepartmentWithTeams } from "@/lib/departments/types";
 import { AssignmentList } from "./assignment-list";
 import { AssignVolunteerForm } from "./assign-volunteer-form";
 import { GapSummary } from "./gap-summary";
@@ -12,7 +12,7 @@ interface DeptHeadRosterViewProps {
   eventId: string;
   deptId: string;
   eventTitle: string;
-  department: DepartmentWithSubTeams;
+  department: DepartmentWithTeams;
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
   gapSummary: RosterGapSummary;
@@ -29,7 +29,7 @@ export function DeptHeadRosterView({
 }: DeptHeadRosterViewProps) {
   const [showForm, setShowForm] = useState(false);
 
-  const subTeams = department.sub_teams.filter((st) => st.deleted_at === null);
+  const subTeams = department.teams.filter((st) => st.deleted_at === null);
 
   return (
     <div className="flex flex-col gap-400">

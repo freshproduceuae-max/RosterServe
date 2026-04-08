@@ -42,7 +42,7 @@ export async function getVolunteerDashboardData(
         `id, status, role, event_id, department_id, sub_team_id,
          events!inner(title, event_date),
          departments!inner(name),
-         sub_teams(name)`,
+         teams(name)`,
       )
       .eq("volunteer_id", userId)
       .in("status", ["invited", "accepted"])
@@ -74,7 +74,7 @@ export async function getVolunteerDashboardData(
     sub_team_id: string | null;
     events: { title: string; event_date: string };
     departments: { name: string };
-    sub_teams: { name: string } | null;
+    teams: { name: string } | null;
   };
 
   const upcomingAssignments: AssignmentWithEventContext[] = (
@@ -89,7 +89,7 @@ export async function getVolunteerDashboardData(
     department_id: row.department_id,
     department_name: row.departments.name,
     sub_team_id: row.sub_team_id,
-    sub_team_name: row.sub_teams?.name ?? null,
+    sub_team_name: row.teams?.name ?? null,
   })).sort((a, b) => a.event_date.localeCompare(b.event_date));
 
   return {
@@ -300,7 +300,7 @@ export async function getTeamHeadDashboardData(
 
   // 1. Fetch owned sub-teams with their parent dept and event
   const { data: subTeamRows, error: stError } = await supabase
-    .from("sub_teams")
+    .from("teams")
     .select(
       `id, name, department_id,
        departments!inner(name, event_id, events!inner(title, event_date))`,

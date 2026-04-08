@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { DepartmentWithSubTeams } from "@/lib/departments/types";
+import type { DepartmentWithTeams } from "@/lib/departments/types";
 import { softDeleteDepartment } from "@/lib/departments/actions";
-import { SubTeamListSection } from "../../_components/sub-team-list-section";
+import { TeamListSection } from "../../_components/sub-team-list-section";
 import { DeleteConfirmModal } from "../../_components/delete-confirm-modal";
 
 interface DepartmentDetailCardProps {
   eventId: string;
-  department: DepartmentWithSubTeams;
+  department: DepartmentWithTeams;
   ownerNames: Record<string, string>;
   isSuperAdmin: boolean;
   canManage: boolean;
@@ -77,10 +77,10 @@ export function DepartmentDetailCard({
       </div>
 
       {/* Sub-teams */}
-      <SubTeamListSection
+      <TeamListSection
         eventId={eventId}
         departmentId={department.id}
-        subTeams={department.sub_teams}
+        subTeams={department.teams}
         ownerNames={ownerNames}
         canManage={canManage}
       />

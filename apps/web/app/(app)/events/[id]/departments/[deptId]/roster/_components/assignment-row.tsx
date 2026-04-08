@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import type { AssignmentWithContext, AssignmentRole } from "@/lib/assignments/types";
-import type { SubTeam } from "@/lib/departments/types";
+import type { Team } from "@/lib/departments/types";
 import { updateAssignment, removeAssignment } from "@/lib/assignments/actions";
 import { AssignmentStatusBadge } from "./assignment-status-badge";
 
 interface AssignmentRowProps {
   assignment: AssignmentWithContext;
   readOnly: boolean;
-  subTeams: Pick<SubTeam, "id" | "name">[];
+  subTeams: Pick<Team, "id" | "name">[];
   /** When true the sub-team field is required during edit — sub-leaders may not
    *  move an assignment to a dept-level (no sub-team) placement. */
   requireSubTeam: boolean;

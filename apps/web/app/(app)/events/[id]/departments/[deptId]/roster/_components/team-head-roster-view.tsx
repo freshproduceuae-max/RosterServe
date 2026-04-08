@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AssignmentWithContext, VolunteerForAssignment } from "@/lib/assignments/types";
-import type { SubTeam } from "@/lib/departments/types";
+import type { Team } from "@/lib/departments/types";
 import { AssignmentList } from "./assignment-list";
 import { AssignVolunteerForm } from "./assign-volunteer-form";
 import { GapSummary } from "./gap-summary";
@@ -13,7 +13,7 @@ interface TeamHeadRosterViewProps {
   deptId: string;
   eventTitle: string;
   /** All sub-teams owned by this team head in this dept */
-  subTeams: Pick<SubTeam, "id" | "name">[];
+  subTeams: Pick<Team, "id" | "name">[];
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
   gapSummary: RosterGapSummary;
