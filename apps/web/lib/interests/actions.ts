@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasMinimumRole } from "@/lib/auth/roles";
 
 export async function submitInterest(
   departmentId: string
@@ -79,7 +80,12 @@ export async function approveInterest(
   teamId?: string | null,
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await getSessionWithProfile();
-  if (!session || session.profile.role !== "dept_head") {
+  if (
+    !session ||
+    (session.profile.role !== "dept_head" &&
+      session.profile.role !== "all_depts_leader" &&
+      !hasMinimumRole(session.profile.role, "super_admin"))
+  ) {
     return { error: "Unauthorized" };
   }
 
