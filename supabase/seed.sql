@@ -241,3 +241,47 @@
 --   (SELECT id FROM auth.users WHERE email = 'depthead@example.com')
 -- )
 -- ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- RS-F003: Department and team seed examples
+-- Uncomment and adjust UUIDs to test the org-level structure.
+-- ============================================================
+
+-- Example: create a Worship department owned by the dept_head test account
+-- INSERT INTO public.departments (id, name, owner_id, created_by)
+-- VALUES (
+--   'a1000000-0000-0000-0000-000000000001',
+--   'Worship',
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com'),
+--   (SELECT id FROM auth.users WHERE email = 'superadmin@example.com')
+-- );
+
+-- Example: create Team A and Team B within Worship, Team A owned by team_head
+-- INSERT INTO public.teams (id, department_id, name, rotation_label, owner_id, created_by)
+-- VALUES
+--   (
+--     'b1000000-0000-0000-0000-000000000001',
+--     'a1000000-0000-0000-0000-000000000001',
+--     'Team A',
+--     'A',
+--     (SELECT id FROM auth.users WHERE email = 'teamhead@example.com'),
+--     (SELECT id FROM auth.users WHERE email = 'superadmin@example.com')
+--   ),
+--   (
+--     'b1000000-0000-0000-0000-000000000002',
+--     'a1000000-0000-0000-0000-000000000001',
+--     'Team B',
+--     'B',
+--     NULL,
+--     (SELECT id FROM auth.users WHERE email = 'superadmin@example.com')
+--   );
+
+-- Example: headcount requirement — Team A needs 5 volunteers for Sunday Service
+-- INSERT INTO public.team_headcount_requirements (team_id, event_type, required_count, created_by)
+-- VALUES (
+--   'b1000000-0000-0000-0000-000000000001',
+--   'Sunday Service',
+--   5,
+--   (SELECT id FROM auth.users WHERE email = 'superadmin@example.com')
+-- )
+-- ON CONFLICT DO NOTHING;
