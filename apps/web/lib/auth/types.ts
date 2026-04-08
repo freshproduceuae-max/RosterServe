@@ -14,6 +14,7 @@ export type Profile = {
   display_name: string;
   onboarding_complete: boolean;
   supporter_of: string | null;
+  can_create_events: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

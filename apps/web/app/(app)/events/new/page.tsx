@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { hasMinimumRole } from "@/lib/auth/roles";
+import { canManageEvents } from "@/lib/auth/roles";
 import { EventForm } from "../_components/event-form";
 
 export default async function NewEventPage() {
   const session = await getSessionWithProfile();
   if (!session) redirect("/sign-in");
-  // all_depts_leader can create events by default (RS-F001).
-  // Dept Head / Team Head grants are handled in RS-F002.
-  if (!hasMinimumRole(session.profile.role, "all_depts_leader")) redirect("/events");
+  if (!canManageEvents(session.profile)) redirect("/events");
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-400">

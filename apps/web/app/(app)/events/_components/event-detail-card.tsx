@@ -44,10 +44,10 @@ const TRANSITION_BUTTON_LABELS: Record<EventStatus, string> = {
 
 export function EventDetailCard({
   event,
-  isSuperAdmin,
+  canManage,
 }: {
   event: Event;
-  isSuperAdmin: boolean;
+  canManage: boolean;
 }) {
   const [transitionTarget, setTransitionTarget] = useState<EventStatus | null>(
     null
@@ -66,7 +66,7 @@ export function EventDetailCard({
   >(softDeleteEvent, undefined);
 
   const nextStatuses = VALID_STATUS_TRANSITIONS[event.status];
-  const canEdit = isSuperAdmin && event.status !== "completed";
+  const canEdit = canManage && event.status !== "completed";
 
   const transitionError =
     transitionState && "error" in transitionState
@@ -157,7 +157,7 @@ export function EventDetailCard({
         )}
 
         {/* Actions */}
-        {isSuperAdmin && (
+        {canManage && (
           <div className="flex flex-wrap gap-200 border-t border-neutral-300 pt-300">
             {nextStatuses.map((next) => (
               <button
