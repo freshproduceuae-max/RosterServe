@@ -49,7 +49,6 @@ function InterestRow({ interest }: { interest: InterestWithDepartment }) {
         <span className="text-body font-semibold text-neutral-950">
           {interest.department_name}
         </span>
-        <span className="text-body-sm text-neutral-600">{interest.event_title}</span>
         <StatusBadge status={interest.status} />
         {error && (
           <span className="text-body-sm text-semantic-error">{error}</span>

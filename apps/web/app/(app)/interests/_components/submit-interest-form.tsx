@@ -56,7 +56,7 @@ export function SubmitInterestForm({
         </option>
         {availableDepartments.map((dept) => (
           <option key={dept.id} value={dept.id}>
-            {dept.name} — {dept.event_title}
+            {dept.name}
           </option>
         ))}
       </select>
