@@ -60,7 +60,7 @@ export default async function RosterPage({
 
   // ── Team head ──────────────────────────────────────────────────────────────
   if (role === "team_head") {
-    const mySubTeams = department.sub_teams.filter(
+    const mySubTeams = department.teams.filter(
       (st) => st.owner_id === profileId && st.deleted_at === null,
     );
 

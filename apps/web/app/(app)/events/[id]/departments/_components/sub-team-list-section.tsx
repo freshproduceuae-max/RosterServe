@@ -2,27 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { SubTeam } from "@/lib/departments/types";
-import { softDeleteSubTeam } from "@/lib/departments/actions";
+import type { Team } from "@/lib/departments/types";
+import { softDeleteTeam } from "@/lib/departments/actions";
 import { SubTeamEmptyState } from "./sub-team-empty-state";
 import { DeleteConfirmModal } from "./delete-confirm-modal";
 
-interface SubTeamListSectionProps {
+interface TeamListSectionProps {
   eventId: string;
   departmentId: string;
-  subTeams: SubTeam[];
+  subTeams: Team[];
   ownerNames: Record<string, string>;
   canManage: boolean; // super_admin or owning dept_head
 }
 
-export function SubTeamListSection({
+export function TeamListSection({
   eventId,
   departmentId,
   subTeams,
   ownerNames,
   canManage,
-}: SubTeamListSectionProps) {
-  const [deleteTarget, setDeleteTarget] = useState<SubTeam | null>(null);
+}: TeamListSectionProps) {
+  const [deleteTarget, setDeleteTarget] = useState<Team | null>(null);
 
   return (
     <section className="flex flex-col gap-300">
@@ -85,7 +85,7 @@ export function SubTeamListSection({
           onClose={() => setDeleteTarget(null)}
           entityName={deleteTarget.name}
           consequenceText="This sub-team will be removed. This action cannot be undone."
-          action={softDeleteSubTeam}
+          action={softDeleteTeam}
           hiddenFields={{ id: deleteTarget.id }}
         />
       )}

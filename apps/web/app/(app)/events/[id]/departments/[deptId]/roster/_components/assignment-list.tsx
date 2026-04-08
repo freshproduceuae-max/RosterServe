@@ -1,13 +1,13 @@
 "use client";
 
 import type { AssignmentWithContext } from "@/lib/assignments/types";
-import type { SubTeam } from "@/lib/departments/types";
+import type { Team } from "@/lib/departments/types";
 import { AssignmentRow, AssignmentCard } from "./assignment-row";
 
 interface AssignmentListProps {
   assignments: AssignmentWithContext[];
   readOnly: boolean;
-  subTeams: Pick<SubTeam, "id" | "name">[];
+  subTeams: Pick<Team, "id" | "name">[];
   requireSubTeam: boolean;
 }
 

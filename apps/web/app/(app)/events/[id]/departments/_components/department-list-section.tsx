@@ -1,10 +1,10 @@
 import Link from "next/link";
-import type { DepartmentWithSubTeams } from "@/lib/departments/types";
+import type { DepartmentWithTeams } from "@/lib/departments/types";
 import { DepartmentEmptyState } from "./department-empty-state";
 
 interface DepartmentListSectionProps {
   eventId: string;
-  departments: DepartmentWithSubTeams[];
+  departments: DepartmentWithTeams[];
   ownerNames: Record<string, string>;
   isSuperAdmin: boolean;
 }
@@ -44,8 +44,8 @@ export function DepartmentListSection({
                 </span>
                 <span className="text-body-sm text-neutral-600">
                   {ownerNames[dept.owner_id ?? ""] ?? "Unassigned"} &middot;{" "}
-                  {dept.sub_teams.length}{" "}
-                  {dept.sub_teams.length === 1 ? "sub-team" : "sub-teams"}
+                  {dept.teams.length}{" "}
+                  {dept.teams.length === 1 ? "sub-team" : "sub-teams"}
                 </span>
               </div>
               <Link
