@@ -1,4 +1,5 @@
 import type { AssignmentStatus, AssignmentRole } from "@/lib/assignments/types";
+import type { AppRole } from "@/lib/auth/types";
 
 // ---------------------------------------------------------------------------
 // Shared building blocks
@@ -24,6 +25,8 @@ export type DeptRosterHealth = {
   accepted: number;
   declined: number;
   gap_count: number;
+  /** Team head role assignments with status 'invited' or 'declined' */
+  pending_team_heads: number;
 };
 
 export type EventWithDeptHealth = {
@@ -74,8 +77,20 @@ export type DeptHeadDashboardData = {
 
 export type TeamHeadDashboardData = {
   subTeamSummaries: SubTeamRosterSummary[];
+  /** The team_head's own invited/accepted/declined service requests */
+  myInvitations: AssignmentWithEventContext[];
 };
 
 export type SuperAdminDashboardData = {
   upcomingEvents: EventOverview[];
+};
+
+export type AllDeptsLeaderDashboardData = {
+  eventSummaries: EventWithDeptHealth[];
+};
+
+export type SupporterDashboardData = {
+  leaderName: string | null;
+  leaderRole: AppRole | null;
+  upcomingAssignments: AssignmentWithEventContext[];
 };
