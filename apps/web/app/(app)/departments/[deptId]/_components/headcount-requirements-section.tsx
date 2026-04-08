@@ -51,7 +51,7 @@ function TeamHeadcountCard({
   requirements: TeamHeadcountRequirement[];
   canManage: boolean;
 }) {
-  const [addState, addDispatch] = useActionState(setTeamHeadcountRequirement, undefined);
+  const [addState, addDispatch, isAddPending] = useActionState(setTeamHeadcountRequirement, undefined);
   const [removeState, removeDispatch] = useActionState(deleteTeamHeadcountRequirement, undefined);
 
   function handleAdd(e: React.FormEvent<HTMLFormElement>) {
@@ -119,9 +119,10 @@ function TeamHeadcountCard({
           />
           <button
             type="submit"
-            className="rounded-200 bg-brand-calm-600 px-300 py-100 text-body-sm font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90"
+            disabled={isAddPending}
+            className="rounded-200 bg-brand-calm-600 px-300 py-100 text-body-sm font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90 disabled:opacity-50"
           >
-            Set
+            {isAddPending ? "Saving…" : "Set"}
           </button>
           {addState && "error" in addState && (
             <p className="w-full text-body-sm text-semantic-error">{addState.error}</p>

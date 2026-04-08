@@ -24,16 +24,19 @@ export default async function EditTeamPage({
 
   if (!isSuperAdmin && !isDeptHead) redirect(`/departments/${deptId}`);
 
-  const [department, team, teamHeadProfiles] = await Promise.all([
+  const [department, team] = await Promise.all([
     getDepartmentById(deptId),
     getTeamById(teamId),
-    getProfilesByRole("team_head"),
   ]);
   if (!department || !team) notFound();
 
+  // Check ownership before fetching team_head profiles to avoid leaking
+  // the profile list to a dept_head who doesn't own this department.
   if (isDeptHead && department.owner_id !== session.profile.id) {
     redirect(`/departments/${deptId}`);
   }
+
+  const teamHeadProfiles = await getProfilesByRole("team_head");
 
   return (
     <div className="flex flex-col gap-400">

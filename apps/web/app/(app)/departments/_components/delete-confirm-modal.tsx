@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, startTransition } from "react";
+import { useActionState, startTransition, useEffect } from "react";
 import type { DepartmentActionResult } from "@/lib/departments/actions";
 
 interface DeleteConfirmModalProps {
@@ -19,6 +19,12 @@ export function DeleteConfirmModal({
   onCancel,
 }: DeleteConfirmModalProps) {
   const [state, dispatch, isPending] = useActionState(action, undefined);
+
+  // Close modal on success (redirect() is the normal path, but guard against
+  // edge cases where success is returned without a redirect)
+  useEffect(() => {
+    if (state && "success" in state) onCancel();
+  }, [state, onCancel]);
 
   function handleConfirm() {
     const fd = new FormData();

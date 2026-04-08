@@ -20,16 +20,16 @@ export default async function NewTeamPage({
 
   if (!isSuperAdmin && !isDeptHead) redirect(`/departments/${deptId}`);
 
-  const [department, teamHeadProfiles] = await Promise.all([
-    getDepartmentById(deptId),
-    getProfilesByRole("team_head"),
-  ]);
+  const department = await getDepartmentById(deptId);
   if (!department) notFound();
 
-  // Dept head can only create teams in departments they own
+  // Dept head can only create teams in departments they own — check before
+  // fetching team_head profiles to avoid leaking the profile list.
   if (isDeptHead && department.owner_id !== session.profile.id) {
     redirect(`/departments/${deptId}`);
   }
+
+  const teamHeadProfiles = await getProfilesByRole("team_head");
 
   return (
     <div className="flex flex-col gap-400">

@@ -67,6 +67,9 @@ export function DepartmentForm({
       {state && "error" in state && (
         <p className="text-body-sm text-semantic-error">{state.error}</p>
       )}
+      {state && "success" in state && (
+        <p className="text-body-sm text-brand-calm-600">Saved successfully.</p>
+      )}
 
       <div className="flex gap-200">
         <button
