@@ -200,6 +200,7 @@ CREATE POLICY "Team heads can review skill claims in departments with owned team
     AND reviewed_by = auth.uid()
     AND reviewed_at IS NOT NULL
     AND deleted_at IS NULL
+    AND public.get_my_role() = 'team_head'
     AND EXISTS (
       SELECT 1 FROM public.teams t
       WHERE t.department_id = volunteer_skills.department_id

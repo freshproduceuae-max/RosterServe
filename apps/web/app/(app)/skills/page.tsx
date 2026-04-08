@@ -5,6 +5,7 @@ import {
   getDepartmentSkillsForVolunteer,
   getMySkillClaims,
   getSkillClaimsForScope,
+  getAllSkillClaims,
   getSkillClaimsForTeamHead,
   getAllActiveDepartments,
 } from "@/lib/skills/queries";
@@ -55,7 +56,7 @@ export default async function SkillsPage() {
   if (profile.role === "super_admin") {
     const [catalogSkills, claims, allDepartments] = await Promise.all([
       getDepartmentSkillsForLeader(),
-      getSkillClaimsForScope(),
+      getAllSkillClaims(),
       getAllActiveDepartments(),
     ]);
     return (

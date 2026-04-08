@@ -96,6 +96,9 @@ export async function bulkCreateSkills(
   if (!Array.isArray(names) || names.length === 0) {
     return { error: "No skill names provided" };
   }
+  if (names.length > 200) {
+    return { error: "Bulk upload is limited to 200 skills at a time." };
+  }
 
   const trimmed = names
     .map((n) => n.trim())
@@ -358,6 +361,20 @@ export async function approveSkillClaim(
     }
   }
 
+  if (isTeamHead) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("department_id", existing.department_id)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (!team) {
+      return { error: "Unauthorized" };
+    }
+  }
+
   const { error } = await supabase
     .from("volunteer_skills")
     .update({
@@ -422,6 +439,20 @@ export async function rejectSkillClaim(
       .maybeSingle();
 
     if (!department) {
+      return { error: "Unauthorized" };
+    }
+  }
+
+  if (isTeamHead) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("department_id", existing.department_id)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (!team) {
       return { error: "Unauthorized" };
     }
   }
