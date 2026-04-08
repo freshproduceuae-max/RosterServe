@@ -38,7 +38,7 @@ export function HeadcountGapSection({
               )}
               {team.state === "met" && (
                 <span className="rounded-full border border-semantic-success bg-semantic-success/10 px-200 py-50 text-body-sm font-medium text-semantic-success">
-                  ✓ met
+                  met
                 </span>
               )}
             </div>

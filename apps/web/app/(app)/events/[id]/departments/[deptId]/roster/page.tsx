@@ -99,6 +99,9 @@ export default async function RosterPage({
 
     const subTeamIds = mySubTeams.map((st) => st.id);
 
+    // Skill gaps are department-wide (pre-existing behaviour: team_head sees full dept
+    // skill coverage to understand the whole picture). Headcount gaps are scoped to
+    // the team_head's own teams via subTeamIds.
     const [assignments, gapSummary, headcountGaps] = await Promise.all([
       getTeamHeadAssignments(eventId, deptId, subTeamIds),
       getSkillGapsForDepartmentRoster(eventId, deptId),
