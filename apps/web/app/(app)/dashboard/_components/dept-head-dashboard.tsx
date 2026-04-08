@@ -69,6 +69,7 @@ export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps)
                         accepted={dept.accepted}
                         declined={dept.declined}
                         gapCount={dept.gap_count}
+                        pendingTeamHeads={dept.pending_team_heads}
                       />
                     </div>
                   ))}
