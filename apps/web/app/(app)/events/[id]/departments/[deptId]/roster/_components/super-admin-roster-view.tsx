@@ -2,18 +2,25 @@
 
 import type { AssignmentWithContext } from "@/lib/assignments/types";
 import type { DepartmentWithTeams } from "@/lib/departments/types";
+import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
 import { AssignmentList } from "./assignment-list";
+import { GapSummary } from "./gap-summary";
+import { HeadcountGapSection } from "./headcount-gap-section";
 
 interface SuperAdminRosterViewProps {
   eventTitle: string;
   department: DepartmentWithTeams;
   assignments: AssignmentWithContext[];
+  gapSummary: RosterGapSummary;
+  headcountGaps: HeadcountGapSummary;
 }
 
 export function SuperAdminRosterView({
   eventTitle,
   department,
   assignments,
+  gapSummary,
+  headcountGaps,
 }: SuperAdminRosterViewProps) {
   const subTeams = department.teams.filter((st) => st.deleted_at === null);
 
@@ -28,6 +35,9 @@ export function SuperAdminRosterView({
         </div>
         <p className="mt-100 text-body-sm text-neutral-600">{eventTitle}</p>
       </div>
+
+      <GapSummary summary={gapSummary} />
+      <HeadcountGapSection summary={headcountGaps} />
 
       <AssignmentList
         assignments={assignments}

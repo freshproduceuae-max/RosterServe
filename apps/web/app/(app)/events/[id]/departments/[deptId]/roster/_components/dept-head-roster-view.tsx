@@ -11,7 +11,8 @@ import { AssignmentList } from "./assignment-list";
 import { TeamSelectionForm } from "./team-selection-form";
 import { NonConfirmationsSection } from "./non-confirmations-section";
 import { GapSummary } from "./gap-summary";
-import type { RosterGapSummary } from "@/lib/skills/gap-types";
+import { HeadcountGapSection } from "./headcount-gap-section";
+import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
 
 interface DeptHeadRosterViewProps {
   eventId: string;
@@ -21,6 +22,7 @@ interface DeptHeadRosterViewProps {
   assignments: AssignmentWithContext[];
   volunteers: VolunteerForAssignment[];
   gapSummary: RosterGapSummary;
+  headcountGaps: HeadcountGapSummary;
   substituteOptions: TeamHeadOption[];
 }
 
@@ -31,6 +33,7 @@ export function DeptHeadRosterView({
   department,
   assignments,
   gapSummary,
+  headcountGaps,
   substituteOptions,
 }: DeptHeadRosterViewProps) {
   const [showTeamForm, setShowTeamForm] = useState(false);
@@ -56,6 +59,7 @@ export function DeptHeadRosterView({
       </div>
 
       <GapSummary summary={gapSummary} />
+      <HeadcountGapSection summary={headcountGaps} />
 
       {/* Team selection form */}
       {showTeamForm && (
