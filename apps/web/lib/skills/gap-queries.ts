@@ -146,7 +146,8 @@ export async function getHeadcountGapsForRoster(
       .select("id, name")
       .eq("department_id", deptId)
       .is("deleted_at", null);
-    if (filterTeamIds && filterTeamIds.length > 0) {
+    if (filterTeamIds !== undefined) {
+      if (filterTeamIds.length === 0) return noRequirements;
       teamsQuery = teamsQuery.in("id", filterTeamIds);
     }
     const { data: teamsData, error: teamsError } = await teamsQuery;
