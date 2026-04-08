@@ -11,10 +11,9 @@ export type InterestRequest = {
   created_at: string;
 };
 
-// For the volunteer view: interest row joined with department and event context
+// For the volunteer view: interest row joined with department name
 export type InterestWithDepartment = InterestRequest & {
   department_name: string;
-  event_title: string;
 };
 
 // For the leader/admin view: interest row joined with volunteer display name and department name
@@ -27,5 +26,10 @@ export type InterestWithVolunteer = InterestRequest & {
 export type DepartmentForInterestSubmit = {
   id: string;
   name: string;
-  event_title: string;
+};
+
+// Lightweight team record for the inline approval team selector
+export type DeptTeam = {
+  id: string;
+  name: string;
 };

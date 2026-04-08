@@ -88,6 +88,8 @@ For this repo state:
 - RS-F003 marked passes=true
 - RS-F004 revision implemented (2026-04-08): getActiveDepartmentsForInterests() updated to org-level departments (no event join); event_title removed from type and UI; no migration needed
 - RS-F004 marked passes=true
+- RS-F006 revision implemented (2026-04-08): migration 00025 (department_members table, approve_and_create_membership() RPC); lib/memberships layer (types, queries, placeInTeam/removeMembership); approveInterest now atomic via RPC; team selector on approval card; volunteer membership view on /interests; department detail members section with team placement; PR merged
+- RS-F006 marked passes=true
 
 ## Next Up
 
@@ -112,7 +114,7 @@ Update rule:
 | 3 | RS-F003 | Department and team structure | P0 | passed |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
-| 6 | RS-F006 | Request to join and permanent group membership | P1 | revision_required |
+| 6 | RS-F006 | Request to join and permanent group membership | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | revision_required |
 | 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | revision_required |
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | revision_required |

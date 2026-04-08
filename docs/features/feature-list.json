@@ -125,8 +125,8 @@
       "dependsOn": ["RS-F003", "RS-F004"],
       "ui": true,
       "surface": ["volunteer", "dept_head", "all_depts_leader"],
-      "revisionRequired": true,
-      "revisionNote": "Previous feature was event-scoped interest requests. Now approval creates permanent group membership. Add team placement step after approval. Membership persists across all events.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08. Added department_members table (migration 00025) + approve_and_create_membership() RPC for atomic approval. Team placement selector added to approval card. Volunteer interests page shows active memberships. Department detail page shows members section with team placement and removal controls. Fixed events!inner join breakage from RS-F003.",
       "steps": [
         "Let volunteers submit a request to join a department.",
         "Route each request to the appropriate Dept Head for review.",
@@ -134,7 +134,7 @@
         "Allow Dept Head to optionally place the approved volunteer into a named team.",
         "Reflect membership in all leader views regardless of active events."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F007",
