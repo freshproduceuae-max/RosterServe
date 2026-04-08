@@ -11,6 +11,7 @@ export function AppNav({ role }: { role: AppRole }) {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", show: true },
     { label: "Events", href: "/events", show: isLeaderRole(role) },
+    { label: "Departments", href: "/departments", show: isLeaderRole(role) },
     { label: "Availability", href: "/availability", show: true },
     { label: "Interests", href: "/interests", show: role !== "team_head" },
     { label: "Skills", href: "/skills", show: role !== "team_head" },
