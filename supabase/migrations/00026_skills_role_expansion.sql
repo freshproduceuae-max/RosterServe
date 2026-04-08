@@ -37,7 +37,8 @@ CREATE POLICY "Super admins can insert department skills"
 CREATE POLICY "Super admins can update department skills"
   ON public.department_skills FOR UPDATE
   USING (
-    public.get_my_role() = 'super_admin'
+    deleted_at IS NULL
+    AND public.get_my_role() = 'super_admin'
   )
   WITH CHECK (
     public.get_my_role() = 'super_admin'
@@ -71,7 +72,8 @@ CREATE POLICY "All depts leaders can insert department skills"
 CREATE POLICY "All depts leaders can update department skills"
   ON public.department_skills FOR UPDATE
   USING (
-    public.get_my_role() = 'all_depts_leader'
+    deleted_at IS NULL
+    AND public.get_my_role() = 'all_depts_leader'
   )
   WITH CHECK (
     public.get_my_role() = 'all_depts_leader'
