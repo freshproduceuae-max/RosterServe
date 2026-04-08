@@ -115,7 +115,14 @@ export async function rejectInterest(
   interestId: string
 ): Promise<{ error?: string; success?: boolean }> {
   const session = await getSessionWithProfile();
-  if (!session || session.profile.role !== "dept_head") {
+  if (!session) return { error: "Unauthorized" };
+
+  const role = session.profile.role;
+  const isDeptHead = role === "dept_head";
+  const isElevated =
+    role === "all_depts_leader" || hasMinimumRole(role, "super_admin");
+
+  if (!isDeptHead && !isElevated) {
     return { error: "Unauthorized" };
   }
 
@@ -131,16 +138,19 @@ export async function rejectInterest(
     return { error: "Interest not found" };
   }
 
-  const { data: department } = await supabase
-    .from("departments")
-    .select("id")
-    .eq("id", existing.department_id)
-    .eq("owner_id", session.profile.id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  // Dept heads must own the department; elevated roles rely on RLS for scope.
+  if (isDeptHead) {
+    const { data: department } = await supabase
+      .from("departments")
+      .select("id")
+      .eq("id", existing.department_id)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
 
-  if (!department) {
-    return { error: "Unauthorized" };
+    if (!department) {
+      return { error: "Unauthorized" };
+    }
   }
 
   const { error } = await supabase
