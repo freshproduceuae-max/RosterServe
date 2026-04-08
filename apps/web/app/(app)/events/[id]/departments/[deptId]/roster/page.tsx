@@ -36,7 +36,8 @@ export default async function RosterPage({
   if (!department || !event) notFound();
 
   // ── Dept head ──────────────────────────────────────────────────────────────
-  if (role === "dept_head" && department.owner_id === profileId) {
+  if (role === "dept_head") {
+    if (department.owner_id !== profileId) redirect("/dashboard");
     const [assignments, gapSummary] = await Promise.all([
       getAssignmentsForRoster(eventId, deptId),
       getSkillGapsForDepartmentRoster(eventId, deptId),
@@ -101,8 +102,6 @@ export default async function RosterPage({
     return (
       <PageShell eventId={eventId} deptId={deptId}>
         <TeamHeadRosterView
-          eventId={eventId}
-          deptId={deptId}
           eventTitle={event.title}
           profileId={profileId}
           subTeams={mySubTeams}

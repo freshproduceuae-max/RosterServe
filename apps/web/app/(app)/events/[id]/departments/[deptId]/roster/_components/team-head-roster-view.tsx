@@ -9,8 +9,6 @@ import { GapSummary } from "./gap-summary";
 import type { RosterGapSummary } from "@/lib/skills/gap-types";
 
 interface TeamHeadRosterViewProps {
-  eventId: string;
-  deptId: string;
   eventTitle: string;
   profileId: string;
   subTeams: Pick<Team, "id" | "name">[];
@@ -81,6 +79,8 @@ function TeamHeadInvitationPanel({
       const result = await respondToServiceRequest(assignment.id, response);
       if (result.error) {
         setError(result.error);
+        setPendingResponse(null);
+      } else {
         setPendingResponse(null);
       }
     });
