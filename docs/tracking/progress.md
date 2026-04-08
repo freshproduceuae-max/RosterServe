@@ -74,10 +74,20 @@ For this repo state:
     - `all_depts_leader`: signs in → `/dashboard` stub renders, `/events` shows Create CTA, `/events/new` accessible
     - `supporter`: signs in → `/dashboard` stub renders, Events nav link absent, 0 JS errors
   - All 11 validation checks passed — RS-F001 marked `passes=true`
+- RS-F002 revision plan drafted, Codex advisory reviewed, approved, and merged via PR #20 plan step (2026-04-08)
+- RS-F002 revision implemented: migration 00021 (can_create_events column, all_depts_leader SELECT policy, expanded INSERT/UPDATE policies); canManageEvents + canManageThisEvent helpers; grantEventCreation / revokeEventCreation actions; /events/grants page + GrantList component; all four event actions updated; events page gates updated; EventDetailCard canManage prop; edit page two-step gate; PR #20 reviewed, approved, and merged to main (2026-04-08)
+- RS-F002 validation fixes: two missing RLS policies and one React dialog crash discovered during browser checks 5–16; fixed in PR #21 and merged to main (2026-04-08)
+  - Migration 00022: super_admin UPDATE policy on profiles (required for grant/revoke to write can_create_events)
+  - Migration 00023: "Granted users can read events they created" SELECT on events (required for createEvent .select() after INSERT)
+  - EventDetailCard: transitionAction / deleteAction wrapped in startTransition(); immediate modal-close calls removed
+- RS-F002 post-merge validation (2026-04-08):
+  - `npm run typecheck`, `npm run lint`: all pass
+  - Browser checks 5–16: all pass (grant/revoke cycle, ownership enforcement, status machine, all_depts_leader cross-dept visibility)
+  - All 16 validation checks passed — RS-F002 marked `passes=true`
 
 ## Next Up
 
-- RS-F002 revision: event lifecycle management — restrict creation to super_admin + all_depts_leader by default; add grant mechanism for dept_head / team_head
+- RS-F003 revision: department and team structure
 - Each revision requires its own plan → Codex advisory review → implementation → Codex blocking code review → user approval → validation cycle
 
 ## Status Legend
@@ -93,7 +103,7 @@ Update rule:
 | Order | ID | Feature | Priority | Status |
 |---|---|---|---|---|
 | 1 | RS-F001 | Authentication and role access | P0 | passed |
-| 2 | RS-F002 | Event lifecycle management | P0 | revision_required |
+| 2 | RS-F002 | Event lifecycle management | P0 | passed |
 | 3 | RS-F003 | Department and team structure | P0 | revision_required |
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | revision_required |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |

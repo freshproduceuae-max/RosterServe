@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-04-08 (session 15)
-Project phase: Active revision cycle — RS-F001 passed; RS-F002 revision next
-Repo baseline: main is clean and up to date; 20 migrations apply cleanly
+Last updated: 2026-04-08 (session 16)
+Project phase: Active revision cycle — RS-F001 + RS-F002 passed; RS-F003 revision next
+Repo baseline: main is clean and up to date; 23 migrations apply cleanly
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -10,61 +10,81 @@ HANDOFF RULE
 
 LATEST COMPLETED WORK
 
-RS-F001 revision — role hierarchy expansion
-  PR #17 (plan): docs/prd/prd.md + docs/features/feature-list.json narrowed RS-F001 scope
-    - Supporter mirroring deferred to RS-F018
-    - Event-creation grant deferred to RS-F002
-    - RS-F001 = structural foundation only (enum, types, RLS, dashboard stubs)
-  PR #18 (implementation): 2 migrations + full TypeScript + 6 role dashboard stubs
-    - Migrations: 00019 (ALTER TYPE ADD VALUE for 3 new roles) + 00020 (data migration, supporter_of column, RLS)
-    - 3 Codex blocking review rounds before APPROVED
-    - Fixes applied: removed DROP TYPE attempt; fixed event creation gate; cleaned sub_leader identifier remnants
-  PR #19 (hotfix): migration split for reset safety
-    - Root cause: SQLSTATE 55P04 — PostgreSQL disallows using a new enum value in the same transaction it was added
-    - Fix: 00019 contains only ALTER TYPE ADD VALUE; 00020 contains all downstream work
+RS-F002 revision — event lifecycle management
+  PR #20 (implementation): event creation grants
+    - can_create_events boolean NOT NULL DEFAULT false added to profiles (migration 00021)
+    - all_depts_leader events SELECT policy added (migration 00021)
+    - events INSERT and UPDATE RLS policies expanded to cover all_depts_leader by default
+      and granted dept_head / team_head (migration 00021)
+    - canManageEvents(profile) + canManageThisEvent(profile, event) helpers in lib/auth/roles.ts
+    - grantEventCreation / revokeEventCreation server actions in lib/events/grants.ts
+    - /events/grants page (super_admin only) with GrantList toggle component
+    - All four event actions (createEvent, updateEvent, transitionEventStatus, softDeleteEvent)
+      updated to use canManageEvents check
+    - events/page.tsx, events/new/page.tsx, events/[id]/page.tsx, events/[id]/edit/page.tsx updated
+    - EventDetailCard isSuperAdmin prop renamed to canManage; sourced from canManageThisEvent
 
-VALIDATION RESULTS (all checks confirmed 2026-04-08)
-  - npx supabase db reset: all 20 migrations apply cleanly ✓
-  - SELECT policyname ... ILIKE '%sub_leader%': 0 rows ✓
+  PR #21 (validation fixes):
+    - Migration 00022: super_admin UPDATE policy on profiles (dept_head / team_head rows)
+      Root cause: grantEventCreation / revokeEventCreation silently wrote 0 rows because no
+      RLS UPDATE policy allowed super_admin to update another user's profile row
+    - Migration 00023: "Granted users can read events they created" SELECT policy on events
+      Root cause: createEvent's .select("id").single() failed after INSERT because the new event
+      has no departments yet and the dept_head SELECT policy is scoped to owned-dept events only
+    - EventDetailCard dialog crash fixed: transitionAction and deleteAction wrapped in
+      startTransition(); immediate setTransitionTarget(null) / setShowDelete(false) calls removed
+      Root cause: useActionState dispatch called imperatively without startTransition + modal
+      unmounted before async action resolved → React removeChild null crash
+
+VALIDATION RESULTS (checks 5–16 confirmed 2026-04-08)
+  - Check 5: super_admin creates event → appears in list ✓
+  - Check 6: all_depts_leader creates event → appears in list ✓
+  - Check 7: dept_head (no grant) → no Create CTA at /events ✓
+  - Check 8: dept_head (no grant) → /events/new redirects to /events ✓
+  - Check 9: super_admin grants dept_head at /events/grants → button flips to Revoke ✓
+  - Check 10: granted dept_head → CTA visible, event creation succeeds ✓
+  - Check 11: granted dept_head → Edit/action on own event; absent on super_admin's event ✓
+  - Check 12: revoke grant → CTA gone, /events/new blocks again ✓
+  - Check 13: draft→published→completed chain valid; published→draft rejected by DB trigger ✓
+  - Check 14: can_create_events NOT NULL DEFAULT false confirmed at schema level ✓
+  - Check 15: all_depts_leader sees all active events regardless of department ownership ✓
+  - Check 16: /events/[id]/edit accessible for own event; redirects for non-owned event ✓
   - npm run typecheck: PASS ✓
   - npm run lint: PASS ✓
-  - npm run build: PASS ✓
-  - team_head browser: signs in → /dashboard renders, /events visible (no Create CTA), /events/new blocked ✓
-  - all_depts_leader browser: signs in → /dashboard stub, /events shows Create CTA, /events/new accessible ✓
-  - supporter browser: signs in → /dashboard stub, no Events nav link, 0 JS errors ✓
 
 CODEBASE STATUS
-- 20 migrations applied cleanly on db reset
-- sub_leader enum value: intentionally left in PostgreSQL type as deprecated dead value (removing it requires dropping all dependent functions/policies; no row carries sub_leader after migration)
-- supporter_of column added to profiles (nullable FK) — used by RS-F018 (permission mirroring), not wired yet
+- 23 migrations applied cleanly on db reset
+- sub_leader enum value: deprecated dead value; no row carries sub_leader; do not use in new code
+- supporter_of column on profiles (nullable FK) — wired by RS-F018, not yet active
 - all_depts_leader and supporter dashboard stubs are placeholders; full content is RS-F010's responsibility
-- isLeaderRole() excludes supporter (their access is derived from supporter_of FK, not structural scope)
-- hasMinimumRole(role, "all_depts_leader") gates event creation — covers super_admin + all_depts_leader
+- isLeaderRole() excludes supporter (access is derived from supporter_of FK, not structural scope)
+- canManageEvents(profile) gates event creation; canManageThisEvent(profile, event) gates edit/action surface
 
 FEATURE STATUS SUMMARY
 - RS-F001: passed ✅
 - RS-F005: passed ✅
-- RS-F002–RS-F004, RS-F006–RS-F010: revision_required
+- RS-F002: passed ✅
+- RS-F003–RS-F004, RS-F006–RS-F010: revision_required
 - RS-F011–RS-F018: not_started
 
 BLOCKERS
 - None
 
 NEXT REQUIRED ACTION
-1. RS-F002 revision: event lifecycle management
-   - Restrict event creation to super_admin + all_depts_leader by default (event creation gate already correct in code from PR #18)
-   - Add grant mechanism allowing super_admin to grant dept_head / team_head event-creation access
-   - Maintain event lifecycle states: draft, published, completed
-2. Follow full cycle: write plan -> Codex advisory review -> implement -> Codex blocking code review -> user approval -> validate
+1. RS-F003 revision: department and team structure
+   - Write plan → Codex advisory review → implement → Codex blocking review → user approval → validate
+   - Likely scope: department/sub-team CRUD scoped to dept_head ownership, team_head assignment
+   - Plan file path: docs/plans/plan-rs-f003-<slug>.md (to be created)
 
 BRANCH CONVENTION
-- Use codex/<feature-id>-<short-slug>
-- Last merged branches: codex/rs-f001-role-hierarchy-revision-impl (PR #18), fix/rs-f001-migration-split (PR #19)
-- Next branch: codex/rs-f002-event-lifecycle-revision
+- Use feat/<feature-id>-<short-slug>
+- Last merged branches: feat/rs-f002-event-lifecycle-revision (PR #21)
+- Next branch: feat/rs-f003-<slug>
 
 PLAN STATUS
-- docs/plans/plan-rs-f001-role-hierarchy-revision.md: implemented; validation outstanding
-- All pre-revision plans (RS-F002 through RS-F010) are outdated — write new revision plans
+- docs/plans/plan-rs-f001-role-hierarchy-revision.md: implemented and validated ✓
+- docs/plans/plan-rs-f002-event-lifecycle-revision.md: implemented and validated ✓ (two RLS deviations documented)
+- All other pre-revision plans (RS-F003 through RS-F010) are outdated — write new revision plans
 
 CARRY-OVER EXECUTION NOTES
 - Follow the canonical design system for all UI work
@@ -73,10 +93,12 @@ CARRY-OVER EXECUTION NOTES
 - Auto-suggestions never auto-assign — Dept Head confirmation always required
 - Do not commit directly to main; use a clean branch per feature
 - The sub_leader enum value is deprecated dead; do not introduce it into new code or policies
+- canManageEvents / canManageThisEvent are the canonical event-access helpers — do not revert to raw role checks
+- DepartmentListSection still uses isSuperAdmin (not canManageEvent) — department management is RS-F003 scope
 
 CANONICAL DOCS
 - Vision: VisionDocument_ChurchRosterApp.md (revised 2026-04-07)
-- PRD: docs/prd/prd.md (revised 2026-04-07, RS-F001 scope narrowed 2026-04-08)
-- Feature registry: docs/features/feature-list.json (v2; RS-F001 in_review pending browser validation)
+- PRD: docs/prd/prd.md (revised 2026-04-07)
+- Feature registry: docs/features/feature-list.json (v2; RS-F001 + RS-F002 passed)
 - Progress tracker: docs/tracking/progress.md
 - Session handoff: docs/tracking/claude-progress.txt

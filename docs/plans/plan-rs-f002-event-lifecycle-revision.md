@@ -1,6 +1,6 @@
 # Implementation Plan: RS-F002 — Event Lifecycle Revision
 
-**Status:** Draft
+**Status:** Implemented and validated (passes=true) — 2026-04-08
 **Feature:** RS-F002 Event lifecycle management
 **Revision:** PRD v2 (2026-04-07) — expand event creation to all_depts_leader by default; add grant mechanism for dept_head / team_head
 **Depends on:** RS-F001 (role hierarchy, six-role enum and TypeScript types — in place)
@@ -378,3 +378,27 @@ Design: same table density as `event-list-table.tsx`. No new component patterns.
 2. **Stale session after grant**: If `super_admin` grants a dept_head access in one browser tab, the dept_head's session profile is cached and won't reflect the grant until they re-authenticate or the session refreshes. Acceptable for v1 — no in-session grant notification required.
 3. **Edit page null vs RLS-blocked ambiguity**: `getEventById` returns `null` for both "event does not exist" and "event exists but RLS blocks the read." Both land on `notFound()`, which is safe. The ownership pre-check (`canManageThisEvent`) gives a friendlier redirect path before the DB query for the case where the user has grant but the event belongs to someone else — but `notFound()` is always the correct fallback.
 4. **`DepartmentListSection` isSuperAdmin**: This prop is kept as `super_admin`-only for RS-F002. Department management control expansion is RS-F003 scope — do not bleed RS-F003 work into this revision.
+
+---
+
+## Implementation Outcome (2026-04-08)
+
+**PRs merged:** #20 (implementation), #21 (validation fixes)
+**Migrations delivered:** 00021, 00022, 00023
+**All 16 validation checks passed.**
+
+### Deviations from plan
+
+**Migration 00022 — not in original plan:**
+The plan added `can_create_events` to profiles and wrote the grant actions but did not include an UPDATE policy on `profiles` for `super_admin`. Without it, `grantEventCreation` / `revokeEventCreation` silently wrote 0 rows (Supabase returns no error for a 0-row UPDATE). Discovered and fixed during browser validation (Check 9).
+
+**Migration 00023 — not in original plan:**
+The plan described the dept_head / team_head authorization matrix as full active-event read once granted, but did not add the corresponding SELECT policy. The `createEvent` action chains `.select("id").single()` after INSERT; a newly created event has no departments, so the dept_head's existing SELECT policy (scoped to events with owned departments) blocked the read-back. Discovered and fixed during browser validation (Check 10).
+
+**EventDetailCard dialog crash — not in plan:**
+The plan did not specify the imperative dispatch pattern. The implementation called `transitionAction(fd)` and `deleteAction(fd)` outside `startTransition`, then immediately closed the modal, causing a React `removeChild` null crash on reconciliation. Fixed in PR #21 by wrapping dispatches in `startTransition()` and removing the premature modal-close calls.
+
+### Migration / rollout status
+- Local: all 23 migrations applied cleanly via `npx supabase db reset`
+- Remote (production): not yet applied — must run `npx supabase db push` against the linked remote project before deploying
+- Migrations 00022 and 00023 are required for the grant mechanism and event creation to function correctly in production
