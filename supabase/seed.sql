@@ -165,19 +165,35 @@
 -- (run this as the dept_head user in Supabase Studio; should only return in-scope rows)
 
 -- ---------------------------------------------------------------------------
--- RS-F006 seed examples (commented out — requires real UUIDs from RS-F003/RS-F004)
--- Note for developers: These examples require RS-F003 department data and
--- RS-F004 volunteer profiles to already exist in the local DB.
--- Replace the placeholder UUIDs with real values from your local seed data.
+-- RS-F006 seed examples (commented out — requires real UUIDs from earlier seeds)
 -- ---------------------------------------------------------------------------
--- INSERT INTO public.volunteer_interests (volunteer_id, department_id, status, reviewed_by, reviewed_at)
--- VALUES
---   -- Pending interest (not yet reviewed)
---   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_1', 'pending', NULL, NULL),
---   -- Approved interest (reviewed and accepted)
---   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_2', 'approved', 'DEPT_HEAD_UUID', NOW()),
---   -- Rejected interest (reviewed and declined)
---   ('VOLUNTEER_UUID', 'DEPARTMENT_UUID_3', 'rejected', 'DEPT_HEAD_UUID', NOW());
+-- Example: approve an interest and create membership via RPC
+-- SELECT approve_and_create_membership('INTEREST_UUID', NULL);
+
+-- Example: create a membership directly for testing (bypasses interest flow)
+-- INSERT INTO public.department_members (volunteer_id, department_id, team_id, created_by)
+-- VALUES (
+--   (SELECT id FROM auth.users WHERE email = 'volunteer@example.com'),
+--   (SELECT id FROM public.departments WHERE name = 'Worship Team'),
+--   NULL,
+--   (SELECT id FROM auth.users WHERE email = 'depthead@example.com')
+-- );
+
+-- Example: assign the volunteer to a team
+-- UPDATE public.department_members
+-- SET team_id = (SELECT id FROM public.teams WHERE name = 'Team A')
+-- WHERE volunteer_id = (SELECT id FROM auth.users WHERE email = 'volunteer@example.com')
+--   AND department_id = (SELECT id FROM public.departments WHERE name = 'Worship Team')
+--   AND deleted_at IS NULL;
+
+-- Example: view all active members for a department
+-- SELECT dm.*, p.display_name, t.name AS team_name
+-- FROM public.department_members dm
+-- JOIN public.profiles p ON p.id = dm.volunteer_id
+-- LEFT JOIN public.teams t ON t.id = dm.team_id
+-- WHERE dm.department_id = (SELECT id FROM public.departments WHERE name = 'Worship Team')
+--   AND dm.deleted_at IS NULL
+-- ORDER BY dm.created_at;
 
 -- ---------------------------------------------------------------------------
 -- RS-F007 seed examples (commented out — requires real UUIDs from RS-F003/RS-F004/RS-F006)

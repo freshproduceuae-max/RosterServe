@@ -10,6 +10,8 @@ import {
 import { DepartmentDetailCard } from "./_components/department-detail-card";
 import { TeamListSection } from "./_components/team-list-section";
 import { HeadcountRequirementsSection } from "./_components/headcount-requirements-section";
+import { getDepartmentMembers } from "@/lib/memberships/queries";
+import { MembersSection } from "./_components/members-section";
 
 export default async function DepartmentDetailPage({
   params,
@@ -35,7 +37,11 @@ export default async function DepartmentDetailPage({
     department.owner_id,
     ...department.teams.map((t) => t.owner_id),
   ].filter((id): id is string => id !== null);
-  const ownerNames = await getOwnerDisplayNames(ownerIds);
+
+  const [ownerNames, members] = await Promise.all([
+    getOwnerDisplayNames(ownerIds),
+    canManage ? getDepartmentMembers(deptId) : Promise.resolve([]),
+  ]);
 
   // team_head sees only their own team's headcount requirements
   const visibleTeamsForHeadcount = isTeamHead
@@ -82,6 +88,13 @@ export default async function DepartmentDetailPage({
         <HeadcountRequirementsSection
           teams={visibleTeamsForHeadcount}
           requirementsByTeam={requirementsByTeam}
+          canManage={canManage}
+        />
+      )}
+      {canManage && (
+        <MembersSection
+          members={members}
+          teams={department.teams}
           canManage={canManage}
         />
       )}
