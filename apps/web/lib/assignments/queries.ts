@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSessionWithProfile } from "@/lib/auth/session";
 import type {
   Assignment,
   AssignmentForVolunteer,
@@ -232,6 +233,9 @@ export async function getVolunteersForAssignment(
 export async function getAssignmentsForVolunteer(): Promise<
   AssignmentForVolunteer[]
 > {
+  const session = await getSessionWithProfile();
+  if (!session) return [];
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("assignments")
@@ -239,6 +243,7 @@ export async function getAssignmentsForVolunteer(): Promise<
       "*, event:events!event_id(title, event_date), department:departments!department_id(name), sub_team:teams!sub_team_id(name)",
     )
     .is("deleted_at", null)
+    .eq("volunteer_id", session.profile.id)
     .order("created_at", { ascending: false });
   if (error || !data) return [];
 

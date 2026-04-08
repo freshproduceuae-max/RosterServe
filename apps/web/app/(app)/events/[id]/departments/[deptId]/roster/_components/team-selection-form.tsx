@@ -36,7 +36,10 @@ export function TeamSelectionForm({
     startTransition(async () => {
       const result = await selectTeamForEvent(eventId, deptId, selectedTeamId);
       if (result.error) {
-        setError(result.error);
+        const partial = (result.created ?? 0) > 0
+          ? ` (${result.created} invited before error)`
+          : "";
+        setError(result.error + partial);
       } else {
         setSuccessMsg(
           `Done — ${result.created} invited, ${result.skipped} already assigned.`,

@@ -472,16 +472,7 @@ export async function assignSubstituteTeamHead(
     };
   }
 
-  // Soft-delete the declined assignment
-  const { error: deleteError } = await supabase
-    .from("assignments")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", declinedAssignmentId);
-  if (deleteError) {
-    return { error: "Failed to remove declined assignment. Please try again." };
-  }
-
-  // Create new team_head assignment for substitute
+  // 1. Create new team_head assignment for substitute (FIRST)
   const { error: insertError } = await supabase.from("assignments").insert({
     event_id: assignment.event_id,
     department_id: assignment.department_id,
@@ -494,13 +485,19 @@ export async function assignSubstituteTeamHead(
   if (insertError) {
     if (insertError.code === "23505") {
       return {
-        error:
-          "This person is already assigned in this department for this event",
+        error: "This person is already assigned in this department for this event",
       };
     }
-    return {
-      error: "Failed to create substitute assignment. Please try again.",
-    };
+    return { error: "Failed to create substitute assignment. Please try again." };
+  }
+
+  // 2. Soft-delete the declined assignment (ONLY after insert succeeds)
+  const { error: deleteError } = await supabase
+    .from("assignments")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", declinedAssignmentId);
+  if (deleteError) {
+    return { error: "Failed to remove declined assignment. Please try again." };
   }
 
   revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
