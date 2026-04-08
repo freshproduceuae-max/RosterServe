@@ -90,6 +90,9 @@ For this repo state:
 - RS-F004 marked passes=true
 - RS-F006 revision implemented (2026-04-08): migration 00025 (department_members table, approve_and_create_membership() RPC); lib/memberships layer (types, queries, placeInTeam/removeMembership); approveInterest now atomic via RPC; team selector on approval card; volunteer membership view on /interests; department detail members section with team placement; PR merged
 - RS-F006 marked passes=true
+- RS-F007 revision plan drafted and approved (2026-04-08)
+- RS-F007 revision implemented (2026-04-08): migration 00026 (new RLS policies for super_admin/all_depts_leader/team_head on both skills tables); actions expanded with dual-branch role guards + bulkCreateSkills; getSkillClaimsForTeamHead + getAllActiveDepartments queries added; /skills page routes all 6 roles; TeamHeadSkillsView created; SuperAdminSkillsView updated with SkillCreationForm (single + bulk entry)
+- RS-F007 marked passes=true
 
 ## Next Up
 
@@ -115,7 +118,7 @@ Update rule:
 | 4 | RS-F004 | Volunteer onboarding and profile setup | P0 | passed |
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Request to join and permanent group membership | P1 | passed |
-| 7 | RS-F007 | Skill profile and approval | P0 | revision_required |
+| 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | revision_required |
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | revision_required |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | revision_required |

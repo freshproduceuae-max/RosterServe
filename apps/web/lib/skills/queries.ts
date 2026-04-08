@@ -174,3 +174,58 @@ export async function getAllSkillClaims(): Promise<SkillClaimWithVolunteer[]> {
       return a.volunteer_display_name.localeCompare(b.volunteer_display_name);
     });
 }
+
+/**
+ * getSkillClaimsForTeamHead
+ * Team head: all skill claims (deleted_at IS NULL, department_id IS NOT NULL)
+ * in departments where the caller owns at least one active team.
+ * Returns all statuses so the team-head view can render pending + reviewed rows.
+ * RLS policy "Team heads can read skill claims in departments with owned teams"
+ * automatically restricts the result set.
+ */
+export async function getSkillClaimsForTeamHead(): Promise<
+  SkillClaimWithVolunteer[]
+> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("volunteer_skills")
+    .select(
+      "*, volunteer:profiles!volunteer_id(display_name), department_skill:department_skills!skill_id(name), department:departments!department_id(name)",
+    )
+    .is("deleted_at", null)
+    .not("department_id", "is", null)
+    .order("status", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error || !data) return [];
+
+  type RawRow = VolunteerSkillClaim & {
+    volunteer: { display_name: string } | null;
+    department_skill: { name: string } | null;
+    department: { name: string } | null;
+  };
+
+  return (data as unknown as RawRow[]).map((row) => ({
+    ...row,
+    volunteer_display_name: row.volunteer?.display_name ?? "Unknown",
+    skill_name: row.department_skill?.name ?? row.name,
+    department_name: row.department?.name ?? "Unknown",
+  }));
+}
+
+/**
+ * getAllActiveDepartments
+ * Super admin / all_depts_leader: all active (non-deleted) departments.
+ * Used to populate the department selector in the super admin skill creation form.
+ */
+export async function getAllActiveDepartments(): Promise<
+  { id: string; name: string }[]
+> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("departments")
+    .select("id, name")
+    .is("deleted_at", null)
+    .order("name", { ascending: true });
+  if (error || !data) return [];
+  return data as { id: string; name: string }[];
+}
