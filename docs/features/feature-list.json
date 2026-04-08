@@ -146,15 +146,15 @@
       "dependsOn": ["RS-F003", "RS-F004"],
       "ui": true,
       "surface": ["volunteer", "dept_head", "team_head", "admin"],
-      "revisionRequired": true,
-      "revisionNote": "Super Admin now creates skills via manual entry or bulk template upload. Both Dept Head and Team Head can approve, edit, or remove volunteer skill claims.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-08. Super Admin now creates skills via manual entry or bulk template upload (migration 00026, bulkCreateSkills action, SkillCreationForm). Both Dept Head and Team Head can approve/reject volunteer skill claims within their scope (expanded RLS policies + role guards). all_depts_leader gets full read+write. /skills page routes all six roles correctly.",
       "steps": [
         "Allow Super Admin to define skills via manual entry or bulk template upload.",
         "Allow volunteers to add skills to their profiles (pending approval).",
         "Allow both Dept Heads and Team Heads to approve, edit, or remove volunteer skill claims within their scope.",
         "Ensure only approved skills feed planning and gap detection logic."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F008",
