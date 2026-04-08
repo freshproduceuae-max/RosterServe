@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
+import { isLeaderRole, canManageEvents } from "@/lib/auth/roles";
 import { getEvents } from "@/lib/events/queries";
 import { EVENT_STATUSES, EVENT_STATUS_LABELS, type EventStatus } from "@/lib/events/types";
 import { EventListTable } from "./_components/event-list-table";
@@ -23,23 +23,31 @@ export default async function EventsPage({
       : undefined;
 
   const events = await getEvents(statusFilter ? { status: statusFilter } : undefined);
-  // all_depts_leader can create events by default; dept_head/team_head require
-  // an explicit grant (RS-F002). Use all_depts_leader rank as the minimum.
-  const canCreateEvent = hasMinimumRole(session.profile.role, "all_depts_leader");
+  const canCreateEvent = canManageEvents(session.profile);
 
   return (
     <div className="flex flex-col gap-400">
       {/* Header */}
       <div className="flex flex-col gap-200 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-display text-h1 text-neutral-950">Events</h1>
-        {canCreateEvent && (
-          <Link
-            href="/events/new"
-            className="rounded-200 bg-brand-calm-600 px-400 py-200 text-center text-body font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90"
-          >
-            Create event
-          </Link>
-        )}
+        <div className="flex items-center gap-300">
+          {session.profile.role === "super_admin" && (
+            <Link
+              href="/events/grants"
+              className="text-body-sm text-brand-calm-600 hover:underline"
+            >
+              Manage grants
+            </Link>
+          )}
+          {canCreateEvent && (
+            <Link
+              href="/events/new"
+              className="rounded-200 bg-brand-calm-600 px-400 py-200 text-center text-body font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90"
+            >
+              Create event
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Status filter tabs */}

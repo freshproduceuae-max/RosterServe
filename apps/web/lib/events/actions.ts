@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { hasMinimumRole } from "@/lib/auth/roles";
+import { canManageEvents } from "@/lib/auth/roles";
 import { createEventSchema, updateEventSchema, transitionStatusSchema } from "./schemas";
 
 export type EventActionResult = { error: string } | { success: true } | undefined;
@@ -13,7 +13,7 @@ export async function createEvent(
   formData: FormData
 ): Promise<EventActionResult> {
   const session = await getSessionWithProfile();
-  if (!session || !hasMinimumRole(session.profile.role, "super_admin")) {
+  if (!session || !canManageEvents(session.profile)) {
     return { error: "You do not have permission to create events." };
   }
 
@@ -51,7 +51,7 @@ export async function updateEvent(
   formData: FormData
 ): Promise<EventActionResult> {
   const session = await getSessionWithProfile();
-  if (!session || !hasMinimumRole(session.profile.role, "super_admin")) {
+  if (!session || !canManageEvents(session.profile)) {
     return { error: "You do not have permission to edit events." };
   }
 
@@ -89,7 +89,7 @@ export async function transitionEventStatus(
   formData: FormData
 ): Promise<EventActionResult> {
   const session = await getSessionWithProfile();
-  if (!session || !hasMinimumRole(session.profile.role, "super_admin")) {
+  if (!session || !canManageEvents(session.profile)) {
     return { error: "You do not have permission to change event status." };
   }
 
@@ -125,7 +125,7 @@ export async function softDeleteEvent(
   formData: FormData
 ): Promise<EventActionResult> {
   const session = await getSessionWithProfile();
-  if (!session || !hasMinimumRole(session.profile.role, "super_admin")) {
+  if (!session || !canManageEvents(session.profile)) {
     return { error: "You do not have permission to delete events." };
   }
 

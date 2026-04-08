@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { isLeaderRole, hasMinimumRole } from "@/lib/auth/roles";
+import { isLeaderRole, hasMinimumRole, canManageThisEvent } from "@/lib/auth/roles";
 import { getEventById } from "@/lib/events/queries";
 import { getDepartmentsByEventId, getOwnerDisplayNames } from "@/lib/departments/queries";
 import { EventDetailCard } from "../_components/event-detail-card";
@@ -24,6 +24,7 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const isSuperAdmin = hasMinimumRole(session.profile.role, "super_admin");
+  const canManage = canManageThisEvent(session.profile, event);
 
   // Build owner display name map from the actual owner IDs present in this event's departments
   const ownerIds = departments
@@ -40,7 +41,7 @@ export default async function EventDetailPage({
         &larr; Back to events
       </Link>
 
-      <EventDetailCard event={event} isSuperAdmin={isSuperAdmin} />
+      <EventDetailCard event={event} canManage={canManage} />
 
       <DepartmentListSection
         eventId={id}

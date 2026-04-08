@@ -1,4 +1,4 @@
-import type { AppRole } from "./types";
+import type { AppRole, Profile } from "./types";
 
 export const ROLE_RANK: Record<AppRole, number> = {
   super_admin: 60,
@@ -27,6 +27,36 @@ export const ROLE_HOME_PATH: Record<AppRole, string> = {
 // from supporter_of, not their own structural scope (RS-F018).
 export function isLeaderRole(role: AppRole): boolean {
   return role !== "volunteer" && role !== "supporter";
+}
+
+// Returns true if the user has any event-creation/management capability.
+// Used for list/new page gates and action-layer entry checks.
+export function canManageEvents(profile: Profile): boolean {
+  if (hasMinimumRole(profile.role, "all_depts_leader")) return true;
+  if (
+    (profile.role === "dept_head" || profile.role === "team_head") &&
+    profile.can_create_events
+  )
+    return true;
+  return false;
+}
+
+// Returns true if the user can manage this specific event.
+// super_admin and all_depts_leader can manage any event.
+// Granted dept_head / team_head can only manage events they created.
+// Used for the detail card and edit page to gate action controls.
+export function canManageThisEvent(
+  profile: Profile,
+  event: { created_by: string }
+): boolean {
+  if (hasMinimumRole(profile.role, "all_depts_leader")) return true;
+  if (
+    (profile.role === "dept_head" || profile.role === "team_head") &&
+    profile.can_create_events &&
+    event.created_by === profile.id
+  )
+    return true;
+  return false;
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
