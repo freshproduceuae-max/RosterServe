@@ -46,15 +46,15 @@
       "dependsOn": ["RS-F001"],
       "ui": true,
       "surface": ["admin", "all_depts_leader", "dept_head"],
-      "revisionRequired": true,
-      "revisionNote": "Restrict event creation to super_admin and all_depts_leader by default. Add grant mechanism for dept_head and team_head.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-07 (plan), implemented PR #20, validation fixes PR #21 (2026-04-08). Browser validation confirmed checks 5–16: grant/revoke cycle, dept_head ownership enforcement, status transition machine, all_depts_leader cross-dept visibility. Two RLS gaps fixed during validation (migrations 00022, 00023); dialog crash fixed in EventDetailCard.",
       "steps": [
         "Restrict event creation to Super Admin and All Departments Leader by default.",
         "Implement a grant mechanism allowing Super Admin to give dept_head or team_head event-creation access.",
         "Maintain event lifecycle states: draft, published, completed.",
         "Ensure downstream planning records remain anchored to an event."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F003",
