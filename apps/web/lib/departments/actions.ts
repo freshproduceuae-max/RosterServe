@@ -7,15 +7,13 @@ import { hasMinimumRole } from "@/lib/auth/roles";
 import {
   createDepartmentSchema,
   updateDepartmentSchema,
-  createSubTeamSchema,
-  updateSubTeamSchema,
+  createTeamSchema,
+  updateTeamSchema,
+  setHeadcountRequirementSchema,
 } from "./schemas";
 
 export type DepartmentActionResult = { error: string } | { success: true } | undefined;
 
-// Verify that the given profile exists and has the expected role.
-// Called before any owner_id write to enforce the ownership invariant
-// server-side (in addition to the database-level trigger).
 async function verifyOwnerRole(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   ownerId: string,
@@ -45,7 +43,6 @@ export async function createDepartment(
 
   const rawOwnerId = formData.get("ownerId");
   const parsed = createDepartmentSchema.safeParse({
-    eventId: formData.get("eventId"),
     name: formData.get("name"),
     ownerId: rawOwnerId || undefined,
   });
@@ -66,7 +63,6 @@ export async function createDepartment(
   const { data, error } = await supabase
     .from("departments")
     .insert({
-      event_id: parsed.data.eventId,
       name: parsed.data.name,
       owner_id: parsed.data.ownerId || null,
       created_by: session.user.id,
@@ -78,7 +74,7 @@ export async function createDepartment(
     return { error: "This department could not be created. Please try again." };
   }
 
-  redirect(`/events/${parsed.data.eventId}/departments/${data.id}`);
+  redirect(`/departments/${data.id}`);
 }
 
 export async function updateDepartment(
@@ -103,18 +99,6 @@ export async function updateDepartment(
 
   const supabase = await createSupabaseServerClient();
 
-  // Fetch event_id for redirect
-  const { data: existing, error: fetchError } = await supabase
-    .from("departments")
-    .select("event_id")
-    .eq("id", parsed.data.id)
-    .is("deleted_at", null)
-    .single();
-
-  if (fetchError || !existing) {
-    return { error: "Department not found." };
-  }
-
   if (parsed.data.ownerId) {
     const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "dept_head");
     if (!validOwner) {
@@ -135,7 +119,7 @@ export async function updateDepartment(
     return { error: "This department could not be saved. Please try again." };
   }
 
-  redirect(`/events/${existing.event_id}/departments/${parsed.data.id}`);
+  redirect(`/departments/${parsed.data.id}`);
 }
 
 export async function softDeleteDepartment(
@@ -148,15 +132,13 @@ export async function softDeleteDepartment(
   }
 
   const id = formData.get("id");
-  const eventId = formData.get("eventId");
-  if (typeof id !== "string" || !id || typeof eventId !== "string" || !eventId) {
+  if (typeof id !== "string" || !id) {
     return { error: "Invalid department." };
   }
 
   const supabase = await createSupabaseServerClient();
   const now = new Date().toISOString();
 
-  // Soft-delete the department
   const { error: deptError } = await supabase
     .from("departments")
     .update({ deleted_at: now })
@@ -167,26 +149,24 @@ export async function softDeleteDepartment(
     return { error: "Could not delete department. Please try again." };
   }
 
-  // Cascade: soft-delete all active sub-teams in this department
-  const { error: subTeamError } = await supabase
-    .from("sub_teams")
+  const { error: teamError } = await supabase
+    .from("teams")
     .update({ deleted_at: now })
     .eq("department_id", id)
     .is("deleted_at", null);
 
-  if (subTeamError) {
-    // Department is already deleted; log and surface a partial-state warning
+  if (teamError) {
     return {
       error:
-        "Department was deleted but some sub-teams could not be removed. Please contact your admin.",
+        "Department was deleted but some teams could not be removed. Please contact your admin.",
     };
   }
 
-  redirect(`/events/${eventId}`);
+  redirect("/departments");
 }
 
 // ============================================================
-// SUB-TEAM ACTIONS (super_admin or owning dept_head)
+// TEAM ACTIONS (super_admin or owning dept_head)
 // ============================================================
 
 async function verifyDeptHeadOwnership(
@@ -204,7 +184,7 @@ async function verifyDeptHeadOwnership(
   return data?.owner_id === userId;
 }
 
-export async function createSubTeam(
+export async function createTeam(
   _prev: DepartmentActionResult,
   formData: FormData
 ): Promise<DepartmentActionResult> {
@@ -215,13 +195,15 @@ export async function createSubTeam(
   const isDeptHead = session.profile.role === "dept_head";
 
   if (!isSuperAdmin && !isDeptHead) {
-    return { error: "You do not have permission to create sub-teams." };
+    return { error: "You do not have permission to create teams." };
   }
 
   const rawOwnerId = formData.get("ownerId");
-  const parsed = createSubTeamSchema.safeParse({
+  const rawRotation = formData.get("rotationLabel");
+  const parsed = createTeamSchema.safeParse({
     departmentId: formData.get("departmentId"),
     name: formData.get("name"),
+    rotationLabel: rawRotation || undefined,
     ownerId: rawOwnerId || undefined,
   });
 
@@ -242,16 +224,6 @@ export async function createSubTeam(
     }
   }
 
-  // Fetch event_id for redirect
-  const { data: dept } = await supabase
-    .from("departments")
-    .select("event_id")
-    .eq("id", parsed.data.departmentId)
-    .is("deleted_at", null)
-    .single();
-
-  if (!dept) return { error: "Department not found." };
-
   if (parsed.data.ownerId) {
     const validOwner = await verifyOwnerRole(supabase, parsed.data.ownerId, "team_head");
     if (!validOwner) {
@@ -259,21 +231,22 @@ export async function createSubTeam(
     }
   }
 
-  const { error } = await supabase.from("sub_teams").insert({
+  const { error } = await supabase.from("teams").insert({
     department_id: parsed.data.departmentId,
     name: parsed.data.name,
+    rotation_label: parsed.data.rotationLabel || null,
     owner_id: parsed.data.ownerId || null,
     created_by: session.user.id,
   });
 
   if (error) {
-    return { error: "This sub-team could not be created. Please try again." };
+    return { error: "This team could not be created. Please try again." };
   }
 
-  redirect(`/events/${dept.event_id}/departments/${parsed.data.departmentId}`);
+  redirect(`/departments/${parsed.data.departmentId}`);
 }
 
-export async function updateSubTeam(
+export async function updateTeam(
   _prev: DepartmentActionResult,
   formData: FormData
 ): Promise<DepartmentActionResult> {
@@ -284,13 +257,15 @@ export async function updateSubTeam(
   const isDeptHead = session.profile.role === "dept_head";
 
   if (!isSuperAdmin && !isDeptHead) {
-    return { error: "You do not have permission to edit sub-teams." };
+    return { error: "You do not have permission to edit teams." };
   }
 
   const rawOwnerId = formData.get("ownerId");
-  const parsed = updateSubTeamSchema.safeParse({
+  const rawRotation = formData.get("rotationLabel");
+  const parsed = updateTeamSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
+    rotationLabel: rawRotation || undefined,
     ownerId: rawOwnerId || undefined,
   });
 
@@ -300,15 +275,14 @@ export async function updateSubTeam(
 
   const supabase = await createSupabaseServerClient();
 
-  // Fetch department_id and event_id for ownership check and redirect
   const { data: existing } = await supabase
-    .from("sub_teams")
-    .select("department_id, departments(event_id)")
+    .from("teams")
+    .select("department_id")
     .eq("id", parsed.data.id)
     .is("deleted_at", null)
     .single();
 
-  if (!existing) return { error: "Sub-team not found." };
+  if (!existing) return { error: "Team not found." };
 
   if (isDeptHead) {
     const owns = await verifyDeptHeadOwnership(
@@ -329,24 +303,23 @@ export async function updateSubTeam(
   }
 
   const { error } = await supabase
-    .from("sub_teams")
+    .from("teams")
     .update({
       name: parsed.data.name,
+      rotation_label: parsed.data.rotationLabel || null,
       owner_id: parsed.data.ownerId || null,
     })
     .eq("id", parsed.data.id)
     .is("deleted_at", null);
 
   if (error) {
-    return { error: "This sub-team could not be saved. Please try again." };
+    return { error: "This team could not be saved. Please try again." };
   }
 
-  const eventId = (existing.departments as unknown as { event_id: string } | null)
-    ?.event_id;
-  redirect(`/events/${eventId}/departments/${existing.department_id}`);
+  redirect(`/departments/${existing.department_id}`);
 }
 
-export async function softDeleteSubTeam(
+export async function softDeleteTeam(
   _prev: DepartmentActionResult,
   formData: FormData
 ): Promise<DepartmentActionResult> {
@@ -357,24 +330,24 @@ export async function softDeleteSubTeam(
   const isDeptHead = session.profile.role === "dept_head";
 
   if (!isSuperAdmin && !isDeptHead) {
-    return { error: "You do not have permission to delete sub-teams." };
+    return { error: "You do not have permission to delete teams." };
   }
 
   const id = formData.get("id");
   if (typeof id !== "string" || !id) {
-    return { error: "Invalid sub-team." };
+    return { error: "Invalid team." };
   }
 
   const supabase = await createSupabaseServerClient();
 
   const { data: existing } = await supabase
-    .from("sub_teams")
-    .select("department_id, departments(event_id)")
+    .from("teams")
+    .select("department_id")
     .eq("id", id)
     .is("deleted_at", null)
     .single();
 
-  if (!existing) return { error: "Sub-team not found." };
+  if (!existing) return { error: "Team not found." };
 
   if (isDeptHead) {
     const owns = await verifyDeptHeadOwnership(
@@ -388,16 +361,102 @@ export async function softDeleteSubTeam(
   }
 
   const { error } = await supabase
-    .from("sub_teams")
+    .from("teams")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
     .is("deleted_at", null);
 
   if (error) {
-    return { error: "Could not delete sub-team. Please try again." };
+    return { error: "Could not delete team. Please try again." };
   }
 
-  const eventId = (existing.departments as unknown as { event_id: string } | null)
-    ?.event_id;
-  redirect(`/events/${eventId}/departments/${existing.department_id}`);
+  redirect(`/departments/${existing.department_id}`);
+}
+
+// ============================================================
+// HEADCOUNT REQUIREMENT ACTIONS
+// ============================================================
+
+export async function setTeamHeadcountRequirement(
+  _prev: DepartmentActionResult,
+  formData: FormData
+): Promise<DepartmentActionResult> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "You must be signed in." };
+
+  const role = session.profile.role;
+  const canManage =
+    hasMinimumRole(role, "super_admin") ||
+    role === "dept_head" ||
+    role === "all_depts_leader";
+
+  if (!canManage) {
+    return { error: "You do not have permission to set headcount requirements." };
+  }
+
+  const parsed = setHeadcountRequirementSchema.safeParse({
+    teamId: formData.get("teamId"),
+    eventType: formData.get("eventType"),
+    requiredCount: Number(formData.get("requiredCount")),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("team_headcount_requirements")
+    .upsert(
+      {
+        team_id: parsed.data.teamId,
+        event_type: parsed.data.eventType,
+        required_count: parsed.data.requiredCount,
+        created_by: session.user.id,
+      },
+      { onConflict: "team_id,event_type" }
+    );
+
+  if (error) {
+    return { error: "Could not save headcount requirement. Please try again." };
+  }
+
+  return { success: true };
+}
+
+export async function deleteTeamHeadcountRequirement(
+  _prev: DepartmentActionResult,
+  formData: FormData
+): Promise<DepartmentActionResult> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "You must be signed in." };
+
+  const role = session.profile.role;
+  const canManage =
+    hasMinimumRole(role, "super_admin") ||
+    role === "dept_head" ||
+    role === "all_depts_leader";
+
+  if (!canManage) {
+    return { error: "You do not have permission to remove headcount requirements." };
+  }
+
+  const id = formData.get("id");
+  if (typeof id !== "string" || !id) {
+    return { error: "Invalid requirement." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("team_headcount_requirements")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: "Could not remove headcount requirement. Please try again." };
+  }
+
+  return { success: true };
 }

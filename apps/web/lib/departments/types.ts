@@ -1,6 +1,5 @@
 export type Department = {
   id: string;
-  event_id: string;
   name: string;
   owner_id: string | null;
   created_by: string;
@@ -9,10 +8,11 @@ export type Department = {
   deleted_at: string | null;
 };
 
-export type SubTeam = {
+export type Team = {
   id: string;
   department_id: string;
   name: string;
+  rotation_label: "A" | "B" | "C" | null;
   owner_id: string | null;
   created_by: string;
   created_at: string;
@@ -20,8 +20,18 @@ export type SubTeam = {
   deleted_at: string | null;
 };
 
-export type DepartmentWithSubTeams = Department & {
-  sub_teams: SubTeam[];
+export type DepartmentWithTeams = Department & {
+  teams: Team[];
+};
+
+export type TeamHeadcountRequirement = {
+  id: string;
+  team_id: string;
+  event_type: string;
+  required_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type OwnerProfile = {

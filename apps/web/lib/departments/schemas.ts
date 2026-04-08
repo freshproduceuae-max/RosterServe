@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createDepartmentSchema = z.object({
-  eventId: z.string().uuid("Invalid event ID."),
   name: z
     .string()
     .trim()
@@ -20,27 +19,43 @@ export const updateDepartmentSchema = z.object({
   ownerId: z.string().uuid("Invalid owner.").optional().or(z.literal("")),
 });
 
-export const createSubTeamSchema = z.object({
+export const createTeamSchema = z.object({
   departmentId: z.string().uuid("Invalid department ID."),
   name: z
     .string()
     .trim()
-    .min(1, "Sub-team name is required.")
-    .max(100, "Sub-team name must be under 100 characters."),
+    .min(1, "Team name is required.")
+    .max(100, "Team name must be under 100 characters."),
+  rotationLabel: z.enum(["A", "B", "C"]).optional().or(z.literal("")),
   ownerId: z.string().uuid("Invalid owner.").optional().or(z.literal("")),
 });
 
-export const updateSubTeamSchema = z.object({
-  id: z.string().uuid("Invalid sub-team ID."),
+export const updateTeamSchema = z.object({
+  id: z.string().uuid("Invalid team ID."),
   name: z
     .string()
     .trim()
-    .min(1, "Sub-team name is required.")
-    .max(100, "Sub-team name must be under 100 characters."),
+    .min(1, "Team name is required.")
+    .max(100, "Team name must be under 100 characters."),
+  rotationLabel: z.enum(["A", "B", "C"]).optional().or(z.literal("")),
   ownerId: z.string().uuid("Invalid owner.").optional().or(z.literal("")),
+});
+
+export const setHeadcountRequirementSchema = z.object({
+  teamId: z.string().uuid("Invalid team ID."),
+  eventType: z
+    .string()
+    .trim()
+    .min(1, "Event type is required.")
+    .max(100, "Event type must be under 100 characters."),
+  requiredCount: z
+    .number({ error: "Required count must be a number." })
+    .int("Required count must be a whole number.")
+    .min(1, "Required count must be at least 1."),
 });
 
 export type CreateDepartmentValues = z.infer<typeof createDepartmentSchema>;
 export type UpdateDepartmentValues = z.infer<typeof updateDepartmentSchema>;
-export type CreateSubTeamValues = z.infer<typeof createSubTeamSchema>;
-export type UpdateSubTeamValues = z.infer<typeof updateSubTeamSchema>;
+export type CreateTeamValues = z.infer<typeof createTeamSchema>;
+export type UpdateTeamValues = z.infer<typeof updateTeamSchema>;
+export type SetHeadcountRequirementValues = z.infer<typeof setHeadcountRequirementSchema>;
