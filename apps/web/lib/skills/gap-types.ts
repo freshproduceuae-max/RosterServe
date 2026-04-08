@@ -27,3 +27,25 @@ export type RosterGapSummary = {
   gaps: string[];
   state: GapState;
 };
+
+/**
+ * TeamHeadcountGap — headcount coverage state for one team on one event.
+ */
+export type TeamHeadcountGap = {
+  team_id: string;
+  team_name: string;
+  required: number;
+  confirmed: number;
+  gap: number;
+  state: "met" | "short";
+};
+
+/**
+ * HeadcountGapSummary — aggregate result for all teams in a dept roster.
+ */
+export type HeadcountGapState = "no_requirements" | "all_met" | "gaps";
+
+export type HeadcountGapSummary = {
+  teams: TeamHeadcountGap[];
+  state: HeadcountGapState;
+};

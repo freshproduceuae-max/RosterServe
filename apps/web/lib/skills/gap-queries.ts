@@ -1,5 +1,10 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { RosterGapSummary, GapState } from "./gap-types";
+import type {
+  RosterGapSummary,
+  GapState,
+  HeadcountGapSummary,
+  TeamHeadcountGap,
+} from "./gap-types";
 
 /**
  * getSkillGapsForDepartmentRoster
@@ -107,5 +112,101 @@ export async function getSkillGapsForDepartmentRoster(
   } catch (err) {
     console.error("[getSkillGapsForDepartmentRoster] unexpected error", err);
     return { required: [], covered: [], gaps: [], state: "uncovered" };
+  }
+}
+
+/**
+ * getHeadcountGapsForRoster
+ * Computes per-team headcount gap for a department roster on a given event.
+ *
+ * filterTeamIds — when provided, only teams in this list are included.
+ *                 Used by the team_head branch to scope to their own teams.
+ */
+export async function getHeadcountGapsForRoster(
+  eventId: string,
+  deptId: string,
+  filterTeamIds?: string[],
+): Promise<HeadcountGapSummary> {
+  const noRequirements: HeadcountGapSummary = { teams: [], state: "no_requirements" };
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    // 1. Get event_type for this event
+    const { data: eventData, error: eventError } = await supabase
+      .from("events")
+      .select("event_type")
+      .eq("id", eventId)
+      .single();
+    if (eventError || !eventData) return noRequirements;
+    const eventType = eventData.event_type as string;
+
+    // 2. Get active teams in this department (optionally filtered)
+    let teamsQuery = supabase
+      .from("teams")
+      .select("id, name")
+      .eq("department_id", deptId)
+      .is("deleted_at", null);
+    if (filterTeamIds && filterTeamIds.length > 0) {
+      teamsQuery = teamsQuery.in("id", filterTeamIds);
+    }
+    const { data: teamsData, error: teamsError } = await teamsQuery;
+    if (teamsError || !teamsData || teamsData.length === 0) return noRequirements;
+
+    const teamIds = teamsData.map((t: { id: string }) => t.id);
+
+    // 3. Get headcount requirements for these teams + this event type
+    const { data: reqData, error: reqError } = await supabase
+      .from("team_headcount_requirements")
+      .select("team_id, required_count")
+      .in("team_id", teamIds)
+      .eq("event_type", eventType);
+    if (reqError || !reqData || reqData.length === 0) return noRequirements;
+
+    const reqTeamIds = reqData.map((r: { team_id: string; required_count: number }) => r.team_id);
+
+    // 4. Count non-declined assignments per team (invited + accepted + served count as confirmed)
+    const { data: assignData, error: assignError } = await supabase
+      .from("assignments")
+      .select("sub_team_id")
+      .eq("event_id", eventId)
+      .eq("department_id", deptId)
+      .in("sub_team_id", reqTeamIds)
+      .neq("status", "declined")
+      .is("deleted_at", null);
+    if (assignError) return noRequirements;
+
+    const countByTeam = new Map<string, number>();
+    (assignData ?? []).forEach((a: { sub_team_id: string | null }) => {
+      if (a.sub_team_id) {
+        countByTeam.set(a.sub_team_id, (countByTeam.get(a.sub_team_id) ?? 0) + 1);
+      }
+    });
+
+    // 5. Build per-team gap rows
+    const teamNameMap = new Map(
+      teamsData.map((t: { id: string; name: string }) => [t.id, t.name]),
+    );
+
+    const teams: TeamHeadcountGap[] = reqData.map(
+      (req: { team_id: string; required_count: number }) => {
+        const confirmed = countByTeam.get(req.team_id) ?? 0;
+        const required = req.required_count;
+        const gap = Math.max(0, required - confirmed);
+        return {
+          team_id: req.team_id,
+          team_name: teamNameMap.get(req.team_id) ?? "Unknown team",
+          required,
+          confirmed,
+          gap,
+          state: gap === 0 ? "met" : "short",
+        };
+      },
+    );
+
+    const hasGaps = teams.some((t) => t.state === "short");
+    return { teams, state: hasGaps ? "gaps" : "all_met" };
+  } catch (err) {
+    console.error("[getHeadcountGapsForRoster] unexpected error", err);
+    return noRequirements;
   }
 }
