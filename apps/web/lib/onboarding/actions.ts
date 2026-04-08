@@ -79,8 +79,7 @@ export async function saveVolunteerInterests(
   // Atomic replace: delete + insert run in one PostgreSQL transaction inside
   // replace_volunteer_interests(). An insert failure rolls back the delete,
   // so the volunteer's previous selections are never lost on error.
-  // The function's INSERT policy also rejects department IDs that are not
-  // active and on a published event.
+  // The function's INSERT policy requires the department to be active (not soft-deleted).
   const { error } = await supabase.rpc("replace_volunteer_interests", {
     p_volunteer_id: session.user.id,
     p_department_ids: parsed.data.department_ids,
