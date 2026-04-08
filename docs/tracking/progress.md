@@ -1,9 +1,9 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-08 (session 16)
-Current phase: Active revision cycle — RS-F001 passed; RS-F002 revision next
-Current build stage: 2 features passed (RS-F001, RS-F005); RS-F002 revision plan not yet started
+Last updated: 2026-04-09
+Current phase: Active revision cycle — RS-F009 passed; RS-F010 revision next
+Current build stage: 9 features passed (RS-F001–RS-F009)
 
 ## Execution Gate
 
@@ -93,6 +93,10 @@ For this repo state:
 - RS-F007 revision plan drafted and approved (2026-04-08)
 - RS-F007 revision implemented (2026-04-08): migration 00026 (new RLS policies for super_admin/all_depts_leader/team_head on both skills tables); actions expanded with dual-branch role guards + bulkCreateSkills; getSkillClaimsForTeamHead + getAllActiveDepartments queries added; /skills page routes all 6 roles; TeamHeadSkillsView created; SuperAdminSkillsView updated with SkillCreationForm (single + bulk entry)
 - RS-F007 marked passes=true
+- RS-F008 revision implemented and validated (2026-04-09): replaced individual assignment creation with team-selection and bulk-invite flow; accept/decline for team heads and volunteers; substitute team head selection on decline; all_depts_leader read-only roster access; migration 00027
+- RS-F008 marked passes=true
+- RS-F009 revision implemented (2026-04-09): added HeadcountGapSummary type, getHeadcountGapsForRoster query (per-team, per-event-type, non-declined assignment count vs required), HeadcountGapSection component; all three roster views (DeptHeadRosterView, TeamHeadRosterView, SuperAdminRosterView) now render both skill and headcount gap sections; team head branch scoped to own sub-teams via filterTeamIds
+- RS-F009 marked passes=true
 
 ## Next Up
 
@@ -120,7 +124,7 @@ Update rule:
 | 6 | RS-F006 | Request to join and permanent group membership | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | passed |
-| 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | revision_required |
+| 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | passed |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | revision_required |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | not_started |

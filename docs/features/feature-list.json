@@ -189,15 +189,15 @@
       "dependsOn": ["RS-F007", "RS-F008"],
       "ui": true,
       "surface": ["dept_head", "team_head", "all_depts_leader"],
-      "revisionRequired": true,
-      "revisionNote": "Add headcount gap detection alongside skill gap detection. Headcount requirements are set per team per event type in RS-F003.",
+      "revisionRequired": false,
+      "revisionNote": "Revised 2026-04-09. Added HeadcountGapSummary type, getHeadcountGapsForRoster query (per-team, per-event-type, non-declined assignment count vs required), HeadcountGapSection component. All three roster views (DeptHeadRosterView, TeamHeadRosterView, SuperAdminRosterView) now render both skill and headcount gap sections. Team head branch scoped to own sub-teams via filterTeamIds.",
       "steps": [
         "Compare confirmed coverage against required skills per team per event.",
         "Compare confirmed headcount against required headcount per team per event type.",
         "Surface both skill and headcount gap signals in leader planning views.",
         "Ensure gap detection uses only approved skills."
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "RS-F010",

@@ -6,7 +6,8 @@ import type { Team } from "@/lib/departments/types";
 import { respondToServiceRequest } from "@/lib/assignments/actions";
 import { AssignmentList } from "./assignment-list";
 import { GapSummary } from "./gap-summary";
-import type { RosterGapSummary } from "@/lib/skills/gap-types";
+import { HeadcountGapSection } from "./headcount-gap-section";
+import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
 
 interface TeamHeadRosterViewProps {
   eventTitle: string;
@@ -14,6 +15,7 @@ interface TeamHeadRosterViewProps {
   subTeams: Pick<Team, "id" | "name">[];
   assignments: AssignmentWithContext[];
   gapSummary: RosterGapSummary;
+  headcountGaps: HeadcountGapSummary;
 }
 
 export function TeamHeadRosterView({
@@ -22,6 +24,7 @@ export function TeamHeadRosterView({
   subTeams,
   assignments,
   gapSummary,
+  headcountGaps,
 }: TeamHeadRosterViewProps) {
   const heading = subTeams.length === 1 ? subTeams[0].name : "Your teams";
 
@@ -43,6 +46,7 @@ export function TeamHeadRosterView({
       )}
 
       <GapSummary summary={gapSummary} />
+      <HeadcountGapSection summary={headcountGaps} />
 
       {/* Team member assignment list */}
       {assignments.length === 0 ? (
