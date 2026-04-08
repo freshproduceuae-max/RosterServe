@@ -31,6 +31,10 @@ CREATE INDEX idx_department_members_volunteer_id
   ON public.department_members (volunteer_id)
   WHERE deleted_at IS NULL;
 
+CREATE INDEX idx_department_members_team_id
+  ON public.department_members (team_id)
+  WHERE deleted_at IS NULL AND team_id IS NOT NULL;
+
 -- ---------------------------------------------------------------------------
 -- 2. Enable RLS
 -- ---------------------------------------------------------------------------
@@ -101,6 +105,20 @@ CREATE POLICY "Super admins can update any membership"
   USING (public.get_my_role() = 'super_admin')
   WITH CHECK (public.get_my_role() = 'super_admin');
 
+-- Explicitly block direct inserts; memberships are created only through approve_and_create_membership().
+CREATE POLICY "No direct inserts to department_members"
+  ON public.department_members FOR INSERT
+  WITH CHECK (false);
+
+-- All depts leader can update team placement on any active membership
+CREATE POLICY "All depts leaders can update team placement"
+  ON public.department_members FOR UPDATE
+  USING (
+    deleted_at IS NULL
+    AND public.get_my_role() = 'all_depts_leader'
+  )
+  WITH CHECK (public.get_my_role() = 'all_depts_leader');
+
 -- ---------------------------------------------------------------------------
 -- 3. approve_and_create_membership(): atomic approval + membership insert
 -- ---------------------------------------------------------------------------
@@ -146,7 +164,7 @@ BEGIN
     EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role = 'super_admin'
+        AND p.role IN ('super_admin', 'all_depts_leader')
     )
   ) THEN
     RAISE EXCEPTION 'Permission denied';
