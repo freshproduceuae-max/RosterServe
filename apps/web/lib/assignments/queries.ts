@@ -1,5 +1,12 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { AssignmentWithContext, VolunteerForAssignment } from "./types";
+import { getSessionWithProfile } from "@/lib/auth/session";
+import type {
+  Assignment,
+  AssignmentForVolunteer,
+  AssignmentWithContext,
+  TeamHeadOption,
+  VolunteerForAssignment,
+} from "./types";
 
 /**
  * getAssignmentsForRoster
@@ -215,4 +222,84 @@ export async function getVolunteersForAssignment(
   });
 
   return volunteers;
+}
+
+/**
+ * getAssignmentsForVolunteer
+ * Returns all non-deleted assignments for the authenticated user, with event
+ * title, event date, department name, and team name. Ordered newest first.
+ * RLS restricts to rows where volunteer_id = auth.uid() — works for any role.
+ */
+export async function getAssignmentsForVolunteer(): Promise<
+  AssignmentForVolunteer[]
+> {
+  const session = await getSessionWithProfile();
+  if (!session) return [];
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("assignments")
+    .select(
+      "*, event:events!event_id(title, event_date), department:departments!department_id(name), sub_team:teams!sub_team_id(name)",
+    )
+    .is("deleted_at", null)
+    .eq("volunteer_id", session.profile.id)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+
+  type RawRow = Assignment & {
+    event: { title: string; event_date: string } | null;
+    department: { name: string } | null;
+    sub_team: { name: string } | null;
+  };
+
+  return (data as unknown as RawRow[]).map((row) => ({
+    ...row,
+    event_title: row.event?.title ?? "Unknown event",
+    event_date: row.event?.event_date ?? "",
+    department_name: row.department?.name ?? "Unknown department",
+    sub_team_name: row.sub_team?.name ?? null,
+  }));
+}
+
+/**
+ * getTeamHeadsInDept
+ * Returns team heads (team owners) from all teams in deptId except excludeTeamId.
+ * Used by the DeptHeadRosterView to populate the substitute team head selector.
+ * RLS on departments + teams restricts to the dept_head's owned department.
+ */
+export async function getTeamHeadsInDept(
+  deptId: string,
+  excludeTeamId: string,
+): Promise<TeamHeadOption[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("teams")
+    .select(
+      "id, name, owner_id, owner:profiles!owner_id(display_name)",
+    )
+    .eq("department_id", deptId)
+    .neq("id", excludeTeamId)
+    .not("owner_id", "is", null)
+    .is("deleted_at", null);
+  if (error || !data) return [];
+
+  type RawRow = {
+    id: string;
+    name: string;
+    owner_id: string | null;
+    owner: { display_name: string } | null;
+  };
+
+  return (data as unknown as RawRow[])
+    .filter(
+      (row): row is RawRow & { owner_id: string; owner: { display_name: string } } =>
+        row.owner_id !== null && row.owner !== null,
+    )
+    .map((row) => ({
+      volunteerId: row.owner_id,
+      displayName: row.owner.display_name,
+      teamId: row.id,
+      teamName: row.name,
+    }));
 }

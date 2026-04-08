@@ -119,7 +119,7 @@ Update rule:
 | 5 | RS-F005 | Availability and blockout management | P0 | passed |
 | 6 | RS-F006 | Request to join and permanent group membership | P1 | passed |
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
-| 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | revision_required |
+| 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | passed |
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | revision_required |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | revision_required |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |

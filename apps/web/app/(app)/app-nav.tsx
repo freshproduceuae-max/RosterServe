@@ -12,6 +12,7 @@ export function AppNav({ role }: { role: AppRole }) {
     { label: "Dashboard", href: "/dashboard", show: true },
     { label: "Events", href: "/events", show: isLeaderRole(role) },
     { label: "Departments", href: "/departments", show: isLeaderRole(role) },
+    { label: "Assignments", href: "/assignments", show: role === "volunteer" || role === "team_head" || role === "supporter" },
     { label: "Availability", href: "/availability", show: true },
     { label: "Interests", href: "/interests", show: role !== "team_head" },
     { label: "Skills", href: "/skills", show: role !== "team_head" },

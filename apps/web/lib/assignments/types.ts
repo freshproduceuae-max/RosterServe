@@ -27,3 +27,17 @@ export type VolunteerForAssignment = {
   already_assigned: boolean;
   approved_skills: string[];
 };
+
+export type AssignmentForVolunteer = Assignment & {
+  event_title: string;
+  event_date: string;
+  department_name: string;
+  sub_team_name: string | null;
+};
+
+export type TeamHeadOption = {
+  volunteerId: string;
+  displayName: string;
+  teamId: string;
+  teamName: string;
+};
