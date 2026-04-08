@@ -260,3 +260,99 @@ export async function removeAssignment(
   revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
   return { success: true };
 }
+
+/**
+ * selectTeamForEvent
+ * dept_head: creates bulk 'invited' assignments for all active members of the
+ * selected team plus the team owner (role='team_head').
+ * Duplicate inserts (23505) are silently skipped — already assigned.
+ * Returns { created, skipped } on success; { error } on failure.
+ */
+export async function selectTeamForEvent(
+  eventId: string,
+  deptId: string,
+  teamId: string,
+): Promise<{ error?: string; created?: number; skipped?: number }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "Unauthorized" };
+  if (session.profile.role !== "dept_head") return { error: "Unauthorized" };
+
+  if (!eventId || !deptId || !teamId) return { error: "Invalid parameters" };
+
+  const supabase = await createSupabaseServerClient();
+
+  // Verify dept ownership
+  const { data: dept } = await supabase
+    .from("departments")
+    .select("id")
+    .eq("id", deptId)
+    .eq("owner_id", session.profile.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!dept) return { error: "Department not found or unauthorized" };
+
+  // Verify team belongs to dept; get team owner
+  const { data: team } = await supabase
+    .from("teams")
+    .select("id, owner_id")
+    .eq("id", teamId)
+    .eq("department_id", deptId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!team) return { error: "Team not found or does not belong to this department" };
+
+  // Fetch active members for this team
+  const { data: members } = await supabase
+    .from("department_members")
+    .select("volunteer_id")
+    .eq("team_id", teamId)
+    .is("deleted_at", null);
+
+  const memberIds = (members ?? []).map(
+    (m: { volunteer_id: string }) => m.volunteer_id,
+  );
+
+  // Build insert list: team owner as team_head, rest as volunteer (skip owner if already in members)
+  const entries: { volunteerId: string; role: AssignmentRole }[] = [];
+  if (team.owner_id) {
+    entries.push({ volunteerId: team.owner_id, role: "team_head" });
+  }
+  for (const volunteerId of memberIds) {
+    if (volunteerId !== team.owner_id) {
+      entries.push({ volunteerId, role: "volunteer" });
+    }
+  }
+
+  if (entries.length === 0) {
+    return { error: "This team has no members to assign" };
+  }
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const entry of entries) {
+    const { error } = await supabase.from("assignments").insert({
+      event_id: eventId,
+      department_id: deptId,
+      sub_team_id: teamId,
+      volunteer_id: entry.volunteerId,
+      role: entry.role,
+      status: "invited",
+      created_by: session.profile.id,
+    });
+    if (!error) {
+      created++;
+    } else if (error.code === "23505") {
+      skipped++;
+    } else {
+      return {
+        error: `Failed to assign team member: ${error.message}`,
+        created,
+        skipped,
+      };
+    }
+  }
+
+  revalidatePath(rosterPath(eventId, deptId));
+  return { created, skipped };
+}
