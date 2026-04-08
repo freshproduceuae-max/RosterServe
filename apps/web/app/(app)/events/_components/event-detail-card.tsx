@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, startTransition } from "react";
 import Link from "next/link";
 import { EventStatusBadge } from "./event-status-badge";
 import { StatusTransitionModal, DeleteEventModal } from "./status-transition-modal";
@@ -80,15 +80,16 @@ export function EventDetailCard({
     const fd = new FormData();
     fd.set("id", event.id);
     fd.set("newStatus", transitionTarget);
-    transitionAction(fd);
-    setTransitionTarget(null);
+    startTransition(() => transitionAction(fd));
+    // Modal stays open during the transition: redirect closes it on success,
+    // error message renders inside it on failure.
   }
 
   function handleDeleteConfirm() {
     const fd = new FormData();
     fd.set("id", event.id);
-    deleteAction(fd);
-    setShowDelete(false);
+    startTransition(() => deleteAction(fd));
+    // Same: redirect handles unmount on success.
   }
 
   return (
