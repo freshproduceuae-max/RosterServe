@@ -356,3 +356,153 @@ export async function selectTeamForEvent(
   revalidatePath(rosterPath(eventId, deptId));
   return { created, skipped };
 }
+
+/**
+ * respondToServiceRequest
+ * Any authenticated user can accept or decline their own invited assignment.
+ * Validates: caller owns the assignment (volunteer_id = auth.uid()), status='invited'.
+ */
+export async function respondToServiceRequest(
+  assignmentId: string,
+  response: "accepted" | "declined",
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "Unauthorized" };
+
+  if (!assignmentId) return { error: "Invalid assignment" };
+  if (response !== "accepted" && response !== "declined") {
+    return { error: "Invalid response" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: assignment } = await supabase
+    .from("assignments")
+    .select("id, event_id, department_id, volunteer_id, status, deleted_at")
+    .eq("id", assignmentId)
+    .maybeSingle();
+
+  if (!assignment || assignment.deleted_at !== null) {
+    return { error: "Assignment not found" };
+  }
+  if (assignment.volunteer_id !== session.profile.id) {
+    return { error: "Unauthorized" };
+  }
+  if (assignment.status !== "invited") {
+    return { error: "Only invited assignments can be responded to" };
+  }
+
+  const { error } = await supabase
+    .from("assignments")
+    .update({ status: response })
+    .eq("id", assignmentId);
+
+  if (error) {
+    return { error: "Failed to update assignment. Please try again." };
+  }
+
+  revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
+  revalidatePath("/assignments");
+  return { success: true };
+}
+
+/**
+ * assignSubstituteTeamHead
+ * dept_head: when a team_head assignment is 'declined', the dept_head can
+ * replace it by picking the owner of a different team in the same department.
+ * Soft-deletes the declined assignment and creates a new 'invited' team_head
+ * assignment for the substitute.
+ */
+export async function assignSubstituteTeamHead(
+  declinedAssignmentId: string,
+  newVolunteerId: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "Unauthorized" };
+  if (session.profile.role !== "dept_head") return { error: "Unauthorized" };
+
+  if (!declinedAssignmentId || !newVolunteerId) {
+    return { error: "Invalid parameters" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // Fetch the declined assignment
+  const { data: assignment } = await supabase
+    .from("assignments")
+    .select(
+      "id, event_id, department_id, sub_team_id, role, status, deleted_at",
+    )
+    .eq("id", declinedAssignmentId)
+    .maybeSingle();
+
+  if (!assignment || assignment.deleted_at !== null) {
+    return { error: "Assignment not found" };
+  }
+  if (assignment.role !== "team_head") {
+    return { error: "Only declined team head assignments can be substituted" };
+  }
+  if (assignment.status !== "declined") {
+    return { error: "Only declined team head assignments can be substituted" };
+  }
+
+  // Verify dept_head owns the department
+  const { data: dept } = await supabase
+    .from("departments")
+    .select("id")
+    .eq("id", assignment.department_id)
+    .eq("owner_id", session.profile.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!dept) return { error: "Unauthorized" };
+
+  // Substitute must own a different team in the same department
+  const { data: otherTeam } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("department_id", assignment.department_id)
+    .eq("owner_id", newVolunteerId)
+    .neq("id", assignment.sub_team_id ?? "")
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!otherTeam) {
+    return {
+      error:
+        "The substitute must be a team head of another team in this department",
+    };
+  }
+
+  // Soft-delete the declined assignment
+  const { error: deleteError } = await supabase
+    .from("assignments")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", declinedAssignmentId);
+  if (deleteError) {
+    return { error: "Failed to remove declined assignment. Please try again." };
+  }
+
+  // Create new team_head assignment for substitute
+  const { error: insertError } = await supabase.from("assignments").insert({
+    event_id: assignment.event_id,
+    department_id: assignment.department_id,
+    sub_team_id: assignment.sub_team_id,
+    volunteer_id: newVolunteerId,
+    role: "team_head",
+    status: "invited",
+    created_by: session.profile.id,
+  });
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return {
+        error:
+          "This person is already assigned in this department for this event",
+      };
+    }
+    return {
+      error: "Failed to create substitute assignment. Please try again.",
+    };
+  }
+
+  revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
+  return { success: true };
+}
