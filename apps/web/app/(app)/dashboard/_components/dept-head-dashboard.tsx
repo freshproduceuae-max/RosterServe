@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { DeptHeadDashboardData } from "@/lib/dashboard/types";
+import { RosterHealthBar } from "./roster-health-bar";
+import { RotationScheduleSection } from "./rotation-schedule-section";
 
 function formatEventDate(isoDate: string): string {
   const date = new Date(`${isoDate}T00:00:00`);
@@ -10,7 +12,6 @@ function formatEventDate(isoDate: string): string {
     year: "numeric",
   });
 }
-import { RosterHealthBar } from "./roster-health-bar";
 
 interface DeptHeadDashboardProps {
   data: DeptHeadDashboardData;
@@ -18,7 +19,7 @@ interface DeptHeadDashboardProps {
 }
 
 export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps) {
-  const { eventSummaries, pendingInterests, pendingSkillApprovals } = data;
+  const { eventSummaries, pendingInterests, pendingSkillApprovals, rotationEntries, rotationTeamsByDept } = data;
   const hasPending = pendingInterests > 0 || pendingSkillApprovals > 0;
 
   return (
@@ -79,6 +80,14 @@ export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps)
           </div>
         )}
       </section>
+
+      {/* Team rotation schedule */}
+      {rotationEntries.length > 0 && (
+        <RotationScheduleSection
+          entries={rotationEntries}
+          teamsByDept={rotationTeamsByDept}
+        />
+      )}
 
       {/* Pending queues */}
       {hasPending && (
