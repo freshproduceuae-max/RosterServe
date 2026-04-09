@@ -2,7 +2,7 @@
   "projectName": "RosterServe",
   "version": 2,
   "generatedAt": "2026-04-07",
-  "note": "Version 2 — updated to reflect PRD revision of 2026-04-07. Role hierarchy expanded, permanent group membership added, team rotation and auto-suggestions added, request-to-serve flow replaces invitation model. Features requiring revision reset to passes=false.",
+  "note": "Version 2 \u00e2\u20ac\u201d updated to reflect PRD revision of 2026-04-07. Role hierarchy expanded, permanent group membership added, team rotation and auto-suggestions added, request-to-serve flow replaces invitation model. Features requiring revision reset to passes=false.",
   "sourcePrdPath": "docs/prd/prd.md",
   "sourcePaths": {
     "vision": "VisionDocument_ChurchRosterApp.md",
@@ -25,7 +25,15 @@
       "priority": "P0",
       "dependsOn": [],
       "ui": true,
-      "surface": ["auth", "admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
+      "surface": [
+        "auth",
+        "admin",
+        "all_depts_leader",
+        "dept_head",
+        "team_head",
+        "supporter",
+        "volunteer"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-08 (PR #17 plan, PR #18 + PR #19 implementation). Scope: structural foundation only. Supporter permission mirroring is owned by RS-F018. Event-creation grant is owned by RS-F002. Browser validation confirmed 2026-04-08: team_head, all_depts_leader, supporter all sign in and reach correct dashboard surfaces; event creation gate verified for both roles.",
       "steps": [
@@ -43,11 +51,17 @@
       "description": "Allow Super Admin and All Departments Leaders to create and manage events; Dept Heads and Team Heads may create events only if granted access by Super Admin.",
       "order": 2,
       "priority": "P0",
-      "dependsOn": ["RS-F001"],
+      "dependsOn": [
+        "RS-F001"
+      ],
       "ui": true,
-      "surface": ["admin", "all_depts_leader", "dept_head"],
+      "surface": [
+        "admin",
+        "all_depts_leader",
+        "dept_head"
+      ],
       "revisionRequired": false,
-      "revisionNote": "Revised 2026-04-07 (plan), implemented PR #20, validation fixes PR #21 (2026-04-08). Browser validation confirmed checks 5–16: grant/revoke cycle, dept_head ownership enforcement, status transition machine, all_depts_leader cross-dept visibility. Two RLS gaps fixed during validation (migrations 00022, 00023); dialog crash fixed in EventDetailCard.",
+      "revisionNote": "Revised 2026-04-07 (plan), implemented PR #20, validation fixes PR #21 (2026-04-08). Browser validation confirmed checks 5\u00e2\u20ac\u201c16: grant/revoke cycle, dept_head ownership enforcement, status transition machine, all_depts_leader cross-dept visibility. Two RLS gaps fixed during validation (migrations 00022, 00023); dialog crash fixed in EventDetailCard.",
       "steps": [
         "Restrict event creation to Super Admin and All Departments Leader by default.",
         "Implement a grant mechanism allowing Super Admin to give dept_head or team_head event-creation access.",
@@ -63,9 +77,17 @@
       "description": "Model departments and named teams so ownership, permanent group membership, and visibility follow the real church planning hierarchy.",
       "order": 3,
       "priority": "P0",
-      "dependsOn": ["RS-F001", "RS-F002"],
+      "dependsOn": [
+        "RS-F001",
+        "RS-F002"
+      ],
       "ui": true,
-      "surface": ["admin", "all_depts_leader", "dept_head", "team_head"],
+      "surface": [
+        "admin",
+        "all_depts_leader",
+        "dept_head",
+        "team_head"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-08 via PR #22. Renamed sub_teams to teams, added rotation_label (A/B/C), decoupled departments from events (org-level permanent structures), added team_headcount_requirements table, added /departments CRUD route with headcount management. DB validated: all 24 migrations apply cleanly.",
       "steps": [
@@ -85,11 +107,15 @@
       "description": "Guide new volunteers through the minimum setup needed to submit a request to join a department and participate in the rostering system.",
       "order": 4,
       "priority": "P0",
-      "dependsOn": ["RS-F001"],
+      "dependsOn": [
+        "RS-F001"
+      ],
       "ui": true,
-      "surface": ["volunteer"],
+      "surface": [
+        "volunteer"
+      ],
       "revisionRequired": false,
-      "revisionNote": "Revised 2026-04-08. getActiveDepartmentsForInterests() updated to query org-level departments directly (no event join); event_title removed from DepartmentForInterests type and InterestsStep UI. No migration needed — INSERT RLS policy already updated in migration 00024.",
+      "revisionNote": "Revised 2026-04-08. getActiveDepartmentsForInterests() updated to query org-level departments directly (no event join); event_title removed from DepartmentForInterests type and InterestsStep UI. No migration needed \u00e2\u20ac\u201d INSERT RLS policy already updated in migration 00024.",
       "steps": [
         "Gate new volunteer users into an onboarding path before the main dashboard.",
         "Capture availability preferences, department interest as a formal request to join, and optional skill input.",
@@ -104,9 +130,16 @@
       "description": "Allow volunteers to maintain service availability and make that information usable during roster planning and cross-team auto-suggestions.",
       "order": 5,
       "priority": "P0",
-      "dependsOn": ["RS-F001", "RS-F004"],
+      "dependsOn": [
+        "RS-F001",
+        "RS-F004"
+      ],
       "ui": true,
-      "surface": ["volunteer", "dept_head", "team_head"],
+      "surface": [
+        "volunteer",
+        "dept_head",
+        "team_head"
+      ],
       "revisionRequired": false,
       "steps": [
         "Capture dated availability plus preference or blockout signals.",
@@ -122,9 +155,16 @@
       "description": "Allow volunteers to request to join departments; approval creates permanent group membership and optionally places them into a named team.",
       "order": 6,
       "priority": "P1",
-      "dependsOn": ["RS-F003", "RS-F004"],
+      "dependsOn": [
+        "RS-F003",
+        "RS-F004"
+      ],
       "ui": true,
-      "surface": ["volunteer", "dept_head", "all_depts_leader"],
+      "surface": [
+        "volunteer",
+        "dept_head",
+        "all_depts_leader"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-08. Added department_members table (migration 00025) + approve_and_create_membership() RPC for atomic approval. Team placement selector added to approval card. Volunteer interests page shows active memberships. Department detail page shows members section with team placement and removal controls. Fixed events!inner join breakage from RS-F003.",
       "steps": [
@@ -143,9 +183,17 @@
       "description": "Capture volunteer skills and require approval by Dept Head or Team Head before those skills affect planning.",
       "order": 7,
       "priority": "P0",
-      "dependsOn": ["RS-F003", "RS-F004"],
+      "dependsOn": [
+        "RS-F003",
+        "RS-F004"
+      ],
       "ui": true,
-      "surface": ["volunteer", "dept_head", "team_head", "admin"],
+      "surface": [
+        "volunteer",
+        "dept_head",
+        "team_head",
+        "admin"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-08. Super Admin now creates skills via manual entry or bulk template upload (migration 00026, bulkCreateSkills action, SkillCreationForm). Both Dept Head and Team Head can approve/reject volunteer skill claims within their scope (expanded RLS policies + role guards). all_depts_leader gets full read+write. /skills page routes all six roles correctly.",
       "steps": [
@@ -163,9 +211,18 @@
       "description": "Give Dept Heads a structured way to select a team for an event and send requests to serve to Team Heads and their volunteers.",
       "order": 8,
       "priority": "P0",
-      "dependsOn": ["RS-F002", "RS-F003", "RS-F005", "RS-F007"],
+      "dependsOn": [
+        "RS-F002",
+        "RS-F003",
+        "RS-F005",
+        "RS-F007"
+      ],
       "ui": true,
-      "surface": ["dept_head", "team_head", "all_depts_leader"],
+      "surface": [
+        "dept_head",
+        "team_head",
+        "all_depts_leader"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-08. Replaced individual assignment creation with team-selection and bulk-invite flow (selectTeamForEvent). Added accept/decline for team heads (roster page) and volunteers (/assignments page). Substitute team head selection on decline (assignSubstituteTeamHead). Non-confirmations panel on Dept Head roster. all_depts_leader read-only roster access. Migration 00027 adds self-response RLS + all_depts_leader read.",
       "steps": [
@@ -186,9 +243,16 @@
       "description": "Surface skill coverage and headcount shortfalls before the event so leaders can act in time.",
       "order": 9,
       "priority": "P0",
-      "dependsOn": ["RS-F007", "RS-F008"],
+      "dependsOn": [
+        "RS-F007",
+        "RS-F008"
+      ],
       "ui": true,
-      "surface": ["dept_head", "team_head", "all_depts_leader"],
+      "surface": [
+        "dept_head",
+        "team_head",
+        "all_depts_leader"
+      ],
       "revisionRequired": false,
       "revisionNote": "Revised 2026-04-09. Added HeadcountGapSummary type, getHeadcountGapsForRoster query (per-team, per-event-type, non-declined assignment count vs required), HeadcountGapSection component. All three roster views (DeptHeadRosterView, TeamHeadRosterView, SuperAdminRosterView) now render both skill and headcount gap sections. Team head branch scoped to own sub-teams via filterTeamIds.",
       "steps": [
@@ -206,11 +270,22 @@
       "description": "Provide each of the six roles with a weekly operational dashboard showing only the context they need.",
       "order": 10,
       "priority": "P0",
-      "dependsOn": ["RS-F001", "RS-F008", "RS-F009"],
+      "dependsOn": [
+        "RS-F001",
+        "RS-F008",
+        "RS-F009"
+      ],
       "ui": true,
-      "surface": ["admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
+      "surface": [
+        "admin",
+        "all_depts_leader",
+        "dept_head",
+        "team_head",
+        "supporter",
+        "volunteer"
+      ],
       "revisionRequired": false,
-      "revisionNote": "Revised 2026-04-09. Built AllDeptsLeaderDashboard (full cross-dept event health view with non-confirmation counts). Built SupporterDashboard (own service requests + leader context). TeamHeadDashboard: added own invitation cards with accept/decline. DeptHeadDashboard: added pending_team_heads highlight in RosterHealthBar. getDeptHeadDashboardData rewritten to use assignments→events join (schema-safe). New queries: getAllDeptsLeaderDashboardData, getSupporterDashboardData, updated getTeamHeadDashboardData.",
+      "revisionNote": "Revised 2026-04-09. Built AllDeptsLeaderDashboard (full cross-dept event health view with non-confirmation counts). Built SupporterDashboard (own service requests + leader context). TeamHeadDashboard: added own invitation cards with accept/decline. DeptHeadDashboard: added pending_team_heads highlight in RosterHealthBar. getDeptHeadDashboardData rewritten to use assignments\u00e2\u2020\u2019events join (schema-safe). New queries: getAllDeptsLeaderDashboardData, getSupporterDashboardData, updated getTeamHeadDashboardData.",
       "steps": [
         "Build role-specific weekly dashboard states for all six roles.",
         "Populate dashboards with scoped requests to serve, planning health, non-confirmations, and relevant context.",
@@ -226,9 +301,18 @@
       "description": "Let leaders publish event-specific guidance, notes, and attachments to the right audience.",
       "order": 11,
       "priority": "P1",
-      "dependsOn": ["RS-F002", "RS-F003", "RS-F008"],
+      "dependsOn": [
+        "RS-F002",
+        "RS-F003",
+        "RS-F008"
+      ],
       "ui": true,
-      "surface": ["dept_head", "team_head", "all_depts_leader", "volunteer"],
+      "surface": [
+        "dept_head",
+        "team_head",
+        "all_depts_leader",
+        "volunteer"
+      ],
       "revisionRequired": false,
       "steps": [
         "Create the instruction publishing flow tied to event, department, or team context.",
@@ -245,18 +329,25 @@
       "description": "Close the loop between a request to serve and volunteer or Team Head confirmation with controlled status changes.",
       "order": 12,
       "priority": "P0",
-      "dependsOn": ["RS-F008", "RS-F010"],
+      "dependsOn": [
+        "RS-F008",
+        "RS-F010"
+      ],
       "ui": true,
-      "surface": ["dept_head", "team_head", "volunteer"],
+      "surface": [
+        "dept_head",
+        "team_head",
+        "volunteer"
+      ],
       "revisionRequired": false,
       "steps": [
         "Provide confirm and decline actions from request-to-serve experiences.",
         "Require confirmation dialog on decline.",
-        "Enforce controlled status progression: requested → confirmed / declined → served.",
+        "Enforce controlled status progression: requested \u00e2\u2020\u2019 confirmed / declined \u00e2\u2020\u2019 served.",
         "Reflect response outcomes back into leader and volunteer weekly views."
       ],
       "passes": true,
-      "completedNote": "Implemented 2026-04-09. Added decline confirmation dialog to ServiceRequestCard and InvitationCard. Added accepted→served RLS policy (migration 00030) and markAssignmentServed server action. DeptHeadRosterView shows confirmed assignments with MarkServedButton. TeamHeadDashboard shows confirmed service section."
+      "completedNote": "Implemented 2026-04-09. Added decline confirmation dialog to ServiceRequestCard and InvitationCard. Added accepted\u00e2\u2020\u2019served RLS policy (migration 00030) and markAssignmentServed server action. DeptHeadRosterView shows confirmed assignments with MarkServedButton. TeamHeadDashboard shows confirmed service section."
     },
     {
       "id": "RS-F013",
@@ -265,9 +356,17 @@
       "description": "Notify volunteers and leaders when request-to-serve state changes and send pre-event operational alerts.",
       "order": 13,
       "priority": "P1",
-      "dependsOn": ["RS-F008", "RS-F012"],
+      "dependsOn": [
+        "RS-F008",
+        "RS-F012"
+      ],
       "ui": true,
-      "surface": ["dept_head", "team_head", "all_depts_leader", "volunteer"],
+      "surface": [
+        "dept_head",
+        "team_head",
+        "all_depts_leader",
+        "volunteer"
+      ],
       "revisionRequired": false,
       "steps": [
         "Trigger notifications for request-to-serve issuance and response changes.",
@@ -284,9 +383,17 @@
       "description": "Route destructive actions through soft delete and Super Admin review so operational safety is preserved.",
       "order": 14,
       "priority": "P0",
-      "dependsOn": ["RS-F001", "RS-F002", "RS-F003"],
+      "dependsOn": [
+        "RS-F001",
+        "RS-F002",
+        "RS-F003"
+      ],
       "ui": true,
-      "surface": ["admin", "all_depts_leader", "dept_head"],
+      "surface": [
+        "admin",
+        "all_depts_leader",
+        "dept_head"
+      ],
       "revisionRequired": false,
       "steps": [
         "Route destructive changes through a soft-delete state.",
@@ -303,9 +410,20 @@
       "description": "Make failures understandable and recoverable with calm messaging, clear next steps, and support escalation paths.",
       "order": 15,
       "priority": "P2",
-      "dependsOn": ["RS-F010", "RS-F012", "RS-F013"],
+      "dependsOn": [
+        "RS-F010",
+        "RS-F012",
+        "RS-F013"
+      ],
       "ui": true,
-      "surface": ["admin", "all_depts_leader", "dept_head", "team_head", "supporter", "volunteer"],
+      "surface": [
+        "admin",
+        "all_depts_leader",
+        "dept_head",
+        "team_head",
+        "supporter",
+        "volunteer"
+      ],
       "revisionRequired": false,
       "steps": [
         "Define calm, actionable error states across core user flows.",
@@ -322,17 +440,24 @@
       "description": "Allow Dept Heads to schedule automatic or manual team rotation across recurring events.",
       "order": 16,
       "priority": "P1",
-      "dependsOn": ["RS-F003", "RS-F008"],
+      "dependsOn": [
+        "RS-F003",
+        "RS-F008"
+      ],
       "ui": true,
-      "surface": ["dept_head", "all_depts_leader"],
+      "surface": [
+        "dept_head",
+        "all_depts_leader"
+      ],
       "revisionRequired": false,
       "steps": [
         "Allow Dept Heads to assign rotation labels (A, B, C) to teams within a department.",
-        "Support automatic rotation — cycle through teams in label order across consecutive events of the same type.",
-        "Allow manual override — Dept Head selects a specific team for any event without disrupting the rotation sequence.",
+        "Support automatic rotation \u00e2\u20ac\u201d cycle through teams in label order across consecutive events of the same type.",
+        "Allow manual override \u00e2\u20ac\u201d Dept Head selects a specific team for any event without disrupting the rotation sequence.",
         "Show the rotation schedule on the Dept Head dashboard."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Migration 00031 adds dept_rotation_overrides table with RLS (dept_head full access to owned depts; super_admin/all_depts_leader read). getRotationSchedule() computes auto-suggested next team from A->B->C cycle based on override history. setRotationOverride/clearRotationOverride server actions with ownership guard. RotationScheduleSection client component on DeptHeadDashboard shows auto vs override badge per entry with inline team select and clear button."
     },
     {
       "id": "RS-F017",
@@ -341,15 +466,22 @@
       "description": "When a team member cannot confirm, surface ranked replacement suggestions from other teams in the same department.",
       "order": 17,
       "priority": "P1",
-      "dependsOn": ["RS-F006", "RS-F008", "RS-F009"],
+      "dependsOn": [
+        "RS-F006",
+        "RS-F008",
+        "RS-F009"
+      ],
       "ui": true,
-      "surface": ["dept_head", "all_depts_leader"],
+      "surface": [
+        "dept_head",
+        "all_depts_leader"
+      ],
       "revisionRequired": false,
       "steps": [
         "Generate ranked replacement suggestions from other teams in the same department when a gap exists.",
         "Rank suggestions by skill match and volunteer availability.",
         "Exclude volunteers already assigned to the event.",
-        "Allow Dept Head to confirm a suggestion — Dept Head confirmation always required; no auto-assignment."
+        "Allow Dept Head to confirm a suggestion \u00e2\u20ac\u201d Dept Head confirmation always required; no auto-assignment."
       ],
       "passes": false
     },
@@ -360,9 +492,14 @@
       "description": "Allow Super Admin to assign a Supporter to a specific leader so the Supporter can act on that leader's behalf.",
       "order": 18,
       "priority": "P1",
-      "dependsOn": ["RS-F001"],
+      "dependsOn": [
+        "RS-F001"
+      ],
       "ui": true,
-      "surface": ["admin", "supporter"],
+      "surface": [
+        "admin",
+        "supporter"
+      ],
       "revisionRequired": false,
       "steps": [
         "Allow Super Admin to assign a Supporter to a specific leader.",
