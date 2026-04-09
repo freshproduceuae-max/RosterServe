@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: All features complete — RS-F018 passed
-Current build stage: 18 features passed (RS-F001–RS-F018)
+Current phase: Production deployed — v1 live
+Current build stage: 18 features passed (RS-F001–RS-F018); deployed to Vercel
 
 ## Execution Gate
 
