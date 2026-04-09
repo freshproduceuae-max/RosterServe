@@ -24,6 +24,7 @@ interface TeamHeadDashboardProps {
 export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps) {
   const { subTeamSummaries, myInvitations } = data;
   const pendingInvitations = myInvitations.filter((a) => a.status === "invited");
+  const confirmedInvitations = myInvitations.filter((a) => a.status === "accepted");
 
   return (
     <div className="flex flex-col gap-400">
@@ -41,6 +42,32 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
           <div className="flex flex-col gap-200">
             {pendingInvitations.map((inv) => (
               <InvitationCard key={inv.id} invitation={inv} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Confirmed service */}
+      {confirmedInvitations.length > 0 && (
+        <section className="flex flex-col gap-200">
+          <h2 className="font-display text-h2 text-neutral-950">
+            Confirmed service
+          </h2>
+          <div className="flex flex-col gap-200">
+            {confirmedInvitations.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex flex-col gap-50 rounded-200 border border-semantic-success/30 bg-semantic-success/5 p-300"
+              >
+                <p className="text-body-sm font-semibold text-neutral-950">
+                  {inv.event_title}
+                </p>
+                <p className="text-body-sm text-neutral-600">
+                  {inv.department_name}
+                  {inv.sub_team_name ? ` · ${inv.sub_team_name}` : ""} ·{" "}
+                  {formatEventDate(inv.event_date)}
+                </p>
+              </div>
             ))}
           </div>
         </section>
@@ -101,6 +128,14 @@ function InvitationCard({ invitation }: { invitation: AssignmentWithEventContext
   const [responded, setResponded] = useState(false);
 
   function handleResponse(response: "accepted" | "declined") {
+    if (
+      response === "declined" &&
+      !window.confirm(
+        "Decline this service request? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
     setError(null);
     setPendingResponse(response);
     startTransition(async () => {

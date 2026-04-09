@@ -39,6 +39,14 @@ export function ServiceRequestCard({
   const [isPending, startTransition] = useTransition();
 
   function handleResponse(response: "accepted" | "declined") {
+    if (
+      response === "declined" &&
+      !window.confirm(
+        "Decline this service request? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
     setError(null);
     setPendingResponse(response);
     startTransition(async () => {
