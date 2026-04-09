@@ -74,6 +74,8 @@ export type DeptHeadDashboardData = {
   pendingInterests: number;
   pendingSkillApprovals: number;
   rotationEntries: import("@/lib/departments/types").RotationEntry[];
+  /** Plain object (JSON-safe, RSC-serialisable) — rotatable teams per dept_id. */
+  rotationTeamsByDept: Record<string, import("@/lib/departments/queries").RotatableTeamRecord[]>;
 };
 
 export type TeamHeadDashboardData = {

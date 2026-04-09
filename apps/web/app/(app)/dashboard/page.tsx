@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getVolunteerDashboardData,
   getDeptHeadDashboardData,
@@ -42,26 +41,7 @@ export default async function DashboardPage() {
 
   if (profile.role === "dept_head") {
     const data = await getDeptHeadDashboardData(profile.id);
-
-    // Build teamsByDept for rotation section — only fetch depts referenced in rotation entries
-    type RotatableTeam = { id: string; department_id: string; name: string; rotation_label: "A" | "B" | "C" };
-    const teamsByDept = new Map<string, RotatableTeam[]>();
-    const rotationDeptIds = [...new Set(data.rotationEntries.map((e) => e.departmentId))];
-    if (rotationDeptIds.length > 0) {
-      const supabase = await createSupabaseServerClient();
-      const { data: teamRows } = await supabase
-        .from("teams")
-        .select("id, department_id, name, rotation_label")
-        .in("department_id", rotationDeptIds)
-        .not("rotation_label", "is", null)
-        .is("deleted_at", null);
-      for (const t of (teamRows ?? []) as RotatableTeam[]) {
-        if (!teamsByDept.has(t.department_id)) teamsByDept.set(t.department_id, []);
-        teamsByDept.get(t.department_id)!.push(t);
-      }
-    }
-
-    return <DeptHeadDashboard data={data} displayName={displayName} teamsByDept={teamsByDept} />;
+    return <DeptHeadDashboard data={data} displayName={displayName} />;
   }
 
   if (profile.role === "team_head") {

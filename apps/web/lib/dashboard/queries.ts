@@ -123,7 +123,7 @@ export async function getDeptHeadDashboardData(
     .is("deleted_at", null);
 
   if (!deptRows || deptRows.length === 0) {
-    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0, rotationEntries: [] };
+    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0, rotationEntries: [], rotationTeamsByDept: {} };
   }
   const depts = deptRows as { id: string; name: string }[];
   const deptIds = depts.map((d) => d.id);
@@ -264,7 +264,7 @@ export async function getDeptHeadDashboardData(
   );
 
   // 5. Pending queues + rotation schedule in parallel
-  const [interestRes, skillRes, rotationEntries] = await Promise.all([
+  const [interestRes, skillRes, rotationResult] = await Promise.all([
     supabase
       .from("volunteer_interests")
       .select("id", { count: "exact", head: true })
@@ -282,7 +282,8 @@ export async function getDeptHeadDashboardData(
     eventSummaries,
     pendingInterests: interestRes.count ?? 0,
     pendingSkillApprovals: skillRes.count ?? 0,
-    rotationEntries,
+    rotationEntries: rotationResult.entries,
+    rotationTeamsByDept: rotationResult.teamsByDept,
   };
 }
 

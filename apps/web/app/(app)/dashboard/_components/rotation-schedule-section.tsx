@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import type { RotationEntry, Team } from "@/lib/departments/types";
+import type { RotationEntry } from "@/lib/departments/types";
+import type { RotatableTeamRecord } from "@/lib/departments/queries";
 import { setRotationOverride, clearRotationOverride } from "@/lib/departments/actions";
 
 interface RotationScheduleSectionProps {
   entries: RotationEntry[];
-  /** All rotatable teams keyed by department_id. */
-  teamsByDept: Map<string, Pick<Team, "id" | "name" | "rotation_label">[]>;
+  /** Plain object (JSON-safe) — rotatable teams keyed by department_id. */
+  teamsByDept: Record<string, RotatableTeamRecord[]>;
 }
 
 function formatEventDate(isoDate: string): string {
@@ -36,24 +37,40 @@ export function RotationScheduleSection({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   function handleOverride(eventId: string, deptId: string, teamId: string) {
     const key = `${eventId}::${deptId}`;
     setPendingKey(key);
+    setErrorKey(null);
+    setErrorMessage(null);
     startTransition(async () => {
-      await setRotationOverride(eventId, deptId, teamId);
+      const result = await setRotationOverride(eventId, deptId, teamId);
       setPendingKey(null);
-      router.refresh();
+      if (result.error) {
+        setErrorKey(key);
+        setErrorMessage(result.error);
+      } else {
+        router.refresh();
+      }
     });
   }
 
   function handleClear(eventId: string, deptId: string) {
     const key = `${eventId}::${deptId}`;
     setPendingKey(key);
+    setErrorKey(null);
+    setErrorMessage(null);
     startTransition(async () => {
-      await clearRotationOverride(eventId, deptId);
+      const result = await clearRotationOverride(eventId, deptId);
       setPendingKey(null);
-      router.refresh();
+      if (result.error) {
+        setErrorKey(key);
+        setErrorMessage(result.error);
+      } else {
+        router.refresh();
+      }
     });
   }
 
@@ -64,7 +81,8 @@ export function RotationScheduleSection({
         {entries.map((entry) => {
           const entryKey = `${entry.eventId}::${entry.departmentId}`;
           const isEntryPending = pendingKey === entryKey && isPending;
-          const teams = (teamsByDept.get(entry.departmentId) ?? []).filter(
+          const entryError = errorKey === entryKey ? errorMessage : null;
+          const teams = (teamsByDept[entry.departmentId] ?? []).filter(
             (t) => t.rotation_label !== null,
           );
 
@@ -165,6 +183,10 @@ export function RotationScheduleSection({
                   <span className="text-body-sm text-neutral-600">Saving…</span>
                 )}
               </div>
+
+              {entryError && (
+                <p className="text-body-sm text-semantic-error">{entryError}</p>
+              )}
             </div>
           );
         })}

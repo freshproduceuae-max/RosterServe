@@ -135,10 +135,19 @@ export async function getOwnerDisplayNames(
 // RS-F016: Rotation schedule
 // ---------------------------------------------------------------------------
 
+export type RotatableTeamRecord = { id: string; name: string; rotation_label: "A" | "B" | "C" };
+
+export type RotationScheduleResult = {
+  entries: import("./types").RotationEntry[];
+  /** Plain record (JSON-safe) — teams per dept_id with rotation labels. */
+  teamsByDept: Record<string, RotatableTeamRecord[]>;
+};
+
 export async function getRotationSchedule(
   deptIds: string[],
-): Promise<import("./types").RotationEntry[]> {
-  if (deptIds.length === 0) return [];
+): Promise<RotationScheduleResult> {
+  const empty: RotationScheduleResult = { entries: [], teamsByDept: {} };
+  if (deptIds.length === 0) return empty;
 
   const supabase = await createSupabaseServerClient();
 
@@ -147,7 +156,7 @@ export async function getRotationSchedule(
     .toISOString()
     .split("T")[0];
 
-  // 1. Teams with rotation labels, keyed by department_id
+  // 1. Teams with rotation labels, grouped by department_id
   const { data: teamRows } = await supabase
     .from("teams")
     .select("id, department_id, name, rotation_label")
@@ -163,16 +172,26 @@ export async function getRotationSchedule(
   };
   const teamsWithLabel = (teamRows ?? []) as RawTeam[];
 
-  // Group rotatable teams by dept_id
-  const teamsByDept = new Map<string, RawTeam[]>();
+  // Build plain-object teamsByDept (JSON-serialisable — no Map)
+  const teamsByDeptInternal: Record<string, RawTeam[]> = {};
   for (const t of teamsWithLabel) {
-    if (!teamsByDept.has(t.department_id)) teamsByDept.set(t.department_id, []);
-    teamsByDept.get(t.department_id)!.push(t);
+    if (!teamsByDeptInternal[t.department_id]) teamsByDeptInternal[t.department_id] = [];
+    teamsByDeptInternal[t.department_id].push(t);
+  }
+
+  // teamsByDept for export (strip department_id — caller doesn't need it)
+  const teamsByDeptExport: Record<string, RotatableTeamRecord[]> = {};
+  for (const [deptId, teams] of Object.entries(teamsByDeptInternal)) {
+    teamsByDeptExport[deptId] = teams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      rotation_label: t.rotation_label,
+    }));
   }
 
   // Departments that have at least one rotatable team
-  const activeDeptIds = deptIds.filter((id) => (teamsByDept.get(id)?.length ?? 0) > 0);
-  if (activeDeptIds.length === 0) return [];
+  const activeDeptIds = deptIds.filter((id) => (teamsByDeptInternal[id]?.length ?? 0) > 0);
+  if (activeDeptIds.length === 0) return { entries: [], teamsByDept: teamsByDeptExport };
 
   // 2. Upcoming published events in the 30-day window that have assignments
   //    touching these departments
@@ -214,48 +233,47 @@ export async function getRotationSchedule(
     }
   }
 
-  if (eventDeptSet.size === 0) return [];
+  if (eventDeptSet.size === 0) return { entries: [], teamsByDept: teamsByDeptExport };
 
   // 3. Existing overrides for these event+dept combos
   const eventIds = [...new Set(assignRows_.map((r) => r.event_id))];
   const { data: overrideRows } = await supabase
     .from("dept_rotation_overrides")
-    .select("event_id, department_id, team_id, created_at")
+    .select("event_id, department_id, team_id")
     .in("department_id", activeDeptIds)
-    .in("event_id", eventIds)
-    .order("created_at", { ascending: false });
+    .in("event_id", eventIds);
 
-  type RawOverride = {
-    event_id: string;
-    department_id: string;
-    team_id: string;
-    created_at: string;
-  };
+  type RawOverride = { event_id: string; department_id: string; team_id: string };
   const overrides = (overrideRows ?? []) as RawOverride[];
 
-  // Key: `eventId::deptId` → most-recent override
-  const overrideMap = new Map<string, RawOverride>();
+  // Key: `eventId::deptId` → override team_id
+  const overrideMap = new Map<string, string>();
   for (const o of overrides) {
-    const key = `${o.event_id}::${o.department_id}`;
-    if (!overrideMap.has(key)) overrideMap.set(key, o);
+    overrideMap.set(`${o.event_id}::${o.department_id}`, o.team_id);
   }
 
-  // 4. For each dept: find the last override (any event, latest created_at)
-  //    to determine the "last used" rotation label
+  // 4. History — join events to sort by event_date (not created_at wall-clock)
+  //    so rotation cycle respects chronological event order.
   const { data: historyRows } = await supabase
     .from("dept_rotation_overrides")
-    .select("department_id, team_id, created_at")
-    .in("department_id", activeDeptIds)
-    .order("created_at", { ascending: false });
+    .select("department_id, team_id, events!inner(event_date)")
+    .in("department_id", activeDeptIds);
 
-  type RawHistory = { department_id: string; team_id: string; created_at: string };
-  const history = (historyRows ?? []) as RawHistory[];
+  type RawHistory = {
+    department_id: string;
+    team_id: string;
+    events: { event_date: string };
+  };
+  // Sort descending by event_date in JS (small dataset — < 100 rows typical)
+  const history = ((historyRows ?? []) as unknown as RawHistory[]).sort(
+    (a, b) => b.events.event_date.localeCompare(a.events.event_date),
+  );
 
   // Build a team lookup: team_id → rotation_label
   const teamLabelMap = new Map<string, "A" | "B" | "C">();
   for (const t of teamsWithLabel) teamLabelMap.set(t.id, t.rotation_label);
 
-  // Last used label per dept
+  // Last used label per dept (first hit per dept after descending sort = most recent event)
   const lastUsedLabelByDept = new Map<string, "A" | "B" | "C">();
   for (const h of history) {
     if (lastUsedLabelByDept.has(h.department_id)) continue;
@@ -289,16 +307,16 @@ export async function getRotationSchedule(
     const eventInfo = eventInfoMap.get(eventId);
     if (!eventInfo) continue;
 
-    const deptTeams = teamsByDept.get(deptId) ?? [];
+    const deptTeams = teamsByDeptInternal[deptId] ?? [];
     const lastLabel = lastUsedLabelByDept.get(deptId);
     const suggestedLabel = nextLabel(lastLabel);
 
     const suggestedTeam = deptTeams.find((t) => t.rotation_label === suggestedLabel) ?? null;
 
-    const existingOverride = overrideMap.get(key) ?? null;
+    const overrideTeamId = overrideMap.get(key) ?? null;
     let overrideEntry: import("./types").RotationEntry["override"] = null;
-    if (existingOverride) {
-      const t = deptTeams.find((t) => t.id === existingOverride.team_id);
+    if (overrideTeamId) {
+      const t = deptTeams.find((t) => t.id === overrideTeamId);
       if (t) {
         overrideEntry = {
           teamId: t.id,
@@ -323,5 +341,5 @@ export async function getRotationSchedule(
   }
 
   entries.sort((a, b) => a.eventDate.localeCompare(b.eventDate));
-  return entries;
+  return { entries, teamsByDept: teamsByDeptExport };
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { DeptHeadDashboardData } from "@/lib/dashboard/types";
-import type { Team } from "@/lib/departments/types";
 import { RosterHealthBar } from "./roster-health-bar";
 import { RotationScheduleSection } from "./rotation-schedule-section";
 
@@ -17,12 +16,10 @@ function formatEventDate(isoDate: string): string {
 interface DeptHeadDashboardProps {
   data: DeptHeadDashboardData;
   displayName: string;
-  /** Rotatable teams per dept — passed from the server page. */
-  teamsByDept: Map<string, Pick<Team, "id" | "name" | "rotation_label">[]>;
 }
 
-export function DeptHeadDashboard({ data, displayName, teamsByDept }: DeptHeadDashboardProps) {
-  const { eventSummaries, pendingInterests, pendingSkillApprovals, rotationEntries } = data;
+export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps) {
+  const { eventSummaries, pendingInterests, pendingSkillApprovals, rotationEntries, rotationTeamsByDept } = data;
   const hasPending = pendingInterests > 0 || pendingSkillApprovals > 0;
 
   return (
@@ -88,7 +85,7 @@ export function DeptHeadDashboard({ data, displayName, teamsByDept }: DeptHeadDa
       {rotationEntries.length > 0 && (
         <RotationScheduleSection
           entries={rotationEntries}
-          teamsByDept={teamsByDept}
+          teamsByDept={rotationTeamsByDept}
         />
       )}
 
