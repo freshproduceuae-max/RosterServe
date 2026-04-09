@@ -12,6 +12,7 @@ import { TeamSelectionForm } from "./team-selection-form";
 import { NonConfirmationsSection } from "./non-confirmations-section";
 import { GapSummary } from "./gap-summary";
 import { HeadcountGapSection } from "./headcount-gap-section";
+import { MarkServedButton } from "./mark-served-button";
 import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
 
 interface DeptHeadRosterViewProps {
@@ -38,6 +39,9 @@ export function DeptHeadRosterView({
 }: DeptHeadRosterViewProps) {
   const [showTeamForm, setShowTeamForm] = useState(false);
   const subTeams = department.teams.filter((t) => t.deleted_at === null);
+  const acceptedAssignments = assignments.filter(
+    (a) => a.status === "accepted",
+  );
 
   return (
     <div className="flex flex-col gap-400">
@@ -60,6 +64,42 @@ export function DeptHeadRosterView({
 
       <GapSummary summary={gapSummary} />
       <HeadcountGapSection summary={headcountGaps} />
+
+      {/* Confirmed — mark served */}
+      {acceptedAssignments.length > 0 && (
+        <section className="flex flex-col gap-200">
+          <div>
+            <h2 className="font-display text-h2 text-neutral-950">Confirmed</h2>
+            <p className="text-body-sm text-neutral-600">
+              Mark assignments as served after the event.
+            </p>
+          </div>
+          <div className="flex flex-col gap-150">
+            {acceptedAssignments.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between gap-200 rounded-200 border border-neutral-200 bg-neutral-0 px-300 py-200"
+              >
+                <div className="flex flex-col gap-100">
+                  <p className="text-body-sm font-medium text-neutral-950">
+                    {a.volunteer_display_name}
+                  </p>
+                  {a.sub_team_name && (
+                    <p className="text-body-sm text-neutral-500">
+                      {a.sub_team_name}
+                    </p>
+                  )}
+                </div>
+                <MarkServedButton
+                  assignmentId={a.id}
+                  eventId={eventId}
+                  deptId={deptId}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Team selection form */}
       {showTeamForm && (

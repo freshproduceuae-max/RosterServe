@@ -503,3 +503,43 @@ export async function assignSubstituteTeamHead(
   revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
   return { success: true };
 }
+
+export async function markAssignmentServed(
+  assignmentId: string,
+  eventId: string,
+  deptId: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "Not authenticated" };
+
+  const { role } = session.profile;
+  if (!["dept_head", "all_depts_leader", "super_admin"].includes(role)) {
+    return { error: "Not authorized to mark assignments as served" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // For dept_head, verify the assignment belongs to a department they own
+  if (role === "dept_head") {
+    const { data: dept } = await supabase
+      .from("departments")
+      .select("id")
+      .eq("id", deptId)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!dept) return { error: "Not authorized to mark assignments in this department" };
+  }
+
+  const { error } = await supabase
+    .from("assignments")
+    .update({ status: "served" })
+    .eq("id", assignmentId)
+    .eq("department_id", deptId);
+
+  if (error) return { error: "Failed to mark assignment as served" };
+
+  revalidatePath(`/events/${eventId}/departments/${deptId}/roster`);
+  return { success: true };
+}

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { AssignmentForVolunteer } from "@/lib/assignments/types";
-import type { AssignmentStatus } from "@/lib/assignments/types";
+import type { AssignmentForVolunteer, AssignmentStatus } from "@/lib/assignments/types";
 import { respondToServiceRequest } from "@/lib/assignments/actions";
 
 const statusStyles: Record<AssignmentStatus, string> = {
@@ -39,6 +38,14 @@ export function ServiceRequestCard({
   const [isPending, startTransition] = useTransition();
 
   function handleResponse(response: "accepted" | "declined") {
+    if (
+      response === "declined" &&
+      !window.confirm(
+        "Decline this service request? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
     setError(null);
     setPendingResponse(response);
     startTransition(async () => {
