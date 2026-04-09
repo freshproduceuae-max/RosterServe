@@ -1,14 +1,23 @@
 import { redirect } from "next/navigation";
 import { getSessionWithProfile } from "@/lib/auth/session";
-import { getSoftDeletedRecords } from "@/lib/admin/queries";
+import {
+  getSoftDeletedRecords,
+  getSupporterAssignments,
+  getLeaderProfiles,
+} from "@/lib/admin/queries";
 import { DeleteApprovalTable } from "./_components/delete-approval-table";
+import { SupporterAssignmentsSection } from "./_components/supporter-assignments-section";
 
 export default async function AdminOversightPage() {
   const session = await getSessionWithProfile();
   if (!session) redirect("/sign-in");
   if (session.profile.role !== "super_admin") redirect("/dashboard");
 
-  const records = await getSoftDeletedRecords();
+  const [records, supporters, leaders] = await Promise.all([
+    getSoftDeletedRecords(),
+    getSupporterAssignments(),
+    getLeaderProfiles(),
+  ]);
 
   return (
     <div className="flex flex-col gap-400">
@@ -42,6 +51,11 @@ export default async function AdminOversightPage() {
           />
         </>
       )}
+
+      <SupporterAssignmentsSection
+        supporters={supporters}
+        leaders={leaders}
+      />
     </div>
   );
 }
