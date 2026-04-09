@@ -312,7 +312,8 @@
         "Add leader contact and bug-report escalation paths where required.",
         "Prevent failure states from leaking protected data or breaking scope rules."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Added lib/support/actions.ts (sendBugReport via Resend, degrades gracefully when RESEND_API_KEY/DEVELOPER_EMAIL absent). BugReportForm client component in app/(app)/_components/ with toggle open/submitted states. Global error boundary at app/error.tsx (renders own html/body, retry button, WhatsApp link from NEXT_PUBLIC_SUPPORT_WHATSAPP). Global 404 at app/not-found.tsx. App-section error boundary at app/(app)/error.tsx with retry, dashboard link, WhatsApp link, and BugReportForm."
     },
     {
       "id": "RS-F016",

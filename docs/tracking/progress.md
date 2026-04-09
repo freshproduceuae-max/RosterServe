@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F014 passed; RS-F015 next
-Current build stage: 14 features passed (RS-F001–RS-F014)
+Current phase: Active revision cycle — RS-F015 passed; RS-F016 next
+Current build stage: 15 features passed (RS-F001–RS-F015)
 
 ## Execution Gate
 
@@ -107,10 +107,12 @@ For this repo state:
 - RS-F013 marked passes=true (2026-04-09)
 - RS-F014 implemented (2026-04-09): Added lib/admin/queries.ts (getSoftDeletedRecords, getSoftDeletedCount with count-only queries) and lib/admin/actions.ts (restoreRecord sets deleted_at=null, hardDeleteRecord hard-DELETEs, both super_admin gated). New /admin route with DeleteApprovalTable client component (per-record pending state, window.confirm before hard delete). SuperAdminDashboard gains pendingDeletions badge with Review link to /admin when records exist.
 - RS-F014 marked passes=true (2026-04-09)
+- RS-F015 implemented (2026-04-09): lib/support/actions.ts (sendBugReport via Resend, degrades gracefully when RESEND_API_KEY/DEVELOPER_EMAIL absent); BugReportForm client component in app/(app)/_components/; global error boundary at app/error.tsx (renders own html/body, retry + WhatsApp link); global 404 at app/not-found.tsx; app-section error boundary at app/(app)/error.tsx with retry, dashboard link, WhatsApp link, and BugReportForm
+- RS-F015 marked passes=true (2026-04-09)
 
 ## Next Up
 
-- RS-F015: Error handling and support escalation
+- RS-F016: Team rotation scheduling
 - Each feature requires its own plan → agent hierarchy review → implementation → PR → merge
 
 ## Status Legend
@@ -139,7 +141,7 @@ Update rule:
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | passed |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | passed |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | passed |
-| 15 | RS-F015 | Error handling and support escalation | P2 | not_started |
+| 15 | RS-F015 | Error handling and support escalation | P2 | passed |
 | 16 | RS-F016 | Team rotation scheduling | P1 | not_started |
 | 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | not_started |
 | 18 | RS-F018 | Supporter and secretary role management | P1 | not_started |
