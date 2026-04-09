@@ -274,7 +274,8 @@
         "Schedule and send the required 2-day and 5-day leader alerts.",
         "Prevent stale or invalid notification delivery."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Resend v4 installed. Service-role admin client at lib/supabase/admin-client.ts resolves user emails from auth.users. Email functions at lib/email/send.ts (sendInvitationEmail, sendResponseEmail, sendPreEventLeaderAlert) degrade silently when RESEND_API_KEY is absent. HTML-escaping applied to all user-supplied strings in email bodies. createAssignment and selectTeamForEvent send invitation emails; respondToServiceRequest sends response email to dept_head. Cron endpoint GET /api/cron/event-alerts fires daily at 09:00 UTC via vercel.json; queries events 2 and 5 days away, sends pre-event alerts to dept_heads with accepted/pending/declined counts. CRON_SECRET header guard prevents unauthorized cron triggering."
     },
     {
       "id": "RS-F014",

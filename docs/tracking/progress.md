@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F012 passed; RS-F013 next
-Current build stage: 12 features passed (RS-F001–RS-F012)
+Current phase: Active revision cycle — RS-F013 passed; RS-F014 next
+Current build stage: 13 features passed (RS-F001–RS-F013)
 
 ## Execution Gate
 
@@ -101,12 +101,15 @@ For this repo state:
 - RS-F010 marked passes=true (2026-04-09)
 - RS-F011 implemented (2026-04-09): event_instructions table with dept/team scoping, single file attachment per instruction stored in Supabase Storage bucket instruction-media; Leaders post/delete; volunteers read via RLS-scoped query; navigation from roster page (leaders) and AssignmentCard (volunteers)
 - RS-F011 marked passes=true (2026-04-09)
+- RS-F012 implemented (2026-04-09): Added decline confirmation dialog to ServiceRequestCard and InvitationCard. Added accepted→served RLS policy (migration 00030) and markAssignmentServed server action. DeptHeadRosterView shows confirmed assignments with MarkServedButton. TeamHeadDashboard shows confirmed service section.
+- RS-F012 marked passes=true (2026-04-09)
+- RS-F013 implemented (2026-04-09): Resend v4 installed. Service-role admin client at lib/supabase/admin-client.ts resolves user emails from auth.users. Email functions at lib/email/send.ts (sendInvitationEmail, sendResponseEmail, sendPreEventLeaderAlert) degrade silently when RESEND_API_KEY is absent. HTML-escaping applied to all user-supplied strings in email bodies. createAssignment and selectTeamForEvent send invitation emails; respondToServiceRequest sends response email to dept_head. Cron endpoint GET /api/cron/event-alerts fires daily at 09:00 UTC via vercel.json; queries events 2 and 5 days away, sends pre-event alerts to dept_heads with accepted/pending/declined counts. CRON_SECRET header guard prevents unauthorized cron triggering.
+- RS-F013 marked passes=true (2026-04-09)
 
 ## Next Up
 
-- RS-F005: Already passed — verify it still works after RS-F003 schema changes (departments decoupled from events)
-- RS-F006 revision: request-to-join flow (replaces loose interest signal with permanent membership model)
-- Each revision requires its own plan → agent hierarchy review → implementation → PR → merge
+- RS-F014: Admin oversight, soft delete, and approval controls
+- Each feature requires its own plan → agent hierarchy review → implementation → PR → merge
 
 ## Status Legend
 
@@ -132,7 +135,7 @@ Update rule:
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | passed |
 | 11 | RS-F011 | Instructions and media sharing | P1 | passed |
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | passed |
-| 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |
+| 13 | RS-F013 | Notifications and scheduled alerts | P1 | passed |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | not_started |
 | 15 | RS-F015 | Error handling and support escalation | P2 | not_started |
 | 16 | RS-F016 | Team rotation scheduling | P1 | not_started |
