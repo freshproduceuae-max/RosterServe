@@ -13,15 +13,18 @@ export function DeleteApprovalTable({
   records,
   sectionTitle,
 }: DeleteApprovalTableProps) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   if (records.length === 0) return null;
 
   function handleRestore(kind: SoftDeletedEntity["kind"], id: string) {
     setActionError(null);
+    setPendingId(id);
     startTransition(async () => {
       const result = await restoreRecord(kind, id);
+      setPendingId(null);
       if (result.error) setActionError(result.error);
     });
   }
@@ -35,8 +38,10 @@ export function DeleteApprovalTable({
       return;
     }
     setActionError(null);
+    setPendingId(id);
     startTransition(async () => {
       const result = await hardDeleteRecord(kind, id);
+      setPendingId(null);
       if (result.error) setActionError(result.error);
     });
   }
@@ -74,14 +79,14 @@ export function DeleteApprovalTable({
             <div className="flex items-center gap-200">
               <button
                 onClick={() => handleRestore(record.kind, record.id)}
-                disabled={isPending}
+                disabled={pendingId === record.id}
                 className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-opacity duration-fast hover:opacity-80 disabled:opacity-50"
               >
                 Restore
               </button>
               <button
                 onClick={() => handleHardDelete(record.kind, record.id, record.name)}
-                disabled={isPending}
+                disabled={pendingId === record.id}
                 className="rounded-200 bg-semantic-error px-300 py-150 text-body-sm font-semibold text-neutral-0 transition-opacity duration-fast hover:opacity-80 disabled:opacity-50"
               >
                 Delete permanently

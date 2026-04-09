@@ -72,6 +72,20 @@ export async function getSoftDeletedRecords(): Promise<SoftDeletedRecords> {
 }
 
 export async function getSoftDeletedCount(): Promise<number> {
-  const records = await getSoftDeletedRecords();
-  return records.total;
+  const supabase = await createSupabaseServerClient();
+  const [d, e, t] = await Promise.all([
+    supabase
+      .from("departments")
+      .select("id", { count: "exact", head: true })
+      .not("deleted_at", "is", null),
+    supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .not("deleted_at", "is", null),
+    supabase
+      .from("teams")
+      .select("id", { count: "exact", head: true })
+      .not("deleted_at", "is", null),
+  ]);
+  return (d.count ?? 0) + (e.count ?? 0) + (t.count ?? 0);
 }
