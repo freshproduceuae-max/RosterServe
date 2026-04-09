@@ -39,3 +39,16 @@ export type OwnerProfile = {
   display_name: string;
   role: string;
 };
+
+export type RotationLabel = "A" | "B" | "C";
+
+export type RotationEntry = {
+  eventId: string;
+  eventTitle: string;
+  eventDate: string; // ISO date string yyyy-mm-dd
+  eventType: string;
+  departmentId: string;
+  departmentName: string;
+  suggestedTeam: { id: string; name: string; label: RotationLabel } | null;
+  override: { teamId: string; teamName: string; teamLabel: RotationLabel } | null;
+};
