@@ -503,3 +503,29 @@ export async function assignSubstituteTeamHead(
   revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
   return { success: true };
 }
+
+export async function markAssignmentServed(
+  assignmentId: string,
+  eventId: string,
+  deptId: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "Not authenticated" };
+
+  const { role } = session.profile;
+  if (!["dept_head", "all_depts_leader", "super_admin"].includes(role)) {
+    return { error: "Not authorized to mark assignments as served" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("assignments")
+    .update({ status: "served" })
+    .eq("id", assignmentId);
+
+  if (error) return { error: "Failed to mark assignment as served" };
+
+  revalidatePath(`/events/${eventId}/departments/${deptId}/roster`);
+  return { success: true };
+}
