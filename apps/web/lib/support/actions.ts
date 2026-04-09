@@ -2,6 +2,15 @@
 
 import { getResendClient } from "@/lib/email/client";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 export async function sendBugReport(
   description: string,
 ): Promise<{ error?: string; success?: boolean }> {
@@ -27,7 +36,7 @@ export async function sendBugReport(
       subject: "RosterServe bug report",
       html: `
         <p><strong>Bug report received</strong></p>
-        <p>${description.replace(/\n/g, "<br>")}</p>
+        <p>${escapeHtml(description).replace(/\n/g, "<br>")}</p>
         <p><em>Submitted via the in-app bug report form.</em></p>
       `,
     });
