@@ -293,7 +293,8 @@
         "Create the Super Admin review path for permanent removal decisions.",
         "Keep inactive records out of normal operations while preserving review visibility."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Added lib/admin/queries.ts (getSoftDeletedRecords, getSoftDeletedCount with count-only queries) and lib/admin/actions.ts (restoreRecord sets deleted_at=null, hardDeleteRecord hard-DELETEs, both super_admin gated). New /admin route with DeleteApprovalTable client component (per-record pending state, window.confirm before hard delete). SuperAdminDashboard gains pendingDeletions badge with Review link to /admin when records exist."
     },
     {
       "id": "RS-F015",

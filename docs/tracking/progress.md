@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F013 passed; RS-F014 next
-Current build stage: 13 features passed (RS-F001–RS-F013)
+Current phase: Active revision cycle — RS-F014 passed; RS-F015 next
+Current build stage: 14 features passed (RS-F001–RS-F014)
 
 ## Execution Gate
 
@@ -105,10 +105,12 @@ For this repo state:
 - RS-F012 marked passes=true (2026-04-09)
 - RS-F013 implemented (2026-04-09): Resend v4 installed. Service-role admin client at lib/supabase/admin-client.ts resolves user emails from auth.users. Email functions at lib/email/send.ts (sendInvitationEmail, sendResponseEmail, sendPreEventLeaderAlert) degrade silently when RESEND_API_KEY is absent. HTML-escaping applied to all user-supplied strings in email bodies. createAssignment and selectTeamForEvent send invitation emails; respondToServiceRequest sends response email to dept_head. Cron endpoint GET /api/cron/event-alerts fires daily at 09:00 UTC via vercel.json; queries events 2 and 5 days away, sends pre-event alerts to dept_heads with accepted/pending/declined counts. CRON_SECRET header guard prevents unauthorized cron triggering.
 - RS-F013 marked passes=true (2026-04-09)
+- RS-F014 implemented (2026-04-09): Added lib/admin/queries.ts (getSoftDeletedRecords, getSoftDeletedCount with count-only queries) and lib/admin/actions.ts (restoreRecord sets deleted_at=null, hardDeleteRecord hard-DELETEs, both super_admin gated). New /admin route with DeleteApprovalTable client component (per-record pending state, window.confirm before hard delete). SuperAdminDashboard gains pendingDeletions badge with Review link to /admin when records exist.
+- RS-F014 marked passes=true (2026-04-09)
 
 ## Next Up
 
-- RS-F014: Admin oversight, soft delete, and approval controls
+- RS-F015: Error handling and support escalation
 - Each feature requires its own plan → agent hierarchy review → implementation → PR → merge
 
 ## Status Legend
@@ -136,7 +138,7 @@ Update rule:
 | 11 | RS-F011 | Instructions and media sharing | P1 | passed |
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | passed |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | passed |
-| 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | not_started |
+| 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | passed |
 | 15 | RS-F015 | Error handling and support escalation | P2 | not_started |
 | 16 | RS-F016 | Team rotation scheduling | P1 | not_started |
 | 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | not_started |
