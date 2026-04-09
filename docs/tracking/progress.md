@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F010 passed; RS-F011 next
-Current build stage: 10 features passed (RS-F001–RS-F010)
+Current phase: Active revision cycle — RS-F011 passed; RS-F012 next
+Current build stage: 11 features passed (RS-F001–RS-F011)
 
 ## Execution Gate
 
@@ -99,6 +99,8 @@ For this repo state:
 - RS-F009 marked passes=true
 - RS-F010 revision implemented (2026-04-09): built AllDeptsLeaderDashboard (full cross-dept event health view with non-confirmation counts); built SupporterDashboard (own service requests + leader context); TeamHeadDashboard: added own invitation cards with accept/decline; DeptHeadDashboard: added pending_team_heads highlight in RosterHealthBar; getDeptHeadDashboardData rewritten to use assignments→events join (schema-safe); new queries: getAllDeptsLeaderDashboardData, getSupporterDashboardData, updated getTeamHeadDashboardData
 - RS-F010 marked passes=true (2026-04-09)
+- RS-F011 implemented (2026-04-09): event_instructions table with dept/team scoping, single file attachment per instruction stored in Supabase Storage bucket instruction-media; Leaders post/delete; volunteers read via RLS-scoped query; navigation from roster page (leaders) and AssignmentCard (volunteers)
+- RS-F011 marked passes=true (2026-04-09)
 
 ## Next Up
 
@@ -128,7 +130,7 @@ Update rule:
 | 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | passed |
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | passed |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | passed |
-| 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
+| 11 | RS-F011 | Instructions and media sharing | P1 | passed |
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | not_started |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | not_started |
