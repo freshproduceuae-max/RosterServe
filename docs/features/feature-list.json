@@ -508,7 +508,8 @@
         "Attribute actions taken by a Supporter to that Supporter in audit contexts.",
         "Restrict each Supporter to one assigned leader at a time."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Migration 00032 adds RLS UPDATE policy for super_admin on supporter profiles (closes gap left by 00022 which only covers dept_head/team_head). assignSupporter and removeSupporter server actions in lib/admin/actions.ts validate both profiles before updating supporter_of. getSupporterAssignments and getLeaderProfiles queries in lib/admin/queries.ts. SupporterAssignmentsSection client component with per-row pending state and router.refresh(). Admin oversight page loads all three data sets in parallel and renders the new section below pending deletions."
     }
   ]
 }
