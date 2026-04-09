@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import { sendPreEventLeaderAlert } from "@/lib/email/send";
 import { getPublicEnv } from "@/lib/env";
@@ -41,13 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const date2 = toDateString(2);
   const date5 = toDateString(5);
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const db = createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data: events, error: eventsError } = await db
+  const { data: events, error: eventsError } = await adminClient
     .from("events")
     .select("id, title, event_date")
     .in("event_date", [date2, date5])
@@ -71,7 +64,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   for (const event of events as { id: string; title: string; event_date: string }[]) {
     const daysUntil: 2 | 5 = event.event_date === date2 ? 2 : 5;
 
-    const { data: deptRows, error: deptError } = await db
+    const { data: deptRows, error: deptError } = await adminClient
       .from("assignments")
       .select("department_id")
       .eq("event_id", event.id)
@@ -91,7 +84,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     for (const deptId of departmentIds) {
       try {
-        const { data: deptRow } = await db
+        const { data: deptRow } = await adminClient
           .from("departments")
           .select("owner_id")
           .eq("id", deptId)
@@ -110,7 +103,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           continue;
         }
 
-        const { data: counts } = await db
+        const { data: counts } = await adminClient
           .from("assignments")
           .select("status")
           .eq("event_id", event.id)

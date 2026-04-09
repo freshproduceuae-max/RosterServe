@@ -2,6 +2,14 @@ import { getResendClient } from "./client";
 
 const FROM_ADDRESS = "RosterServe <notifications@rosterserve.app>";
 
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /**
  * sendInvitationEmail
  *
@@ -21,15 +29,18 @@ export async function sendInvitationEmail(
   if (!resend) return;
 
   const { eventTitle, eventDate, departmentName, siteUrl } = params;
+  const safeTitle = escHtml(eventTitle);
+  const safeDate = escHtml(eventDate);
+  const safeDept = escHtml(departmentName);
 
   try {
     await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `You've been invited to serve at ${eventTitle}`,
+      subject: `You've been invited to serve at ${safeTitle}`,
       html: `
         <p>Hi,</p>
-        <p>You have been invited to serve in the <strong>${departmentName}</strong> department at <strong>${eventTitle}</strong> on <strong>${eventDate}</strong>.</p>
+        <p>You have been invited to serve in the <strong>${safeDept}</strong> department at <strong>${safeTitle}</strong> on <strong>${safeDate}</strong>.</p>
         <p>Please log in to accept or decline your invitation:</p>
         <p><a href="${siteUrl}/assignments">View your assignments</a></p>
         <p>— RosterServe</p>
@@ -60,11 +71,14 @@ export async function sendResponseEmail(
   if (!resend) return;
 
   const { volunteerName, eventTitle, eventDate, response, siteUrl } = params;
+  const safeName = escHtml(volunteerName);
+  const safeTitle = escHtml(eventTitle);
+  const safeDate = escHtml(eventDate);
   const verb = response === "accepted" ? "accepted" : "declined";
   const subject =
     response === "accepted"
-      ? `${volunteerName} accepted their service request for ${eventTitle}`
-      : `${volunteerName} declined their service request for ${eventTitle}`;
+      ? `${safeName} accepted their service request for ${safeTitle}`
+      : `${safeName} declined their service request for ${safeTitle}`;
 
   try {
     await resend.emails.send({
@@ -73,7 +87,7 @@ export async function sendResponseEmail(
       subject,
       html: `
         <p>Hi,</p>
-        <p><strong>${volunteerName}</strong> has <strong>${verb}</strong> their service request for <strong>${eventTitle}</strong> on <strong>${eventDate}</strong>.</p>
+        <p><strong>${safeName}</strong> has <strong>${verb}</strong> their service request for <strong>${safeTitle}</strong> on <strong>${safeDate}</strong>.</p>
         <p><a href="${siteUrl}/events">View event roster</a></p>
         <p>— RosterServe</p>
       `,
@@ -105,15 +119,17 @@ export async function sendPreEventLeaderAlert(
   if (!resend) return;
 
   const { eventTitle, eventDate, daysUntil, accepted, pending, declined, siteUrl } = params;
+  const safeTitle = escHtml(eventTitle);
+  const safeDate = escHtml(eventDate);
 
   try {
     await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `Reminder: ${eventTitle} is in ${daysUntil} days — roster update`,
+      subject: `Reminder: ${safeTitle} is in ${daysUntil} days — roster update`,
       html: `
         <p>Hi,</p>
-        <p>This is a reminder that <strong>${eventTitle}</strong> is happening on <strong>${eventDate}</strong> — that's <strong>${daysUntil} days away</strong>.</p>
+        <p>This is a reminder that <strong>${safeTitle}</strong> is happening on <strong>${safeDate}</strong> — that's <strong>${daysUntil} days away</strong>.</p>
         <p><strong>Current roster status:</strong></p>
         <ul>
           <li>Accepted: ${accepted}</li>
