@@ -483,7 +483,8 @@
         "Exclude volunteers already assigned to the event.",
         "Allow Dept Head to confirm a suggestion \u00e2\u20ac\u201d Dept Head confirmation always required; no auto-assignment."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. getCrossTeamSuggestions query in lib/assignments/queries.ts fetches active members from other teams in the department not already assigned to the event, ranks by approved required-skill match count (top 20). CrossTeamSuggestionsPanel client component renders collapsible list with per-row Assign button calling createAssignment, optimistic removal, per-row error state, and router.refresh(). DeptHeadRosterView updated with crossTeamSuggestions prop; roster page.tsx wires the parallel query call."
     },
     {
       "id": "RS-F018",

@@ -303,3 +303,150 @@ export async function getTeamHeadsInDept(
       teamName: row.name,
     }));
 }
+
+// ---------------------------------------------------------------------------
+// RS-F017 — Cross-team auto-suggestions
+// ---------------------------------------------------------------------------
+
+export type CrossTeamSuggestion = {
+  volunteerId: string;
+  displayName: string;
+  currentTeamId: string;
+  currentTeamName: string;
+  matchedSkills: string[]; // approved, dept-required skills this volunteer has
+  skillScore: number;      // count of matchedSkills
+  isAvailable: boolean;    // false if blocked out on event date
+};
+
+/**
+ * getCrossTeamSuggestions
+ * Returns up to 20 volunteers from OTHER teams in the same department who are
+ * not yet assigned to the given event, ranked by how many of the department's
+ * required skills they hold (approved).
+ */
+export async function getCrossTeamSuggestions(
+  eventId: string,
+  deptId: string,
+): Promise<CrossTeamSuggestion[]> {
+  const supabase = await createSupabaseServerClient();
+
+  // 0. Fetch event_date for availability check
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("event_date")
+    .eq("id", eventId)
+    .single();
+  const eventDate: string | null = (eventRow as { event_date: string } | null)?.event_date ?? null;
+
+  // 1. Required skill names for this department
+  const { data: requiredSkillRows } = await supabase
+    .from("department_skills")
+    .select("name")
+    .eq("department_id", deptId)
+    .eq("is_required", true)
+    .is("deleted_at", null);
+
+  const requiredSkillNames = new Set<string>(
+    (requiredSkillRows ?? [])
+      .map((r: { name: string | null }) => r.name)
+      .filter((n): n is string => n !== null),
+  );
+
+  // 2. Volunteer IDs already assigned to this event+dept (any status, not deleted)
+  const { data: existingAssignments } = await supabase
+    .from("assignments")
+    .select("volunteer_id")
+    .eq("event_id", eventId)
+    .eq("department_id", deptId)
+    .is("deleted_at", null);
+
+  const assignedIds = new Set<string>(
+    (existingAssignments ?? []).map(
+      (a: { volunteer_id: string }) => a.volunteer_id,
+    ),
+  );
+
+  // 3. Active members of OTHER teams in this dept (team_id IS NOT NULL)
+  const { data: memberRows } = await supabase
+    .from("department_members")
+    .select(
+      "volunteer_id, team_id, volunteer:profiles!volunteer_id(display_name), team:teams!team_id(name)",
+    )
+    .eq("department_id", deptId)
+    .not("team_id", "is", null)
+    .is("deleted_at", null);
+
+  if (!memberRows || memberRows.length === 0) return [];
+
+  type MemberRow = {
+    volunteer_id: string;
+    team_id: string;
+    volunteer: { display_name: string } | null;
+    team: { name: string } | null;
+  };
+
+  // Exclude already-assigned volunteers
+  const candidates = (memberRows as unknown as MemberRow[]).filter(
+    (row) => !assignedIds.has(row.volunteer_id),
+  );
+
+  if (candidates.length === 0) return [];
+
+  const candidateIds = candidates.map((c) => c.volunteer_id);
+
+  // 4. Availability blockouts on event_date for candidates
+  const blockedIds = new Set<string>();
+  if (eventDate) {
+    const { data: blockoutData } = await supabase
+      .from("availability_blockouts")
+      .select("volunteer_id")
+      .in("volunteer_id", candidateIds)
+      .eq("date", eventDate)
+      .is("deleted_at", null);
+    (blockoutData ?? []).forEach((b: { volunteer_id: string }) => blockedIds.add(b.volunteer_id));
+  }
+
+  // 5. Approved skills for candidates scoped to this dept
+  const skillMap = new Map<string, string[]>(); // volunteerId → matched required skill names
+  if (requiredSkillNames.size > 0) {
+    const { data: skillRows } = await supabase
+      .from("volunteer_skills")
+      .select("volunteer_id, name")
+      .in("volunteer_id", candidateIds)
+      .eq("department_id", deptId)
+      .eq("status", "approved")
+      .is("deleted_at", null);
+
+    (skillRows ?? []).forEach(
+      (s: { volunteer_id: string; name: string | null }) => {
+        if (!s.name || !requiredSkillNames.has(s.name)) return;
+        const existing = skillMap.get(s.volunteer_id) ?? [];
+        existing.push(s.name);
+        skillMap.set(s.volunteer_id, existing);
+      },
+    );
+  }
+
+  // 6. Build and rank suggestions
+  const suggestions: CrossTeamSuggestion[] = candidates.map((c) => {
+    const matchedSkills = skillMap.get(c.volunteer_id) ?? [];
+    return {
+      volunteerId: c.volunteer_id,
+      displayName: c.volunteer?.display_name ?? "Unknown",
+      currentTeamId: c.team_id,
+      currentTeamName: c.team?.name ?? "Unknown team",
+      matchedSkills,
+      skillScore: matchedSkills.length,
+      isAvailable: !blockedIds.has(c.volunteer_id),
+    };
+  });
+
+  // Sort: available first, then skill score desc, then alphabetical
+  suggestions.sort((a, b) => {
+    if (a.isAvailable !== b.isAvailable) return a.isAvailable ? -1 : 1;
+    if (b.skillScore !== a.skillScore) return b.skillScore - a.skillScore;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  return suggestions.slice(0, 20);
+}
