@@ -498,3 +498,114 @@ export async function deleteTeamHeadcountRequirement(
 
   return { success: true };
 }
+
+// ============================================================
+// RS-F016: ROTATION OVERRIDE ACTIONS
+// ============================================================
+
+export async function setRotationOverride(
+  eventId: string,
+  deptId: string,
+  teamId: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "You must be signed in." };
+
+  const role = session.profile.role;
+  const isSuperAdmin = hasMinimumRole(role, "super_admin");
+  const isDeptHead = role === "dept_head";
+
+  if (!isSuperAdmin && !isDeptHead) {
+    return { error: "You do not have permission to set rotation overrides." };
+  }
+
+  if (!eventId || !deptId || !teamId) {
+    return { error: "Invalid parameters." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (isDeptHead) {
+    const owns = await verifyDeptHeadOwnership(supabase, deptId, session.user.id);
+    if (!owns) {
+      return { error: "You do not have permission to manage this department." };
+    }
+  }
+
+  const { data: team } = await supabase
+    .from("teams")
+    .select("id, department_id, rotation_label")
+    .eq("id", teamId)
+    .eq("department_id", deptId)
+    .is("deleted_at", null)
+    .single();
+
+  if (!team) {
+    return { error: "Team not found in this department." };
+  }
+
+  if (!team.rotation_label) {
+    return { error: "This team does not have a rotation label assigned." };
+  }
+
+  const { error } = await supabase
+    .from("dept_rotation_overrides")
+    .upsert(
+      {
+        event_id: eventId,
+        department_id: deptId,
+        team_id: teamId,
+        is_manual: true,
+        created_by: session.user.id,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "event_id,department_id" },
+    );
+
+  if (error) {
+    return { error: "Could not save rotation override. Please try again." };
+  }
+
+  return { success: true };
+}
+
+export async function clearRotationOverride(
+  eventId: string,
+  deptId: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await getSessionWithProfile();
+  if (!session) return { error: "You must be signed in." };
+
+  const role = session.profile.role;
+  const isSuperAdmin = hasMinimumRole(role, "super_admin");
+  const isDeptHead = role === "dept_head";
+
+  if (!isSuperAdmin && !isDeptHead) {
+    return { error: "You do not have permission to clear rotation overrides." };
+  }
+
+  if (!eventId || !deptId) {
+    return { error: "Invalid parameters." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (isDeptHead) {
+    const owns = await verifyDeptHeadOwnership(supabase, deptId, session.user.id);
+    if (!owns) {
+      return { error: "You do not have permission to manage this department." };
+    }
+  }
+
+  const { error } = await supabase
+    .from("dept_rotation_overrides")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("department_id", deptId);
+
+  if (error) {
+    return { error: "Could not clear rotation override. Please try again." };
+  }
+
+  return { success: true };
+}
