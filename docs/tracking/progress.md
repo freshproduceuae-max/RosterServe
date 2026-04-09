@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F015 passed; RS-F016 next
-Current build stage: 15 features passed (RS-F001–RS-F015)
+Current phase: All features complete — RS-F018 passed
+Current build stage: 18 features passed (RS-F001–RS-F018)
 
 ## Execution Gate
 
@@ -109,11 +109,16 @@ For this repo state:
 - RS-F014 marked passes=true (2026-04-09)
 - RS-F015 implemented (2026-04-09): lib/support/actions.ts (sendBugReport via Resend, degrades gracefully when RESEND_API_KEY/DEVELOPER_EMAIL absent); BugReportForm client component in app/(app)/_components/; global error boundary at app/error.tsx (renders own html/body, retry + WhatsApp link); global 404 at app/not-found.tsx; app-section error boundary at app/(app)/error.tsx with retry, dashboard link, WhatsApp link, and BugReportForm
 - RS-F015 marked passes=true (2026-04-09)
+- RS-F016 implemented (2026-04-09): migration 00031 (dept_rotation_overrides table, dept_head full CRUD on owned depts); getRotationSchedule query computes next A→B→C label per dept from event_date-sorted override history; RotationScheduleSection client component with per-entry pending/error state; DeptHeadDashboard wired to rotationEntries and rotationTeamsByDept via getDeptHeadDashboardData; RSC boundary uses Record<string, RotatableTeamRecord[]> (no Map)
+- RS-F016 marked passes=true (2026-04-09)
+- RS-F017 implemented (2026-04-09): getCrossTeamSuggestions query ranks available-first, skill-match-count desc, alphabetical; checks availability_blockouts for event date; CrossTeamSuggestionsPanel client component with assign button, unavailable badge, optimistic removal; wired into dept_head roster page
+- RS-F017 marked passes=true (2026-04-09)
+- RS-F018 implemented (2026-04-09): migration 00032 (super_admin UPDATE policy on supporter profiles, closing gap left by 00022); assignSupporter and removeSupporter server actions; getSupporterAssignments and getLeaderProfiles queries; SupporterAssignmentsSection client component with per-row pending state; admin oversight page loads all three data sets in parallel and renders new section
+- RS-F018 marked passes=true (2026-04-09)
 
 ## Next Up
 
-- RS-F016: Team rotation scheduling
-- Each feature requires its own plan → agent hierarchy review → implementation → PR → merge
+- All 18 features passed
 
 ## Status Legend
 
@@ -142,9 +147,9 @@ Update rule:
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | passed |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | passed |
 | 15 | RS-F015 | Error handling and support escalation | P2 | passed |
-| 16 | RS-F016 | Team rotation scheduling | P1 | not_started |
-| 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | not_started |
-| 18 | RS-F018 | Supporter and secretary role management | P1 | not_started |
+| 16 | RS-F016 | Team rotation scheduling | P1 | passed |
+| 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | passed |
+| 18 | RS-F018 | Supporter and secretary role management | P1 | passed |
 
 ## Major Decisions
 
