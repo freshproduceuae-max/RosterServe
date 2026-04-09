@@ -89,3 +89,71 @@ export async function getSoftDeletedCount(): Promise<number> {
   ]);
   return (d.count ?? 0) + (e.count ?? 0) + (t.count ?? 0);
 }
+
+export type SupporterAssignment = {
+  supporterId: string;
+  supporterName: string;
+  assignedLeaderId: string | null;
+  assignedLeaderName: string | null;
+  assignedLeaderRole: string | null;
+};
+
+export type LeaderOption = {
+  id: string;
+  name: string;
+  role: string;
+};
+
+export async function getSupporterAssignments(): Promise<SupporterAssignment[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(
+      "id, display_name, supporter_of, leader:profiles!supporter_of(id, display_name, role)",
+    )
+    .eq("role", "supporter")
+    .is("deleted_at", null)
+    .order("display_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map(
+    (row: {
+      id: string;
+      display_name: string;
+      supporter_of: string | null;
+      leader: { id: string; display_name: string; role: string }[] | null;
+    }) => {
+      const leader = Array.isArray(row.leader) ? row.leader[0] ?? null : row.leader;
+      return {
+        supporterId: row.id,
+        supporterName: row.display_name,
+        assignedLeaderId: leader?.id ?? null,
+        assignedLeaderName: leader?.display_name ?? null,
+        assignedLeaderRole: leader?.role ?? null,
+      };
+    },
+  );
+}
+
+export async function getLeaderProfiles(): Promise<LeaderOption[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, role")
+    .in("role", ["dept_head", "all_depts_leader", "team_head"])
+    .is("deleted_at", null)
+    .order("display_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map(
+    (row: { id: string; display_name: string; role: string }) => ({
+      id: row.id,
+      name: row.display_name,
+      role: row.role,
+    }),
+  );
+}
