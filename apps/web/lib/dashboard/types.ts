@@ -83,6 +83,7 @@ export type TeamHeadDashboardData = {
 
 export type SuperAdminDashboardData = {
   upcomingEvents: EventOverview[];
+  pendingDeletions: number;
 };
 
 export type AllDeptsLeaderDashboardData = {
