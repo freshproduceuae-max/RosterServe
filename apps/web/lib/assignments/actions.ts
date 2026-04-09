@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
+import { sendInvitationEmail, sendResponseEmail } from "@/lib/email/send";
+import { getPublicEnv } from "@/lib/env";
 import type { AssignmentRole } from "./types";
 
 function rosterPath(eventId: string, deptId: string) {
@@ -100,6 +103,43 @@ export async function createAssignment(
     }
     return { error: "Failed to create assignment. Please try again." };
   }
+
+  // Fire invitation email — errors are logged, never thrown
+  void (async () => {
+    try {
+      const adminClient = createSupabaseAdminClient();
+      if (!adminClient) return;
+
+      const { data: volunteerAuth } = await adminClient.auth.admin.getUserById(volunteerId);
+      const volunteerEmail = volunteerAuth?.user?.email;
+      if (!volunteerEmail) return;
+
+      const supabaseForEmail = await createSupabaseServerClient();
+      const { data: eventRow } = await supabaseForEmail
+        .from("events")
+        .select("title, event_date")
+        .eq("id", eventId)
+        .single();
+      if (!eventRow) return;
+
+      const { data: deptRow } = await supabaseForEmail
+        .from("departments")
+        .select("name")
+        .eq("id", deptId)
+        .single();
+      if (!deptRow) return;
+
+      const { siteUrl } = getPublicEnv();
+      await sendInvitationEmail(volunteerEmail, {
+        eventTitle: eventRow.title,
+        eventDate: eventRow.event_date,
+        departmentName: deptRow.name,
+        siteUrl,
+      });
+    } catch (err) {
+      console.error("[createAssignment] email notification failed:", err);
+    }
+  })();
 
   revalidatePath(rosterPath(eventId, deptId));
   return { success: true };
@@ -329,6 +369,7 @@ export async function selectTeamForEvent(
 
   let created = 0;
   let skipped = 0;
+  const createdVolunteerIds: string[] = [];
 
   for (const entry of entries) {
     const { error } = await supabase.from("assignments").insert({
@@ -342,6 +383,7 @@ export async function selectTeamForEvent(
     });
     if (!error) {
       created++;
+      createdVolunteerIds.push(entry.volunteerId);
     } else if (error.code === "23505") {
       skipped++;
     } else {
@@ -354,6 +396,48 @@ export async function selectTeamForEvent(
   }
 
   revalidatePath(rosterPath(eventId, deptId));
+
+  // Fire invitation emails for all successfully created assignments
+  void (async () => {
+    try {
+      const adminClient = createSupabaseAdminClient();
+      if (!adminClient) return;
+
+      const supabaseForEmail = await createSupabaseServerClient();
+      const { data: eventRow } = await supabaseForEmail
+        .from("events")
+        .select("title, event_date")
+        .eq("id", eventId)
+        .single();
+      if (!eventRow) return;
+
+      const { data: deptRow } = await supabaseForEmail
+        .from("departments")
+        .select("name")
+        .eq("id", deptId)
+        .single();
+      if (!deptRow) return;
+
+      const { siteUrl } = getPublicEnv();
+
+      await Promise.allSettled(
+        createdVolunteerIds.map(async (volunteerId) => {
+          const { data: volunteerAuth } = await adminClient.auth.admin.getUserById(volunteerId);
+          const volunteerEmail = volunteerAuth?.user?.email;
+          if (!volunteerEmail) return;
+          await sendInvitationEmail(volunteerEmail, {
+            eventTitle: eventRow.title,
+            eventDate: eventRow.event_date,
+            departmentName: deptRow.name,
+            siteUrl,
+          });
+        }),
+      );
+    } catch (err) {
+      console.error("[selectTeamForEvent] email notifications failed:", err);
+    }
+  })();
+
   return { created, skipped };
 }
 
@@ -403,6 +487,53 @@ export async function respondToServiceRequest(
 
   revalidatePath(rosterPath(assignment.event_id, assignment.department_id));
   revalidatePath("/assignments");
+
+  // Fire response email to dept_head — errors are logged, never thrown
+  void (async () => {
+    try {
+      const adminClient = createSupabaseAdminClient();
+      if (!adminClient) return;
+
+      const supabaseForEmail = await createSupabaseServerClient();
+
+      const { data: eventRow } = await supabaseForEmail
+        .from("events")
+        .select("title, event_date")
+        .eq("id", assignment.event_id)
+        .single();
+      if (!eventRow) return;
+
+      const { data: deptRow } = await supabaseForEmail
+        .from("departments")
+        .select("owner_id")
+        .eq("id", assignment.department_id)
+        .single();
+      if (!deptRow?.owner_id) return;
+
+      const { data: deptHeadAuth } = await adminClient.auth.admin.getUserById(deptRow.owner_id);
+      const deptHeadEmail = deptHeadAuth?.user?.email;
+      if (!deptHeadEmail) return;
+
+      const { data: volunteerProfile } = await supabaseForEmail
+        .from("profiles")
+        .select("display_name")
+        .eq("id", assignment.volunteer_id)
+        .single();
+      const volunteerName = volunteerProfile?.display_name ?? "A volunteer";
+
+      const { siteUrl } = getPublicEnv();
+      await sendResponseEmail(deptHeadEmail, {
+        volunteerName,
+        eventTitle: eventRow.title,
+        eventDate: eventRow.event_date,
+        response,
+        siteUrl,
+      });
+    } catch (err) {
+      console.error("[respondToServiceRequest] email notification failed:", err);
+    }
+  })();
+
   return { success: true };
 }
 
