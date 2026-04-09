@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/auth/types";
+import { getSoftDeletedCount } from "@/lib/admin/queries";
 import type {
   AssignmentWithEventContext,
   DeptHeadDashboardData,
@@ -622,7 +623,7 @@ export async function getTeamHeadDashboardData(
 // Super admin
 // ---------------------------------------------------------------------------
 
-export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: EventOverview[] }> {
+export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: EventOverview[]; pendingDeletions: number }> {
   const supabase = await createSupabaseServerClient();
   const today = todayIso();
   const windowEnd = plusDaysIso(14);
@@ -636,13 +637,14 @@ export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: Ev
     .order("event_date", { ascending: true });
 
   if (error || !eventRows || eventRows.length === 0) {
-    return { upcomingEvents: [] };
+    const pendingDeletions = await getSoftDeletedCount();
+    return { upcomingEvents: [], pendingDeletions };
   }
 
   const eventIds = eventRows.map((e) => e.id);
 
   // Dept counts and assigned volunteer counts in two bulk queries
-  const [deptRes, assignRes] = await Promise.all([
+  const [deptRes, assignRes, pendingDeletions] = await Promise.all([
     supabase
       .from("departments")
       .select("event_id")
@@ -654,6 +656,7 @@ export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: Ev
       .in("event_id", eventIds)
       .neq("status", "declined")
       .is("deleted_at", null),
+    getSoftDeletedCount(),
   ]);
 
   const deptCountByEvent = new Map<string, number>();
@@ -680,7 +683,7 @@ export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: Ev
     assigned_count: volunteerSetByEvent.get(e.id)?.size ?? 0,
   }));
 
-  return { upcomingEvents };
+  return { upcomingEvents, pendingDeletions };
 }
 
 // ---------------------------------------------------------------------------

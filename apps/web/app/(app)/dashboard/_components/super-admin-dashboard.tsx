@@ -16,10 +16,30 @@ interface SuperAdminDashboardProps {
 }
 
 export function SuperAdminDashboard({ data }: SuperAdminDashboardProps) {
-  const { upcomingEvents } = data;
+  const { upcomingEvents, pendingDeletions } = data;
 
   return (
     <div className="flex flex-col gap-400">
+      {/* Admin oversight link */}
+      {pendingDeletions > 0 && (
+        <div className="flex items-center gap-200 rounded-200 border border-neutral-200 bg-neutral-50 px-300 py-200">
+          <div className="flex flex-1 flex-col gap-50">
+            <p className="text-body-sm font-semibold text-neutral-950">
+              Pending approval
+            </p>
+            <p className="text-body-sm text-neutral-600">
+              {pendingDeletions} record
+              {pendingDeletions !== 1 ? "s" : ""} awaiting review
+            </p>
+          </div>
+          <Link
+            href="/admin"
+            className="rounded-200 bg-neutral-950 px-300 py-150 text-body-sm font-semibold text-neutral-0 transition-opacity duration-fast hover:opacity-80"
+          >
+            Review
+          </Link>
+        </div>
+      )}
       <section className="flex flex-col gap-300">
         <h2 className="font-display text-h2 text-neutral-950">Upcoming events</h2>
         {upcomingEvents.length === 0 ? (
