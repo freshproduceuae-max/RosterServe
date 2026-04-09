@@ -519,10 +519,24 @@ export async function markAssignmentServed(
 
   const supabase = await createSupabaseServerClient();
 
+  // For dept_head, verify the assignment belongs to a department they own
+  if (role === "dept_head") {
+    const { data: dept } = await supabase
+      .from("departments")
+      .select("id")
+      .eq("id", deptId)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!dept) return { error: "Not authorized to mark assignments in this department" };
+  }
+
   const { error } = await supabase
     .from("assignments")
     .update({ status: "served" })
-    .eq("id", assignmentId);
+    .eq("id", assignmentId)
+    .eq("department_id", deptId);
 
   if (error) return { error: "Failed to mark assignment as served" };
 

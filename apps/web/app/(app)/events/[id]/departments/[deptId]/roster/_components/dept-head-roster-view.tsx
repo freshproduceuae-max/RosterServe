@@ -80,7 +80,7 @@ export function DeptHeadRosterView({
                 key={a.id}
                 className="flex items-center justify-between gap-200 rounded-200 border border-neutral-200 bg-neutral-0 px-300 py-200"
               >
-                <div className="flex flex-col gap-25">
+                <div className="flex flex-col gap-100">
                   <p className="text-body-sm font-medium text-neutral-950">
                     {a.volunteer_display_name}
                   </p>
