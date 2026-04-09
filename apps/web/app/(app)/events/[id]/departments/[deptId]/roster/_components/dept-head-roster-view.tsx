@@ -13,7 +13,9 @@ import { NonConfirmationsSection } from "./non-confirmations-section";
 import { GapSummary } from "./gap-summary";
 import { HeadcountGapSection } from "./headcount-gap-section";
 import { MarkServedButton } from "./mark-served-button";
+import { CrossTeamSuggestionsPanel } from "./cross-team-suggestions-panel";
 import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
+import type { CrossTeamSuggestion } from "@/lib/assignments/queries";
 
 interface DeptHeadRosterViewProps {
   eventId: string;
@@ -25,6 +27,7 @@ interface DeptHeadRosterViewProps {
   gapSummary: RosterGapSummary;
   headcountGaps: HeadcountGapSummary;
   substituteOptions: TeamHeadOption[];
+  crossTeamSuggestions: CrossTeamSuggestion[];
 }
 
 export function DeptHeadRosterView({
@@ -36,6 +39,7 @@ export function DeptHeadRosterView({
   gapSummary,
   headcountGaps,
   substituteOptions,
+  crossTeamSuggestions,
 }: DeptHeadRosterViewProps) {
   const [showTeamForm, setShowTeamForm] = useState(false);
   const subTeams = department.teams.filter((t) => t.deleted_at === null);
@@ -64,6 +68,11 @@ export function DeptHeadRosterView({
 
       <GapSummary summary={gapSummary} />
       <HeadcountGapSection summary={headcountGaps} />
+      <CrossTeamSuggestionsPanel
+        eventId={eventId}
+        deptId={deptId}
+        initialSuggestions={crossTeamSuggestions}
+      />
 
       {/* Confirmed — mark served */}
       {acceptedAssignments.length > 0 && (

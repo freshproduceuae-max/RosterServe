@@ -9,6 +9,7 @@ import {
   getTeamHeadAssignments,
   getAllAssignmentsForEventDept,
   getTeamHeadsInDept,
+  getCrossTeamSuggestions,
 } from "@/lib/assignments/queries";
 import {
   getSkillGapsForDepartmentRoster,
@@ -41,11 +42,13 @@ export default async function RosterPage({
   // ── Dept head ──────────────────────────────────────────────────────────────
   if (role === "dept_head") {
     if (department.owner_id !== profileId) redirect("/dashboard");
-    const [assignments, gapSummary, headcountGaps] = await Promise.all([
-      getAssignmentsForRoster(eventId, deptId),
-      getSkillGapsForDepartmentRoster(eventId, deptId),
-      getHeadcountGapsForRoster(eventId, deptId),
-    ]);
+    const [assignments, gapSummary, headcountGaps, crossTeamSuggestions] =
+      await Promise.all([
+        getAssignmentsForRoster(eventId, deptId),
+        getSkillGapsForDepartmentRoster(eventId, deptId),
+        getHeadcountGapsForRoster(eventId, deptId),
+        getCrossTeamSuggestions(eventId, deptId),
+      ]);
 
     // For each declined team_head assignment, load substitute options (other
     // team owners in the same dept). Deduplicate by volunteerId.
@@ -84,6 +87,7 @@ export default async function RosterPage({
           gapSummary={gapSummary}
           headcountGaps={headcountGaps}
           substituteOptions={substituteOptions}
+          crossTeamSuggestions={crossTeamSuggestions}
         />
       </PageShell>
     );
