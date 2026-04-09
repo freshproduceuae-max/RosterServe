@@ -6,6 +6,8 @@ import {
   getDeptHeadDashboardData,
   getTeamHeadDashboardData,
   getSuperAdminDashboardData,
+  getAllDeptsLeaderDashboardData,
+  getSupporterDashboardData,
 } from "@/lib/dashboard/queries";
 import { VolunteerDashboard } from "./_components/volunteer-dashboard";
 import { DeptHeadDashboard } from "./_components/dept-head-dashboard";
@@ -33,7 +35,8 @@ export default async function DashboardPage() {
   }
 
   if (profile.role === "all_depts_leader") {
-    return <AllDeptsLeaderDashboard displayName={displayName} />;
+    const data = await getAllDeptsLeaderDashboardData();
+    return <AllDeptsLeaderDashboard data={data} displayName={displayName} />;
   }
 
   if (profile.role === "dept_head") {
@@ -47,7 +50,8 @@ export default async function DashboardPage() {
   }
 
   if (profile.role === "supporter") {
-    return <SupporterDashboard displayName={displayName} />;
+    const data = await getSupporterDashboardData(profile.id);
+    return <SupporterDashboard data={data} displayName={displayName} />;
   }
 
   // Default: volunteer

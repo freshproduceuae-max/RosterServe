@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import type { TeamHeadDashboardData } from "@/lib/dashboard/types";
+import { useState, useTransition } from "react";
+import type { TeamHeadDashboardData, AssignmentWithEventContext } from "@/lib/dashboard/types";
+import { respondToServiceRequest } from "@/lib/assignments/actions";
+import { RosterHealthBar } from "./roster-health-bar";
 
 function formatEventDate(isoDate: string): string {
   const date = new Date(`${isoDate}T00:00:00`);
@@ -10,7 +15,6 @@ function formatEventDate(isoDate: string): string {
     year: "numeric",
   });
 }
-import { RosterHealthBar } from "./roster-health-bar";
 
 interface TeamHeadDashboardProps {
   data: TeamHeadDashboardData;
@@ -18,7 +22,8 @@ interface TeamHeadDashboardProps {
 }
 
 export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps) {
-  const { subTeamSummaries } = data;
+  const { subTeamSummaries, myInvitations } = data;
+  const pendingInvitations = myInvitations.filter((a) => a.status === "invited");
 
   return (
     <div className="flex flex-col gap-400">
@@ -28,6 +33,18 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
           Hi, {displayName.split(" ")[0]}
         </h1>
       </div>
+
+      {/* Pending invitations prompt */}
+      {pendingInvitations.length > 0 && (
+        <section className="flex flex-col gap-200">
+          <h2 className="font-display text-h2 text-neutral-950">Action required</h2>
+          <div className="flex flex-col gap-200">
+            {pendingInvitations.map((inv) => (
+              <InvitationCard key={inv.id} invitation={inv} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Team roster cards */}
       <section className="flex flex-col gap-300">
@@ -45,7 +62,9 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
               >
                 <div className="flex items-start justify-between gap-200">
                   <div className="flex flex-col gap-50">
-                    <p className="font-display text-h3 text-neutral-950">{st.sub_team_name}</p>
+                    <p className="font-display text-h3 text-neutral-950">
+                      {st.sub_team_name}
+                    </p>
                     <p className="text-body-sm text-neutral-600">
                       {st.event_title} · {formatEventDate(st.event_date)}
                     </p>
@@ -71,6 +90,68 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function InvitationCard({ invitation }: { invitation: AssignmentWithEventContext }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pendingResponse, setPendingResponse] = useState<"accepted" | "declined" | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [responded, setResponded] = useState(false);
+
+  function handleResponse(response: "accepted" | "declined") {
+    setError(null);
+    setPendingResponse(response);
+    startTransition(async () => {
+      const result = await respondToServiceRequest(invitation.id, response);
+      if (result.error) {
+        setError(result.error);
+        setPendingResponse(null);
+      } else {
+        setPendingResponse(null);
+        setResponded(true);
+      }
+    });
+  }
+
+  if (responded) {
+    return (
+      <div className="rounded-200 border border-neutral-200 bg-neutral-0 p-300">
+        <p className="text-body-sm text-neutral-500">Response saved.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-200 rounded-200 border border-brand-calm-600/30 bg-brand-calm-600/5 p-300">
+      <div>
+        <p className="text-body-sm font-semibold text-neutral-950">
+          {invitation.event_title}
+        </p>
+        <p className="text-body-sm text-neutral-600">
+          {invitation.department_name}
+          {invitation.sub_team_name ? ` · ${invitation.sub_team_name}` : ""} ·{" "}
+          {formatEventDate(invitation.event_date)}
+        </p>
+      </div>
+      <div className="flex items-center gap-200">
+        <button
+          onClick={() => handleResponse("accepted")}
+          disabled={isPending}
+          className="rounded-200 bg-semantic-success px-300 py-150 text-body-sm font-semibold text-neutral-0 transition-opacity duration-fast hover:opacity-90 disabled:opacity-50"
+        >
+          {pendingResponse === "accepted" ? "Saving…" : "Accept"}
+        </button>
+        <button
+          onClick={() => handleResponse("declined")}
+          disabled={isPending}
+          className="rounded-200 border border-neutral-300 px-300 py-150 text-body-sm font-medium text-neutral-700 transition-colors duration-fast hover:border-neutral-400 hover:text-neutral-950 disabled:opacity-50"
+        >
+          {pendingResponse === "declined" ? "Saving…" : "Decline"}
+        </button>
+      </div>
+      {error && <p className="text-body-sm text-semantic-error">{error}</p>}
     </div>
   );
 }

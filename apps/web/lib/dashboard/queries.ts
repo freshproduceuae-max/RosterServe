@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { AppRole } from "@/lib/auth/types";
 import type {
   AssignmentWithEventContext,
   DeptHeadDashboardData,
@@ -8,6 +9,8 @@ import type {
   TeamHeadDashboardData,
   SubTeamRosterSummary,
   VolunteerDashboardData,
+  AllDeptsLeaderDashboardData,
+  SupporterDashboardData,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -110,67 +113,75 @@ export async function getDeptHeadDashboardData(
   const today = todayIso();
   const windowEnd = plusDaysIso(14);
 
-  // 1. Fetch owned departments with their event (filtered to 14-day window)
-  const { data: deptRows, error: deptError } = await supabase
+  // 1. Owned departments (RLS enforces ownership)
+  const { data: deptRows } = await supabase
     .from("departments")
-    .select("id, name, event_id, events!inner(title, event_date)")
+    .select("id, name")
     .eq("owner_id", userId)
+    .is("deleted_at", null);
+
+  if (!deptRows || deptRows.length === 0) {
+    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0 };
+  }
+  const depts = deptRows as { id: string; name: string }[];
+  const deptIds = depts.map((d) => d.id);
+  const deptNameMap = new Map(depts.map((d) => [d.id, d.name]));
+
+  // 2. Assignments in those depts for upcoming events, including event context
+  const { data: assignRows } = await supabase
+    .from("assignments")
+    .select(
+      "event_id, department_id, volunteer_id, status, role, events!inner(id, title, event_date)",
+    )
+    .in("department_id", deptIds)
     .is("deleted_at", null)
     .gte("events.event_date", today)
     .lte("events.event_date", windowEnd);
 
-  if (deptError || !deptRows || deptRows.length === 0) {
-    const [interestRes, skillRes] = await Promise.all([
-      supabase
-        .from("volunteer_interests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending")
-        .is("deleted_at", null),
-      supabase
-        .from("volunteer_skills")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending")
-        .is("deleted_at", null),
-    ]);
-    return {
-      eventSummaries: [],
-      pendingInterests: interestRes.count ?? 0,
-      pendingSkillApprovals: skillRes.count ?? 0,
-    };
-  }
-
-  type RawDeptRow = {
-    id: string;
-    name: string;
+  type RawAssignRow = {
     event_id: string;
-    events: { title: string; event_date: string };
+    department_id: string;
+    volunteer_id: string;
+    status: string;
+    role: string;
+    events: { id: string; title: string; event_date: string };
   };
-  const depts = deptRows as unknown as RawDeptRow[];
-  const deptIds = depts.map((d) => d.id);
+  const rows = (assignRows ?? []) as unknown as RawAssignRow[];
 
-  // 2. Fetch all non-deleted assignments for these depts — all statuses needed
-  // so that declined counts render correctly for dept heads.
-  const { data: assignmentRows } = await supabase
-    .from("assignments")
-    .select("department_id, volunteer_id, status")
-    .in("department_id", deptIds)
-    .is("deleted_at", null);
+  // Build event info map and count statuses per event+dept
+  const eventInfoMap = new Map<string, { title: string; event_date: string }>();
+  type StatusCount = {
+    invited: number;
+    accepted: number;
+    declined: number;
+    pending_team_heads: number;
+  };
+  const statusKey = (eventId: string, deptId: string) => `${eventId}::${deptId}`;
+  const statusMap = new Map<string, StatusCount>();
 
-  // Count by dept + status
-  type StatusCount = { invited: number; accepted: number; declined: number };
-  const statusByDept = new Map<string, StatusCount>();
-  for (const deptId of deptIds) {
-    statusByDept.set(deptId, { invited: 0, accepted: 0, declined: 0 });
-  }
-  for (const row of assignmentRows ?? []) {
-    const counts = statusByDept.get(row.department_id);
-    if (!counts) continue;
+  for (const row of rows) {
+    const eId = row.event_id;
+    const dId = row.department_id;
+    if (!eventInfoMap.has(eId)) {
+      eventInfoMap.set(eId, { title: row.events.title, event_date: row.events.event_date });
+    }
+    const key = statusKey(eId, dId);
+    if (!statusMap.has(key)) {
+      statusMap.set(key, { invited: 0, accepted: 0, declined: 0, pending_team_heads: 0 });
+    }
+    const counts = statusMap.get(key)!;
     if (row.status === "invited") counts.invited++;
     else if (row.status === "accepted") counts.accepted++;
     else if (row.status === "declined") counts.declined++;
+    if (
+      row.role === "team_head" &&
+      (row.status === "invited" || row.status === "declined")
+    ) {
+      counts.pending_team_heads++;
+    }
   }
 
-  // 3. Bulk gap count: required skills vs approved coverage across all depts
+  // 3. Skill gap counts (keep existing bulk approach — it works on dept scope)
   const { data: requiredSkillRows } = await supabase
     .from("department_skills")
     .select("department_id, name")
@@ -178,32 +189,18 @@ export async function getDeptHeadDashboardData(
     .eq("is_required", true)
     .is("deleted_at", null);
 
-  // Group required skill names by dept
   const requiredByDept = new Map<string, Set<string>>();
   for (const row of requiredSkillRows ?? []) {
-    if (!requiredByDept.has(row.department_id)) {
+    if (!requiredByDept.has(row.department_id))
       requiredByDept.set(row.department_id, new Set());
-    }
     if (row.name) requiredByDept.get(row.department_id)!.add(row.name);
   }
 
-  // Derive non-declined volunteer IDs from the already-fetched assignment rows
-  // (declined volunteers are excluded from skill coverage per the RS-F009 interim coverage rule).
-  const assignedVolunteers = (assignmentRows ?? []).filter(
+  const nonDeclinedVolunteers = rows.filter(
     (r) => r.status !== "declined" && r.volunteer_id,
   );
-
-  const volunteersByDept = new Map<string, string[]>();
-  for (const row of assignedVolunteers ?? []) {
-    if (!volunteersByDept.has(row.department_id)) {
-      volunteersByDept.set(row.department_id, []);
-    }
-    if (row.volunteer_id) volunteersByDept.get(row.department_id)!.push(row.volunteer_id);
-  }
-
-  // Fetch approved skills for all relevant volunteer+dept combos in one query
   const allVolunteerIds = [
-    ...new Set((assignedVolunteers ?? []).map((r) => r.volunteer_id).filter(Boolean)),
+    ...new Set(nonDeclinedVolunteers.map((r) => r.volunteer_id).filter(Boolean)),
   ];
   const { data: approvedSkillRows } = allVolunteerIds.length > 0
     ? await supabase
@@ -216,17 +213,14 @@ export async function getDeptHeadDashboardData(
         .not("department_id", "is", null)
     : { data: [] };
 
-  // Build covered set per dept: skill names covered by any assigned volunteer
   const coveredByDept = new Map<string, Set<string>>();
   for (const row of approvedSkillRows ?? []) {
     if (!row.department_id || !row.name) continue;
-    if (!coveredByDept.has(row.department_id)) {
+    if (!coveredByDept.has(row.department_id))
       coveredByDept.set(row.department_id, new Set());
-    }
     coveredByDept.get(row.department_id)!.add(row.name);
   }
 
-  // Compute gap count per dept
   const gapCountByDept = new Map<string, number>();
   for (const deptId of deptIds) {
     const required = requiredByDept.get(deptId) ?? new Set();
@@ -238,28 +232,29 @@ export async function getDeptHeadDashboardData(
     gapCountByDept.set(deptId, gaps);
   }
 
-  // 4. Aggregate into event summaries
+  // 4. Aggregate into EventWithDeptHealth[]
   const eventMap = new Map<string, EventWithDeptHealth>();
-  for (const dept of depts) {
-    const eventId = dept.event_id;
-    if (!eventMap.has(eventId)) {
-      eventMap.set(eventId, {
-        event_id: eventId,
-        event_title: dept.events.title,
-        event_date: dept.events.event_date,
+  for (const [key, counts] of statusMap.entries()) {
+    const [eId, dId] = key.split("::");
+    if (!eventMap.has(eId)) {
+      const info = eventInfoMap.get(eId)!;
+      eventMap.set(eId, {
+        event_id: eId,
+        event_title: info.title,
+        event_date: info.event_date,
         departments: [],
       });
     }
-    const counts = statusByDept.get(dept.id) ?? { invited: 0, accepted: 0, declined: 0 };
     const health: DeptRosterHealth = {
-      department_id: dept.id,
-      department_name: dept.name,
+      department_id: dId,
+      department_name: deptNameMap.get(dId) ?? dId,
       invited: counts.invited,
       accepted: counts.accepted,
       declined: counts.declined,
-      gap_count: gapCountByDept.get(dept.id) ?? 0,
+      gap_count: gapCountByDept.get(dId) ?? 0,
+      pending_team_heads: counts.pending_team_heads,
     };
-    eventMap.get(eventId)!.departments.push(health);
+    eventMap.get(eId)!.departments.push(health);
   }
 
   const eventSummaries = [...eventMap.values()].sort(
@@ -288,6 +283,162 @@ export async function getDeptHeadDashboardData(
 }
 
 // ---------------------------------------------------------------------------
+// All Depts Leader
+// ---------------------------------------------------------------------------
+
+export async function getAllDeptsLeaderDashboardData(): Promise<AllDeptsLeaderDashboardData> {
+  const supabase = await createSupabaseServerClient();
+  const today = todayIso();
+  const windowEnd = plusDaysIso(14);
+
+  // 1. All departments (RLS allows all_depts_leader to see all)
+  const { data: deptRows } = await supabase
+    .from("departments")
+    .select("id, name")
+    .is("deleted_at", null);
+
+  if (!deptRows || deptRows.length === 0) return { eventSummaries: [] };
+
+  const depts = deptRows as { id: string; name: string }[];
+  const deptIds = depts.map((d) => d.id);
+  const deptNameMap = new Map(depts.map((d) => [d.id, d.name]));
+
+  // 2. Assignments in those depts for upcoming events
+  const { data: assignRows } = await supabase
+    .from("assignments")
+    .select(
+      "event_id, department_id, volunteer_id, status, role, events!inner(id, title, event_date)",
+    )
+    .in("department_id", deptIds)
+    .is("deleted_at", null)
+    .gte("events.event_date", today)
+    .lte("events.event_date", windowEnd);
+
+  type RawAssignRow = {
+    event_id: string;
+    department_id: string;
+    volunteer_id: string;
+    status: string;
+    role: string;
+    events: { id: string; title: string; event_date: string };
+  };
+  const rows = (assignRows ?? []) as unknown as RawAssignRow[];
+
+  const eventInfoMap = new Map<string, { title: string; event_date: string }>();
+  type StatusCount = {
+    invited: number;
+    accepted: number;
+    declined: number;
+    pending_team_heads: number;
+  };
+  const statusKey = (eventId: string, deptId: string) => `${eventId}::${deptId}`;
+  const statusMap = new Map<string, StatusCount>();
+
+  for (const row of rows) {
+    const eId = row.event_id;
+    const dId = row.department_id;
+    if (!eventInfoMap.has(eId)) {
+      eventInfoMap.set(eId, { title: row.events.title, event_date: row.events.event_date });
+    }
+    const key = statusKey(eId, dId);
+    if (!statusMap.has(key)) {
+      statusMap.set(key, { invited: 0, accepted: 0, declined: 0, pending_team_heads: 0 });
+    }
+    const counts = statusMap.get(key)!;
+    if (row.status === "invited") counts.invited++;
+    else if (row.status === "accepted") counts.accepted++;
+    else if (row.status === "declined") counts.declined++;
+    if (
+      row.role === "team_head" &&
+      (row.status === "invited" || row.status === "declined")
+    ) {
+      counts.pending_team_heads++;
+    }
+  }
+
+  // Skill gaps (same bulk approach)
+  const { data: requiredSkillRows } = await supabase
+    .from("department_skills")
+    .select("department_id, name")
+    .in("department_id", deptIds)
+    .eq("is_required", true)
+    .is("deleted_at", null);
+
+  const requiredByDept = new Map<string, Set<string>>();
+  for (const row of requiredSkillRows ?? []) {
+    if (!requiredByDept.has(row.department_id))
+      requiredByDept.set(row.department_id, new Set());
+    if (row.name) requiredByDept.get(row.department_id)!.add(row.name);
+  }
+
+  const nonDeclinedVolunteers = rows.filter(
+    (r) => r.status !== "declined" && r.volunteer_id,
+  );
+  const allVolunteerIds = [
+    ...new Set(nonDeclinedVolunteers.map((r) => r.volunteer_id).filter(Boolean)),
+  ];
+  const { data: approvedSkillRows } = allVolunteerIds.length > 0
+    ? await supabase
+        .from("volunteer_skills")
+        .select("volunteer_id, department_id, name")
+        .in("volunteer_id", allVolunteerIds)
+        .in("department_id", deptIds)
+        .eq("status", "approved")
+        .is("deleted_at", null)
+        .not("department_id", "is", null)
+    : { data: [] };
+
+  const coveredByDept = new Map<string, Set<string>>();
+  for (const row of approvedSkillRows ?? []) {
+    if (!row.department_id || !row.name) continue;
+    if (!coveredByDept.has(row.department_id))
+      coveredByDept.set(row.department_id, new Set());
+    coveredByDept.get(row.department_id)!.add(row.name);
+  }
+
+  const gapCountByDept = new Map<string, number>();
+  for (const deptId of deptIds) {
+    const required = requiredByDept.get(deptId) ?? new Set();
+    const covered = coveredByDept.get(deptId) ?? new Set();
+    let gaps = 0;
+    for (const skill of required) {
+      if (!covered.has(skill)) gaps++;
+    }
+    gapCountByDept.set(deptId, gaps);
+  }
+
+  const eventMap = new Map<string, EventWithDeptHealth>();
+  for (const [key, counts] of statusMap.entries()) {
+    const [eId, dId] = key.split("::");
+    if (!eventMap.has(eId)) {
+      const info = eventInfoMap.get(eId)!;
+      eventMap.set(eId, {
+        event_id: eId,
+        event_title: info.title,
+        event_date: info.event_date,
+        departments: [],
+      });
+    }
+    const health: DeptRosterHealth = {
+      department_id: dId,
+      department_name: deptNameMap.get(dId) ?? dId,
+      invited: counts.invited,
+      accepted: counts.accepted,
+      declined: counts.declined,
+      gap_count: gapCountByDept.get(dId) ?? 0,
+      pending_team_heads: counts.pending_team_heads,
+    };
+    eventMap.get(eId)!.departments.push(health);
+  }
+
+  return {
+    eventSummaries: [...eventMap.values()].sort(
+      (a, b) => a.event_date.localeCompare(b.event_date),
+    ),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Team head
 // ---------------------------------------------------------------------------
 
@@ -311,7 +462,7 @@ export async function getTeamHeadDashboardData(
     .lte("departments.events.event_date", windowEnd);
 
   if (stError || !subTeamRows || subTeamRows.length === 0) {
-    return { subTeamSummaries: [] };
+    return { subTeamSummaries: [], myInvitations: [] };
   }
 
   type RawSubTeam = {
@@ -426,7 +577,45 @@ export async function getTeamHeadDashboardData(
 
   subTeamSummaries.sort((a, b) => a.event_date.localeCompare(b.event_date));
 
-  return { subTeamSummaries };
+  // 5. Fetch own team_head service requests (invited/accepted/declined)
+  const { data: myInvitationRows } = await supabase
+    .from("assignments")
+    .select(
+      "id, status, role, event_id, department_id, sub_team_id, events!inner(title, event_date), departments!inner(name), teams(name)",
+    )
+    .eq("volunteer_id", userId)
+    .eq("role", "team_head")
+    .in("status", ["invited", "accepted", "declined"])
+    .is("deleted_at", null);
+
+  type RawInvRow = {
+    id: string;
+    status: string;
+    role: string;
+    event_id: string;
+    department_id: string;
+    sub_team_id: string | null;
+    events: { title: string; event_date: string };
+    departments: { name: string };
+    teams: { name: string } | null;
+  };
+
+  const myInvitations: AssignmentWithEventContext[] = (
+    (myInvitationRows ?? []) as unknown as RawInvRow[]
+  ).map((row) => ({
+    id: row.id,
+    status: row.status as AssignmentWithEventContext["status"],
+    role: row.role as AssignmentWithEventContext["role"],
+    event_id: row.event_id,
+    event_title: row.events.title,
+    event_date: row.events.event_date,
+    department_id: row.department_id,
+    department_name: row.departments.name,
+    sub_team_id: row.sub_team_id,
+    sub_team_name: row.teams?.name ?? null,
+  })).sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+  return { subTeamSummaries, myInvitations };
 }
 
 // ---------------------------------------------------------------------------
@@ -492,4 +681,82 @@ export async function getSuperAdminDashboardData(): Promise<{ upcomingEvents: Ev
   }));
 
   return { upcomingEvents };
+}
+
+// ---------------------------------------------------------------------------
+// Supporter
+// ---------------------------------------------------------------------------
+
+export async function getSupporterDashboardData(
+  userId: string,
+): Promise<SupporterDashboardData> {
+  const supabase = await createSupabaseServerClient();
+  const today = todayIso();
+  const windowEnd = plusDaysIso(14);
+
+  // 1. Look up the supporter's assigned leader via profiles.supporter_of
+  const { data: supporterProfile } = await supabase
+    .from("profiles")
+    .select("supporter_of")
+    .eq("id", userId)
+    .single();
+
+  let leaderName: string | null = null;
+  let leaderRole: AppRole | null = null;
+
+  if (supporterProfile?.supporter_of) {
+    const { data: leaderProfile } = await supabase
+      .from("profiles")
+      .select("display_name, role")
+      .eq("id", supporterProfile.supporter_of)
+      .single();
+    if (leaderProfile) {
+      leaderName = leaderProfile.display_name;
+      leaderRole = leaderProfile.role as AppRole;
+    }
+  }
+
+  // 2. Fetch own service requests (invited/accepted) in the 14-day window
+  const { data: assignmentRes } = await supabase
+    .from("assignments")
+    .select(
+      `id, status, role, event_id, department_id, sub_team_id,
+       events!inner(title, event_date),
+       departments!inner(name),
+       teams(name)`,
+    )
+    .eq("volunteer_id", userId)
+    .in("status", ["invited", "accepted"])
+    .is("deleted_at", null)
+    .gte("events.event_date", today)
+    .lte("events.event_date", windowEnd);
+
+  type RawAssignment = {
+    id: string;
+    status: string;
+    role: string;
+    event_id: string;
+    department_id: string;
+    sub_team_id: string | null;
+    events: { title: string; event_date: string };
+    departments: { name: string };
+    teams: { name: string } | null;
+  };
+
+  const upcomingAssignments: AssignmentWithEventContext[] = (
+    (assignmentRes ?? []) as unknown as RawAssignment[]
+  ).map((row) => ({
+    id: row.id,
+    status: row.status as AssignmentWithEventContext["status"],
+    role: row.role as AssignmentWithEventContext["role"],
+    event_id: row.event_id,
+    event_title: row.events.title,
+    event_date: row.events.event_date,
+    department_id: row.department_id,
+    department_name: row.departments.name,
+    sub_team_id: row.sub_team_id,
+    sub_team_name: row.teams?.name ?? null,
+  })).sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+  return { leaderName, leaderRole, upcomingAssignments };
 }

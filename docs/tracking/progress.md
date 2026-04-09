@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F009 passed; RS-F010 revision next
-Current build stage: 9 features passed (RS-F001–RS-F009)
+Current phase: Active revision cycle — RS-F010 passed; RS-F011 next
+Current build stage: 10 features passed (RS-F001–RS-F010)
 
 ## Execution Gate
 
@@ -97,6 +97,8 @@ For this repo state:
 - RS-F008 marked passes=true
 - RS-F009 revision implemented (2026-04-09): added HeadcountGapSummary type, getHeadcountGapsForRoster query (per-team, per-event-type, non-declined assignment count vs required), HeadcountGapSection component; all three roster views (DeptHeadRosterView, TeamHeadRosterView, SuperAdminRosterView) now render both skill and headcount gap sections; team head branch scoped to own sub-teams via filterTeamIds
 - RS-F009 marked passes=true
+- RS-F010 revision implemented (2026-04-09): built AllDeptsLeaderDashboard (full cross-dept event health view with non-confirmation counts); built SupporterDashboard (own service requests + leader context); TeamHeadDashboard: added own invitation cards with accept/decline; DeptHeadDashboard: added pending_team_heads highlight in RosterHealthBar; getDeptHeadDashboardData rewritten to use assignments→events join (schema-safe); new queries: getAllDeptsLeaderDashboardData, getSupporterDashboardData, updated getTeamHeadDashboardData
+- RS-F010 marked passes=true (2026-04-09)
 
 ## Next Up
 
@@ -125,7 +127,7 @@ Update rule:
 | 7 | RS-F007 | Skill profile and approval | P0 | passed |
 | 8 | RS-F008 | Roster planning and request-to-serve flow | P0 | passed |
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | passed |
-| 10 | RS-F010 | Personalized weekly dashboard | P0 | revision_required |
+| 10 | RS-F010 | Personalized weekly dashboard | P0 | passed |
 | 11 | RS-F011 | Instructions and media sharing | P1 | not_started |
 | 12 | RS-F012 | Request-to-serve response workflow | P0 | not_started |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |
