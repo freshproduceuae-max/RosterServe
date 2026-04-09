@@ -108,7 +108,14 @@ function SuggestionRow({
     <div className="flex flex-col gap-100 rounded-200 border border-neutral-200 bg-neutral-0 p-300">
       <div className="flex items-start justify-between gap-200">
         <div className="flex flex-col gap-100">
-          <p className="text-body-sm font-medium text-neutral-950">{suggestion.displayName}</p>
+          <div className="flex items-center gap-100">
+            <p className="text-body-sm font-medium text-neutral-950">{suggestion.displayName}</p>
+            {!suggestion.isAvailable && (
+              <span className="rounded-100 border border-semantic-warning/30 bg-semantic-warning/10 px-150 py-50 text-[11px] font-medium text-neutral-700">
+                Unavailable
+              </span>
+            )}
+          </div>
           <p className="text-body-sm text-neutral-500">{suggestion.currentTeamName}</p>
           {suggestion.matchedSkills.length > 0 && (
             <div className="flex flex-wrap gap-100">

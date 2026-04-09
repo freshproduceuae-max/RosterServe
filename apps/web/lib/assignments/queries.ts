@@ -315,6 +315,7 @@ export type CrossTeamSuggestion = {
   currentTeamName: string;
   matchedSkills: string[]; // approved, dept-required skills this volunteer has
   skillScore: number;      // count of matchedSkills
+  isAvailable: boolean;    // false if blocked out on event date
 };
 
 /**
@@ -328,6 +329,14 @@ export async function getCrossTeamSuggestions(
   deptId: string,
 ): Promise<CrossTeamSuggestion[]> {
   const supabase = await createSupabaseServerClient();
+
+  // 0. Fetch event_date for availability check
+  const { data: eventRow } = await supabase
+    .from("events")
+    .select("event_date")
+    .eq("id", eventId)
+    .single();
+  const eventDate: string | null = (eventRow as { event_date: string } | null)?.event_date ?? null;
 
   // 1. Required skill names for this department
   const { data: requiredSkillRows } = await supabase
@@ -385,7 +394,19 @@ export async function getCrossTeamSuggestions(
 
   const candidateIds = candidates.map((c) => c.volunteer_id);
 
-  // 4. Approved skills for candidates scoped to this dept
+  // 4. Availability blockouts on event_date for candidates
+  const blockedIds = new Set<string>();
+  if (eventDate) {
+    const { data: blockoutData } = await supabase
+      .from("availability_blockouts")
+      .select("volunteer_id")
+      .in("volunteer_id", candidateIds)
+      .eq("date", eventDate)
+      .is("deleted_at", null);
+    (blockoutData ?? []).forEach((b: { volunteer_id: string }) => blockedIds.add(b.volunteer_id));
+  }
+
+  // 5. Approved skills for candidates scoped to this dept
   const skillMap = new Map<string, string[]>(); // volunteerId → matched required skill names
   if (requiredSkillNames.size > 0) {
     const { data: skillRows } = await supabase
@@ -406,7 +427,7 @@ export async function getCrossTeamSuggestions(
     );
   }
 
-  // 5. Build and rank suggestions
+  // 6. Build and rank suggestions
   const suggestions: CrossTeamSuggestion[] = candidates.map((c) => {
     const matchedSkills = skillMap.get(c.volunteer_id) ?? [];
     return {
@@ -416,10 +437,13 @@ export async function getCrossTeamSuggestions(
       currentTeamName: c.team?.name ?? "Unknown team",
       matchedSkills,
       skillScore: matchedSkills.length,
+      isAvailable: !blockedIds.has(c.volunteer_id),
     };
   });
 
+  // Sort: available first, then skill score desc, then alphabetical
   suggestions.sort((a, b) => {
+    if (a.isAvailable !== b.isAvailable) return a.isAvailable ? -1 : 1;
     if (b.skillScore !== a.skillScore) return b.skillScore - a.skillScore;
     return a.displayName.localeCompare(b.displayName);
   });
