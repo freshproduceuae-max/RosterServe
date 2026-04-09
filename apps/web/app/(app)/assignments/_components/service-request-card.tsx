@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { AssignmentForVolunteer } from "@/lib/assignments/types";
-import type { AssignmentStatus } from "@/lib/assignments/types";
+import type { AssignmentForVolunteer, AssignmentStatus } from "@/lib/assignments/types";
 import { respondToServiceRequest } from "@/lib/assignments/actions";
 
 const statusStyles: Record<AssignmentStatus, string> = {
