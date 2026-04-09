@@ -73,6 +73,7 @@ export type DeptHeadDashboardData = {
   eventSummaries: EventWithDeptHealth[];
   pendingInterests: number;
   pendingSkillApprovals: number;
+  rotationEntries: import("@/lib/departments/types").RotationEntry[];
 };
 
 export type TeamHeadDashboardData = {

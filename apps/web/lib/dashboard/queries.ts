@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/auth/types";
 import { getSoftDeletedCount } from "@/lib/admin/queries";
+import { getRotationSchedule } from "@/lib/departments/queries";
 import type {
   AssignmentWithEventContext,
   DeptHeadDashboardData,
@@ -122,7 +123,7 @@ export async function getDeptHeadDashboardData(
     .is("deleted_at", null);
 
   if (!deptRows || deptRows.length === 0) {
-    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0 };
+    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0, rotationEntries: [] };
   }
   const depts = deptRows as { id: string; name: string }[];
   const deptIds = depts.map((d) => d.id);
@@ -262,8 +263,8 @@ export async function getDeptHeadDashboardData(
     (a, b) => a.event_date.localeCompare(b.event_date),
   );
 
-  // 5. Pending queues — RLS scopes these to the caller's owned departments
-  const [interestRes, skillRes] = await Promise.all([
+  // 5. Pending queues + rotation schedule in parallel
+  const [interestRes, skillRes, rotationEntries] = await Promise.all([
     supabase
       .from("volunteer_interests")
       .select("id", { count: "exact", head: true })
@@ -274,12 +275,14 @@ export async function getDeptHeadDashboardData(
       .select("id", { count: "exact", head: true })
       .eq("status", "pending")
       .is("deleted_at", null),
+    getRotationSchedule(deptIds),
   ]);
 
   return {
     eventSummaries,
     pendingInterests: interestRes.count ?? 0,
     pendingSkillApprovals: skillRes.count ?? 0,
+    rotationEntries,
   };
 }
 
