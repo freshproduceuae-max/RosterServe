@@ -255,7 +255,8 @@
         "Enforce controlled status progression: requested → confirmed / declined → served.",
         "Reflect response outcomes back into leader and volunteer weekly views."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. Added decline confirmation dialog to ServiceRequestCard and InvitationCard. Added accepted→served RLS policy (migration 00030) and markAssignmentServed server action. DeptHeadRosterView shows confirmed assignments with MarkServedButton. TeamHeadDashboard shows confirmed service section."
     },
     {
       "id": "RS-F013",

@@ -2,8 +2,8 @@
 
 Status: Canonical tracker
 Last updated: 2026-04-09
-Current phase: Active revision cycle — RS-F011 passed; RS-F012 next
-Current build stage: 11 features passed (RS-F001–RS-F011)
+Current phase: Active revision cycle — RS-F012 passed; RS-F013 next
+Current build stage: 12 features passed (RS-F001–RS-F012)
 
 ## Execution Gate
 
@@ -131,7 +131,7 @@ Update rule:
 | 9 | RS-F009 | Skill-gap and headcount-gap detection | P0 | passed |
 | 10 | RS-F010 | Personalized weekly dashboard | P0 | passed |
 | 11 | RS-F011 | Instructions and media sharing | P1 | passed |
-| 12 | RS-F012 | Request-to-serve response workflow | P0 | not_started |
+| 12 | RS-F012 | Request-to-serve response workflow | P0 | passed |
 | 13 | RS-F013 | Notifications and scheduled alerts | P1 | not_started |
 | 14 | RS-F014 | Admin oversight, soft delete, and approval controls | P0 | not_started |
 | 15 | RS-F015 | Error handling and support escalation | P2 | not_started |
