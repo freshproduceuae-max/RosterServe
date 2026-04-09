@@ -235,7 +235,8 @@
         "Support attachment of images and documents.",
         "Restrict visibility to the intended recipients."
       ],
-      "passes": false
+      "passes": true,
+      "completedNote": "Implemented 2026-04-09. event_instructions table with dept/team scoping, single file attachment per instruction stored in Supabase Storage bucket instruction-media. Leaders post/delete; volunteers read via RLS-scoped query. Navigation from roster page (leaders) and AssignmentCard (volunteers)."
     },
     {
       "id": "RS-F012",

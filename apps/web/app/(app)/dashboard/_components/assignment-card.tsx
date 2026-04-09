@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AssignmentWithEventContext } from "@/lib/dashboard/types";
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -69,6 +70,14 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
         )}
         <span aria-hidden>·</span>
         <span>{roleLabel}</span>
+      </div>
+      <div className="mt-200">
+        <Link
+          href={`/events/${assignment.event_id}/departments/${assignment.department_id}/instructions`}
+          className="text-body-sm text-brand-calm-600 underline-offset-2 hover:underline"
+        >
+          View instructions
+        </Link>
       </div>
     </div>
   );

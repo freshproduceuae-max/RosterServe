@@ -156,12 +156,20 @@ function PageShell({
 }) {
   return (
     <div className="flex flex-col gap-400">
-      <Link
-        href={`/events/${eventId}/departments/${deptId}`}
-        className="text-body-sm text-neutral-600 hover:text-neutral-950 hover:underline"
-      >
-        &larr; Back to department
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href={`/events/${eventId}/departments/${deptId}`}
+          className="text-body-sm text-neutral-600 hover:text-neutral-950 hover:underline"
+        >
+          &larr; Back to department
+        </Link>
+        <Link
+          href={`/events/${eventId}/departments/${deptId}/instructions`}
+          className="text-body-sm text-brand-calm-600 underline-offset-2 hover:underline"
+        >
+          Instructions
+        </Link>
+      </div>
       {children}
     </div>
   );
