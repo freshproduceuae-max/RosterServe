@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { AssignmentForVolunteer, AssignmentStatus } from "@/lib/assignments/types";
 import { respondToServiceRequest } from "@/lib/assignments/actions";
+import { formatEventDate } from "@/lib/format-date";
 
 const statusStyles: Record<AssignmentStatus, string> = {
   invited: "bg-neutral-100 text-neutral-600 border border-neutral-300",
@@ -57,17 +58,9 @@ export function ServiceRequestCard({
     });
   }
 
-  const formattedDate = (() => {
-    if (!assignment.event_date) return "";
-    const date = new Date(assignment.event_date + "T00:00:00");
-    if (isNaN(date.getTime())) return "";
-    return date.toLocaleDateString("en-AU", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  })();
+  const formattedDate = assignment.event_date
+    ? formatEventDate(assignment.event_date)
+    : "";
 
   return (
     <div className="flex flex-col gap-200 rounded-300 border border-neutral-300 bg-neutral-0 p-400">

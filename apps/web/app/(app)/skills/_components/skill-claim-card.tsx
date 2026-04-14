@@ -4,14 +4,7 @@ import { useState, useTransition } from "react";
 import type { SkillClaimWithVolunteer } from "@/lib/skills/types";
 import { approveSkillClaim, rejectSkillClaim } from "@/lib/skills/actions";
 import { StatusBadge } from "./status-badge";
-
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatLongDate } from "@/lib/format-date";
 
 function ActionControls({ claimId }: { claimId: string }) {
   const [rejecting, setRejecting] = useState(false);
@@ -104,7 +97,7 @@ export function SkillClaimCard({
         <StatusBadge status={claim.status} />
       </div>
       <p className="text-body-sm text-neutral-600">
-        Claimed {formatDate(claim.created_at)}
+        Claimed {formatLongDate(claim.created_at)}
       </p>
       {!readOnly && claim.status === "pending" && (
         <ActionControls claimId={claim.id} />

@@ -16,25 +16,7 @@ import {
   type Event,
   type EventStatus,
 } from "@/lib/events/types";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatTimestamp(ts: string): string {
-  return new Date(ts).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatFullDate, formatTimestamp } from "@/lib/format-date";
 
 const TRANSITION_BUTTON_LABELS: Record<EventStatus, string> = {
   draft: "",
@@ -128,7 +110,7 @@ export function EventDetailCard({
               Event date
             </p>
             <p className="mt-100 text-body text-neutral-950">
-              {formatDate(event.event_date)}
+              {formatFullDate(event.event_date)}
             </p>
           </div>
           <div>

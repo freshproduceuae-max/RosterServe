@@ -31,7 +31,7 @@ export default async function DashboardPage() {
 
   if (profile.role === "super_admin") {
     const data = await getSuperAdminDashboardData();
-    return <SuperAdminDashboard data={data} />;
+    return <SuperAdminDashboard data={data} displayName={displayName} />;
   }
 
   if (profile.role === "all_depts_leader") {

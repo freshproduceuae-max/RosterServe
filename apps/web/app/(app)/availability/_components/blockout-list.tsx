@@ -3,16 +3,7 @@
 import { useState, useTransition } from "react";
 import { removeBlockout } from "@/lib/availability/actions";
 import type { AvailabilityBlockout } from "@/lib/availability/types";
-
-function formatDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatMediumDate } from "@/lib/format-date";
 
 function BlockoutRow({ blockout }: { blockout: AvailabilityBlockout }) {
   const [confirming, setConfirming] = useState(false);
@@ -34,7 +25,7 @@ function BlockoutRow({ blockout }: { blockout: AvailabilityBlockout }) {
     <li className="flex flex-col gap-100 rounded-200 border border-neutral-300 bg-neutral-0 p-300 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex flex-col gap-50">
         <span className="font-mono text-mono text-neutral-950">
-          {formatDate(blockout.date)}
+          {formatMediumDate(blockout.date)}
         </span>
         {blockout.reason && (
           <span className="text-body-sm text-neutral-600">{blockout.reason}</span>

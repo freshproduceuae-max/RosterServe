@@ -16,6 +16,7 @@ export function AppNav({ role }: { role: AppRole }) {
     { label: "Availability", href: "/availability", show: true },
     { label: "Interests", href: "/interests", show: role !== "team_head" },
     { label: "Skills", href: "/skills", show: role !== "team_head" },
+    { label: "Admin", href: "/admin", show: role === "super_admin" },
   ] satisfies { label: string; href: string; show: boolean }[];
 
   return (

@@ -1,16 +1,7 @@
 import Link from "next/link";
 import type { AllDeptsLeaderDashboardData } from "@/lib/dashboard/types";
 import { RosterHealthBar } from "./roster-health-bar";
-
-function formatEventDate(isoDate: string): string {
-  const date = new Date(`${isoDate}T00:00:00`);
-  return date.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatEventDate } from "@/lib/format-date";
 
 interface AllDeptsLeaderDashboardProps {
   data: AllDeptsLeaderDashboardData;

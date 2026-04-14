@@ -5,21 +5,12 @@ import { useState, useTransition } from "react";
 import type { RotationEntry } from "@/lib/departments/types";
 import type { RotatableTeamRecord } from "@/lib/departments/queries";
 import { setRotationOverride, clearRotationOverride } from "@/lib/departments/actions";
+import { formatEventDate } from "@/lib/format-date";
 
 interface RotationScheduleSectionProps {
   entries: RotationEntry[];
   /** Plain object (JSON-safe) — rotatable teams keyed by department_id. */
   teamsByDept: Record<string, RotatableTeamRecord[]>;
-}
-
-function formatEventDate(isoDate: string): string {
-  const date = new Date(`${isoDate}T00:00:00`);
-  return date.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function LabelBadge({ label }: { label: string }) {

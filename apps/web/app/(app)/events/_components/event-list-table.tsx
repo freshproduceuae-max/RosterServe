@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { EventStatusBadge } from "./event-status-badge";
 import { EVENT_TYPE_LABELS, type Event } from "@/lib/events/types";
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatEventDate } from "@/lib/format-date";
 
 export function EventListTable({ events }: { events: Event[] }) {
   return (
@@ -51,7 +43,7 @@ export function EventListTable({ events }: { events: Event[] }) {
                   {EVENT_TYPE_LABELS[event.event_type]}
                 </td>
                 <td className="py-300 pr-300 text-body-sm text-neutral-800">
-                  {formatDate(event.event_date)}
+                  {formatEventDate(event.event_date)}
                 </td>
                 <td className="py-300 pr-300">
                   <EventStatusBadge status={event.status} />
@@ -78,7 +70,7 @@ export function EventListTable({ events }: { events: Event[] }) {
             </div>
             <div className="flex gap-300 text-body-sm text-neutral-600">
               <span>{EVENT_TYPE_LABELS[event.event_type]}</span>
-              <span>{formatDate(event.event_date)}</span>
+              <span>{formatEventDate(event.event_date)}</span>
             </div>
           </Link>
         ))}

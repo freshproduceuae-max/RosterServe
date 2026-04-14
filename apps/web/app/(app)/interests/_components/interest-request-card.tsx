@@ -3,14 +3,7 @@
 import { useState, useTransition } from "react";
 import type { DeptTeam, InterestWithVolunteer, InterestStatus } from "@/lib/interests/types";
 import { approveInterest, rejectInterest } from "@/lib/interests/actions";
-
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatLongDate } from "@/lib/format-date";
 
 function StatusBadge({ status }: { status: InterestStatus }) {
   const styles: Record<InterestStatus, string> = {
@@ -144,7 +137,7 @@ export function InterestRequestCard({
         <StatusBadge status={interest.status} />
       </div>
       <p className="text-body-sm text-neutral-600">
-        Requested {formatDate(interest.created_at)}
+        Requested {formatLongDate(interest.created_at)}
       </p>
       {canReview && interest.status === "pending" && (
         <ActionControls interestId={interest.id} teams={teams} />

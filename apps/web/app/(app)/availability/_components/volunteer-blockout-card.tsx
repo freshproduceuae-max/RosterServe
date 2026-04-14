@@ -1,14 +1,5 @@
 import type { AvailabilityBlockout } from "@/lib/availability/types";
-
-function formatDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatEventDate } from "@/lib/format-date";
 
 export function VolunteerBlockoutCard({
   displayName,
@@ -35,7 +26,7 @@ export function VolunteerBlockoutCard({
           {blockouts.map((b) => (
             <li key={b.id} className="flex flex-col gap-50">
               <span className="font-mono text-mono text-neutral-800">
-                {formatDate(b.date)}
+                {formatEventDate(b.date)}
               </span>
               {b.reason && (
                 <span className="text-body-sm text-neutral-600">{b.reason}</span>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AssignmentWithEventContext } from "@/lib/dashboard/types";
+import { formatEventDate } from "@/lib/format-date";
 
 const STATUS_CLASSES: Record<string, string> = {
   invited: "border-neutral-300 text-neutral-600",
@@ -14,16 +15,6 @@ const STATUS_LABELS: Record<string, string> = {
   declined: "Declined",
   served: "Served",
 };
-
-function formatEventDate(isoDate: string): string {
-  const date = new Date(`${isoDate}T00:00:00`);
-  return date.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 interface AssignmentCardProps {
   assignment: AssignmentWithEventContext;

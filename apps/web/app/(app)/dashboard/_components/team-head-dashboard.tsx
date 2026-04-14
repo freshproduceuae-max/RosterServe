@@ -5,16 +5,7 @@ import { useState, useTransition } from "react";
 import type { TeamHeadDashboardData, AssignmentWithEventContext } from "@/lib/dashboard/types";
 import { respondToServiceRequest } from "@/lib/assignments/actions";
 import { RosterHealthBar } from "./roster-health-bar";
-
-function formatEventDate(isoDate: string): string {
-  const date = new Date(`${isoDate}T00:00:00`);
-  return date.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatEventDate } from "@/lib/format-date";
 
 interface TeamHeadDashboardProps {
   data: TeamHeadDashboardData;

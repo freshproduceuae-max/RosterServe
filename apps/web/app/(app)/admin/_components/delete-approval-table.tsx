@@ -3,6 +3,7 @@
 import { useTransition, useState } from "react";
 import { restoreRecord, hardDeleteRecord } from "@/lib/admin/actions";
 import type { SoftDeletedEntity } from "@/lib/admin/queries";
+import { formatShortDate } from "@/lib/format-date";
 
 interface DeleteApprovalTableProps {
   records: SoftDeletedEntity[];
@@ -69,11 +70,7 @@ export function DeleteApprovalTable({
               )}
               <p className="text-body-sm text-neutral-400">
                 Deleted{" "}
-                {new Date(record.deletedAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+                {formatShortDate(record.deletedAt)}
               </p>
             </div>
             <div className="flex items-center gap-200">

@@ -1,18 +1,11 @@
 import type { EventInstruction } from "@/lib/instructions/types";
 import { DeleteInstructionButton } from "./delete-instruction-button";
+import { formatShortDate } from "@/lib/format-date";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 interface InstructionCardProps {
@@ -42,7 +35,7 @@ export function InstructionCard({
           </p>
           <p className="text-body-sm text-neutral-500">
             {scope} · {instruction.creator_name ?? "Unknown"} ·{" "}
-            {formatDate(instruction.created_at)}
+            {formatShortDate(instruction.created_at)}
           </p>
         </div>
         {canDelete && (
