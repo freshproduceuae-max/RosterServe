@@ -87,7 +87,7 @@ export function TeamSelectionForm({
           disabled={!selectedTeamId || isPending}
           className="self-start rounded-200 bg-brand-calm-600 px-400 py-200 text-body-sm font-semibold text-neutral-0 transition-colors duration-fast hover:bg-brand-calm-600/90 disabled:opacity-50"
         >
-          {isPending ? "Sending invitations…" : "Send service requests"}
+          {isPending ? "Sending requests…" : "Send requests to serve"}
         </button>
       </form>
     </div>

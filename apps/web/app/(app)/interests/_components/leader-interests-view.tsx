@@ -14,15 +14,15 @@ export function LeaderInterestsView({
     return (
       <div className="flex flex-col gap-500">
         <div>
-          <h1 className="text-h1 text-neutral-950">Department interest requests</h1>
+          <h1 className="text-h1 text-neutral-950">Department join requests</h1>
           <p className="mt-100 text-body-sm text-neutral-600">
-            Showing interest requests for volunteers in your departments.
+            Showing join requests for volunteers in your departments.
           </p>
         </div>
         <div className="rounded-300 border border-neutral-300 bg-neutral-0 p-500 text-center">
           <p className="text-h3 text-neutral-950">No requests yet</p>
           <p className="mt-200 text-body-sm text-neutral-600">
-            No volunteers have submitted interest requests for your departments yet.
+            No volunteers have submitted join requests for your departments yet.
           </p>
         </div>
       </div>
@@ -42,9 +42,9 @@ export function LeaderInterestsView({
   return (
     <div className="flex flex-col gap-500">
       <div>
-        <h1 className="text-h1 text-neutral-950">Department interest requests</h1>
+        <h1 className="text-h1 text-neutral-950">Department join requests</h1>
         <p className="mt-100 text-body-sm text-neutral-600">
-          Showing interest requests for volunteers in your departments.
+          Showing join requests for volunteers in your departments.
         </p>
       </div>
       <div className="flex flex-col gap-600">

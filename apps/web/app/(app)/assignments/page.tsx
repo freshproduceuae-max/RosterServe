@@ -23,15 +23,15 @@ export default async function AssignmentsPage() {
   return (
     <div className="flex flex-col gap-500">
       <div>
-        <h1 className="text-h1 text-neutral-950">Service requests</h1>
+        <h1 className="text-h1 text-neutral-950">Requests to Serve</h1>
         <p className="mt-100 text-body-sm text-neutral-600">
-          Events you have been invited to serve in.
+          Events you have been asked to serve in.
         </p>
       </div>
 
       {assignments.length === 0 ? (
         <p className="text-body-sm text-neutral-500">
-          No service requests yet.
+          No requests to serve yet.
         </p>
       ) : (
         <div className="flex flex-col gap-300">
