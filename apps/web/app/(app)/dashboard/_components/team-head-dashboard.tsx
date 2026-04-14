@@ -24,6 +24,23 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
         <h1 className="font-display text-h1 text-neutral-950">
           Hi, {displayName.split(" ")[0]}
         </h1>
+        <p className="mt-50 text-body-sm text-neutral-600">Team head</p>
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-200">
+        <Link
+          href="/assignments"
+          className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100"
+        >
+          View serving
+        </Link>
+        <Link
+          href="/availability"
+          className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100"
+        >
+          Availability
+        </Link>
       </div>
 
       {/* Pending invitations prompt */}
