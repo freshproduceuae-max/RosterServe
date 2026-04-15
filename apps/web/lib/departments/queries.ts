@@ -152,7 +152,7 @@ export async function getRotationSchedule(
   const supabase = await createSupabaseServerClient();
 
   const today = new Date().toISOString().split("T")[0];
-  const windowEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const windowEnd = new Date(Date.now() + 84 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
 
@@ -193,25 +193,26 @@ export async function getRotationSchedule(
   const activeDeptIds = deptIds.filter((id) => (teamsByDeptInternal[id]?.length ?? 0) > 0);
   if (activeDeptIds.length === 0) return { entries: [], teamsByDept: teamsByDeptExport };
 
-  // 2. Upcoming published events in the 30-day window that have assignments
-  //    touching these departments
-  const { data: assignRows } = await supabase
-    .from("assignments")
+  // 2. Upcoming published + draft events in the 84-day window touching these departments.
+  //    Uses event_departments join instead of assignments so that draft stubs
+  //    (which have no assignment rows yet) are included in the rotation forecast.
+  const { data: edRows } = await supabase
+    .from("event_departments")
     .select(
       "event_id, department_id, events!inner(id, title, event_date, event_type, status)",
     )
     .in("department_id", activeDeptIds)
-    .is("deleted_at", null)
     .gte("events.event_date", today)
     .lte("events.event_date", windowEnd)
-    .eq("events.status", "published");
+    .in("events.status", ["published", "draft"])
+    .is("events.deleted_at", null);
 
   type RawAssignRow = {
     event_id: string;
     department_id: string;
     events: { id: string; title: string; event_date: string; event_type: string; status: string };
   };
-  const assignRows_ = (assignRows ?? []) as unknown as RawAssignRow[];
+  const assignRows_ = (edRows ?? []) as unknown as RawAssignRow[];
 
   // Collect unique event+dept combos
   const eventDeptSet = new Set<string>();

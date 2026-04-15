@@ -7,6 +7,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionWithProfile } from "@/lib/auth/session";
 import { isLeaderRole } from "@/lib/auth/roles";
 import type { Event, EventStatus } from "./types";
+import type { Department } from "@/lib/departments/types";
+
+export type ForecastEvent = Event & {
+  departmentCount: number;
+};
 
 export async function getEvents(filters?: {
   status?: EventStatus;
@@ -47,4 +52,61 @@ export async function getEventById(id: string): Promise<Event | null> {
 
   if (error || !data) return null;
   return data;
+}
+
+export async function getForecastEvents(limitDays: number = 84): Promise<ForecastEvent[]> {
+  const session = await getSessionWithProfile();
+  if (!session || !isLeaderRole(session.profile.role)) return [];
+
+  const supabase = await createSupabaseServerClient();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const windowEnd = new Date(Date.now() + limitDays * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
+  // Note: Supabase PostgREST does not support table(count) aggregate syntax in .select().
+  // Fetch events first, then scope the department count query to those event IDs only.
+  // This prevents an unbounded scan of all event_departments rows as the DB grows.
+  const eventsResult = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_stub", true)
+    .is("deleted_at", null)
+    .gte("event_date", today)
+    .lte("event_date", windowEnd)
+    .order("event_date", { ascending: true });
+
+  if (eventsResult.error || !eventsResult.data) return [];
+
+  const stubIds = eventsResult.data.map((e: { id: string }) => e.id);
+
+  const deptResult = stubIds.length > 0
+    ? await supabase.from("event_departments").select("event_id").in("event_id", stubIds)
+    : { data: [] as { event_id: string }[], error: null };
+
+  const deptCountMap = (deptResult.data ?? []).reduce<Record<string, number>>(
+    (acc, row) => { acc[row.event_id] = (acc[row.event_id] ?? 0) + 1; return acc; },
+    {},
+  );
+
+  return (eventsResult.data as Event[]).map((e) => ({
+    ...e,
+    departmentCount: deptCountMap[e.id] ?? 0,
+  }));
+}
+
+export async function getEventDepartments(eventId: string): Promise<Department[]> {
+  const session = await getSessionWithProfile();
+  if (!session || !isLeaderRole(session.profile.role)) return [];
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("event_departments")
+    .select("departments(*)")
+    .eq("event_id", eventId);
+
+  if (error || !data) return [];
+  return (data as unknown as { departments: Department }[]).map((r) => r.departments);
 }

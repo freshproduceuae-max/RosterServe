@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EventStatusBadge } from "./event-status-badge";
+import { RecurringBadge } from "./recurring-badge";
 import { EVENT_TYPE_LABELS, type Event } from "@/lib/events/types";
 import { formatEventDate } from "@/lib/format-date";
 
@@ -22,6 +23,9 @@ export function EventListTable({ events }: { events: Event[] }) {
               </th>
               <th className="py-200 pr-300 text-left font-mono text-mono uppercase text-neutral-600">
                 Status
+              </th>
+              <th className="py-200 pr-300 text-left font-mono text-mono uppercase text-neutral-600">
+                Recurring
               </th>
             </tr>
           </thead>
@@ -48,6 +52,11 @@ export function EventListTable({ events }: { events: Event[] }) {
                 <td className="py-300 pr-300">
                   <EventStatusBadge status={event.status} />
                 </td>
+                <td className="py-300 pr-300">
+                  {event.is_recurring && event.recurrence_rule && (
+                    <RecurringBadge rule={event.recurrence_rule} />
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -68,9 +77,12 @@ export function EventListTable({ events }: { events: Event[] }) {
               </span>
               <EventStatusBadge status={event.status} />
             </div>
-            <div className="flex gap-300 text-body-sm text-neutral-600">
+            <div className="flex flex-wrap gap-300 text-body-sm text-neutral-600">
               <span>{EVENT_TYPE_LABELS[event.event_type]}</span>
               <span>{formatEventDate(event.event_date)}</span>
+              {event.is_recurring && event.recurrence_rule && (
+                <RecurringBadge rule={event.recurrence_rule} />
+              )}
             </div>
           </Link>
         ))}
