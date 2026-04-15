@@ -3,7 +3,7 @@
 Status: Canonical tracker
 Last updated: 2026-04-15
 Current phase: Production deployed — v1 live
-Current build stage: 18 features passed (RS-F001–RS-F018); deployed to Vercel
+Current build stage: 20 features passed (RS-F001–RS-F020); deployed to Vercel
 
 ## Execution Gate
 
@@ -121,10 +121,14 @@ For this repo state:
 - Phase 2-E implemented (2026-04-15): migration 00035_account_deletion_request.sql (table + partial unique index + RLS); requestAccountDeletion / approveAccountDeletion / rejectAccountDeletion server actions; /api/export/my-data Route Handler (JSON download); /settings/account page (download + DELETE confirmation input); /privacy static page; sign-up page privacy consent link; admin oversight AccountDeletionRequestsSection — PR #39 reviewed (3 NEEDS_CHANGES rounds: CASCADE ordering, owner SELECT policy, upsert→insert+23505 guard, rollback error capture), approved, and merged to main
 - Phase 2-F implemented (2026-04-15): apps/web/instrumentation.ts (@vercel/otel registration, Next.js 15 stable, no config flag needed); docs/ops/new-org-setup.md (full deployment runbook for new org instances) — PR #40 reviewed (1 NEEDS_CHANGES: hardcoded migration count removed), approved, and merged to main
 - **Phase 2 production hardening COMPLETE (2026-04-15)** — all 6 phases (A–F) merged to main
+- RS-F020 (Recurring Events) implemented (2026-04-15): migration 00036 (is_recurring, recurrence_rule, parent_event_id, is_stub columns; event_departments join table with RLS via i_own_dept()/i_have_sub_team_in_dept(); partial unique stub index; backfill from existing assignments); recurrence.ts; lib/events/queries.ts updated (getForecastEvents: two-query approach for stub count, getStubsForParent); /api/cron/stub-rollover Route Handler (CRON_SECRET gated, rolls one stub per series when horizon ≤14 days); events page forecast tab; addEventDepartment action (visibility + dept_head ownership guard, cascades to draft stubs); copyEvent action; forecast-tab.tsx (EventStatusBadge instead of hardcoded label) — PR #41 reviewed (5 NEEDS_CHANGES rounds), approved, and merged to main
+- RS-F020 marked passes=true
+- RS-F019 (Department Task Library) implemented (2026-04-15): migrations 00037 (department_tasks with required_skill_id FK, functional unique index on lower(name), RLS via SECURITY DEFINER helpers) + 00038 (event_task_assignments with nullable volunteer_id, unique per event+task); lib/tasks layer (types.ts, schemas.ts, queries.ts, actions.ts); TaskLibrarySection + TaskForm on /departments/[deptId]; TaskAssignmentSection + TaskSlotRow + TaskVolunteerBadge on roster pages; all three roster views wired (dept_head, team_head, super_admin/all_depts_leader); getDeptHeadDashboardData extended with unassignedTasksCount — PR #42 reviewed (2 NEEDS_CHANGES rounds: upcomingEventIds query fixed to use event_departments directly; empty-string stubs replaced with real eventId/deptId in SuperAdminRosterView), approved, and merged to main
+- RS-F019 marked passes=true
 
 ## Next Up
 
-- All Phase 2 hardening complete. Product is live on Vercel. Next work requires a new approved plan.
+- RS-F019 and RS-F020 complete. Product is live on Vercel. Next work requires a new approved plan.
 
 ## Status Legend
 
@@ -156,6 +160,8 @@ Update rule:
 | 16 | RS-F016 | Team rotation scheduling | P1 | passed |
 | 17 | RS-F017 | Cross-team auto-suggestions for gap filling | P1 | passed |
 | 18 | RS-F018 | Supporter and secretary role management | P1 | passed |
+| 19 | RS-F019 | Department task library and task assignment | P1 | passed |
+| 20 | RS-F020 | Recurring events and forecast calendar | P1 | passed |
 
 ## Major Decisions
 
