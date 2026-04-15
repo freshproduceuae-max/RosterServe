@@ -23,7 +23,7 @@ export default async function AssignmentsPage() {
   return (
     <div className="flex flex-col gap-500">
       <div>
-        <h1 className="text-h1 text-neutral-950">Requests to Serve</h1>
+        <h1 className="text-h1 text-neutral-950">Service requests</h1>
         <p className="mt-100 text-body-sm text-neutral-600">
           Events you have been asked to serve in.
         </p>

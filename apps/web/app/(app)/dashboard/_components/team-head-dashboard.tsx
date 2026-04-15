@@ -33,7 +33,7 @@ export function TeamHeadDashboard({ data, displayName }: TeamHeadDashboardProps)
           href="/assignments"
           className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100"
         >
-          View serving
+          View service requests
         </Link>
         <Link
           href="/availability"
