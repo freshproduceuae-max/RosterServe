@@ -627,22 +627,24 @@ export async function getForecastEvents(limitDays: number = 84): Promise<Forecas
     .slice(0, 10);
 
   // Note: Supabase PostgREST does not support table(count) aggregate syntax in .select().
-  // Fetch events and department associations in two queries, then merge.
-  const [eventsResult, deptResult] = await Promise.all([
-    supabase
-      .from("events")
-      .select("*")
-      .eq("is_stub", true)
-      .is("deleted_at", null)
-      .gte("event_date", today)
-      .lte("event_date", windowEnd)
-      .order("event_date", { ascending: true }),
-    supabase
-      .from("event_departments")
-      .select("event_id"),
-  ]);
+  // Fetch events first, then scope the department count query to those event IDs only.
+  // This prevents an unbounded scan of all event_departments rows as the DB grows.
+  const eventsResult = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_stub", true)
+    .is("deleted_at", null)
+    .gte("event_date", today)
+    .lte("event_date", windowEnd)
+    .order("event_date", { ascending: true });
 
   if (eventsResult.error || !eventsResult.data) return [];
+
+  const stubIds = eventsResult.data.map((e) => e.id);
+
+  const deptResult = stubIds.length > 0
+    ? await supabase.from("event_departments").select("event_id").in("event_id", stubIds)
+    : { data: [] as { event_id: string }[], error: null };
 
   const deptCountMap = (deptResult.data ?? []).reduce<Record<string, number>>(
     (acc, row) => { acc[row.event_id] = (acc[row.event_id] ?? 0) + 1; return acc; },
