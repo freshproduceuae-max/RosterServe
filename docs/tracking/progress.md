@@ -1,7 +1,7 @@
 # RosterServe Progress
 
 Status: Canonical tracker
-Last updated: 2026-04-09
+Last updated: 2026-04-15
 Current phase: Production deployed — v1 live
 Current build stage: 18 features passed (RS-F001–RS-F018); deployed to Vercel
 
