@@ -510,6 +510,43 @@
       ],
       "passes": true,
       "completedNote": "Implemented 2026-04-09. Migration 00032 adds RLS UPDATE policy for super_admin on supporter profiles (closes gap left by 00022 which only covers dept_head/team_head). assignSupporter and removeSupporter server actions in lib/admin/actions.ts validate both profiles before updating supporter_of. getSupporterAssignments and getLeaderProfiles queries in lib/admin/queries.ts. SupporterAssignmentsSection client component with per-row pending state and router.refresh(). Admin oversight page loads all three data sets in parallel and renders the new section below pending deletions."
+    },
+    {
+      "id": "RS-F019",
+      "title": "Department Task Library and Task Assignment",
+      "priority": "P1",
+      "dependsOn": ["RS-F003", "RS-F008"],
+      "ui": true,
+      "surface": ["dept_head", "team_head", "super_admin", "all_depts_leader"],
+      "revisionRequired": false,
+      "steps": [
+        "Allow dept_head to define named tasks for their department, each optionally linked to a required skill.",
+        "Display the task library on the department detail page with add, edit, and soft-delete controls.",
+        "For each event, show task slots on the roster page with assignment UI for dept_head and team_head.",
+        "Allow dept_head and team_head to assign a volunteer to a task slot from eligible candidates.",
+        "Surface unassigned task count on the dept_head dashboard."
+      ],
+      "passes": true,
+      "completedNote": "Implemented 2026-04-15. Migrations 00037 (department_tasks table with required_skill_id FK, functional unique index on lower(name), RLS via SECURITY DEFINER helpers) and 00038 (event_task_assignments with nullable volunteer_id, unique per event+task). lib/tasks layer: types.ts, schemas.ts, queries.ts, actions.ts (soft-deletes child assignments before task delete). TaskLibrarySection and TaskForm on /departments/[deptId]. TaskAssignmentSection, TaskSlotRow, TaskVolunteerBadge on all three roster views (dept_head, team_head, super_admin/all_depts_leader). getDeptHeadDashboardData extended with unassignedTasksCount querying event_departments directly to catch events with tasks but no assignments yet. PR #42 reviewed (2 NEEDS_CHANGES rounds), approved, and merged."
+    },
+    {
+      "id": "RS-F020",
+      "title": "Recurring Events and Forecast Calendar",
+      "priority": "P1",
+      "dependsOn": ["RS-F002"],
+      "ui": true,
+      "surface": ["super_admin", "all_depts_leader", "dept_head"],
+      "revisionRequired": false,
+      "steps": [
+        "Allow super_admin to mark an event as recurring with a recurrence rule (weekly, biweekly, monthly).",
+        "Auto-generate 12 stub events on creation or update of a recurring parent.",
+        "Display upcoming stubs in a Forecast tab on the events list page.",
+        "Roll the 12-occurrence horizon forward via a daily cron job when the nearest stub is within 14 days.",
+        "Cascade department assignments to newly created stubs.",
+        "Allow dept_head to link their department to an event via addEventDepartment, cascaded to draft stubs."
+      ],
+      "passes": true,
+      "completedNote": "Implemented 2026-04-15. Migration 00036 adds is_recurring, recurrence_rule, parent_event_id, is_stub columns to events; creates event_departments join table with RLS via i_own_dept()/i_have_sub_team_in_dept() (avoids recursion); partial unique index on (parent_event_id, event_date) WHERE is_stub=true; backfills event_departments from existing assignments. lib/events/recurrence.ts (computeStubDates). lib/events/queries.ts updated (getForecastEvents uses two sequential queries for stub count; getStubsForParent). /api/cron/stub-rollover Route Handler (CRON_SECRET gated, rolls one stub per series when horizon ≤14 days). Forecast tab with EventStatusBadge. addEventDepartment action with user-scoped visibility check and dept_head ownership guard, cascades to draft stubs. copyEvent action. PR #41 reviewed (5 NEEDS_CHANGES rounds), approved, and merged."
     }
   ]
 }
