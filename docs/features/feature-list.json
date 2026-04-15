@@ -1,7 +1,7 @@
 {
   "projectName": "RosterServe",
   "version": 2,
-  "generatedAt": "2026-04-07",
+  "generatedAt": "2026-04-16",
   "note": "Version 2 \u00e2\u20ac\u201d updated to reflect PRD revision of 2026-04-07. Role hierarchy expanded, permanent group membership added, team rotation and auto-suggestions added, request-to-serve flow replaces invitation model. Features requiring revision reset to passes=false.",
   "sourcePrdPath": "docs/prd/prd.md",
   "sourcePaths": {
