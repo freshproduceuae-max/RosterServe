@@ -213,6 +213,25 @@ export async function getSkillClaimsForTeamHead(): Promise<
 }
 
 /**
+ * getDepartmentSkillsForDropdown
+ * Returns active skills for a single department, id + name only.
+ * Used by the task form dropdown. RLS enforces dept access at the DB layer.
+ */
+export async function getDepartmentSkillsForDropdown(
+  deptId: string,
+): Promise<{ id: string; name: string }[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("department_skills")
+    .select("id, name")
+    .eq("department_id", deptId)
+    .is("deleted_at", null)
+    .order("name", { ascending: true });
+  if (error || !data) return [];
+  return data as { id: string; name: string }[];
+}
+
+/**
  * getAllActiveDepartments
  * Super admin / all_depts_leader: all active (non-deleted) departments.
  * Used to populate the department selector in the super admin skill creation form.

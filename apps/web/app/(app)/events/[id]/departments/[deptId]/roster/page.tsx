@@ -18,6 +18,7 @@ import {
 import { DeptHeadRosterView } from "./_components/dept-head-roster-view";
 import { TeamHeadRosterView } from "./_components/team-head-roster-view";
 import { SuperAdminRosterView } from "./_components/super-admin-roster-view";
+import { getEventTaskSlotsWithCandidates } from "@/lib/tasks/queries";
 
 export default async function RosterPage({
   params,
@@ -42,12 +43,13 @@ export default async function RosterPage({
   // ── Dept head ──────────────────────────────────────────────────────────────
   if (role === "dept_head") {
     if (department.owner_id !== profileId) redirect("/dashboard");
-    const [assignments, gapSummary, headcountGaps, crossTeamSuggestions] =
+    const [assignments, gapSummary, headcountGaps, crossTeamSuggestions, taskData] =
       await Promise.all([
         getAssignmentsForRoster(eventId, deptId),
         getSkillGapsForDepartmentRoster(eventId, deptId),
         getHeadcountGapsForRoster(eventId, deptId),
         getCrossTeamSuggestions(eventId, deptId),
+        getEventTaskSlotsWithCandidates(eventId, deptId),
       ]);
 
     // For each declined team_head assignment, load substitute options (other
@@ -88,6 +90,8 @@ export default async function RosterPage({
           headcountGaps={headcountGaps}
           substituteOptions={substituteOptions}
           crossTeamSuggestions={crossTeamSuggestions}
+          taskSlots={taskData.slots}
+          candidatesByTask={taskData.candidatesByTask}
         />
       </PageShell>
     );
@@ -112,15 +116,26 @@ export default async function RosterPage({
       getHeadcountGapsForRoster(eventId, deptId, subTeamIds),
     ]);
 
+    // Scope task candidates to team head's own team members only (D6)
+    const ownTeamMemberIds = assignments
+      .filter((a) => subTeamIds.includes(a.sub_team_id ?? ""))
+      .map((a) => a.volunteer_id)
+      .filter((id): id is string => !!id);
+    const taskData = await getEventTaskSlotsWithCandidates(eventId, deptId, ownTeamMemberIds);
+
     return (
       <PageShell eventId={eventId} deptId={deptId}>
         <TeamHeadRosterView
+          eventId={eventId}
+          deptId={deptId}
           eventTitle={event.title}
           profileId={profileId}
           subTeams={mySubTeams}
           assignments={assignments}
           gapSummary={gapSummary}
           headcountGaps={headcountGaps}
+          taskSlots={taskData.slots}
+          candidatesByTask={taskData.candidatesByTask}
         />
       </PageShell>
     );
@@ -128,19 +143,23 @@ export default async function RosterPage({
 
   // ── Super admin + all_depts_leader ─────────────────────────────────────────
   if (role === "super_admin" || role === "all_depts_leader") {
-    const [assignments, gapSummary, headcountGaps] = await Promise.all([
+    const [assignments, gapSummary, headcountGaps, taskData] = await Promise.all([
       getAllAssignmentsForEventDept(eventId, deptId),
       getSkillGapsForDepartmentRoster(eventId, deptId),
       getHeadcountGapsForRoster(eventId, deptId),
+      getEventTaskSlotsWithCandidates(eventId, deptId),
     ]);
     return (
       <PageShell eventId={eventId} deptId={deptId}>
         <SuperAdminRosterView
+          eventId={eventId}
+          deptId={deptId}
           eventTitle={event.title}
           department={department}
           assignments={assignments}
           gapSummary={gapSummary}
           headcountGaps={headcountGaps}
+          taskSlots={taskData.slots}
         />
       </PageShell>
     );
