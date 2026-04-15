@@ -264,7 +264,21 @@ export async function getDeptHeadDashboardData(
   );
 
   // 5. Pending queues + rotation schedule + unassigned tasks in parallel
-  const upcomingEventIds = [...eventInfoMap.keys()];
+  // Query upcoming event IDs directly from event_departments so that events with
+  // tasks but no volunteer assignments yet are still counted (eventInfoMap only
+  // contains events that already have at least one assignment row).
+  const { data: edRows } = await supabase
+    .from("event_departments")
+    .select("event_id, events!inner(event_date)")
+    .in("department_id", deptIds)
+    .gte("events.event_date", today)
+    .lte("events.event_date", windowEnd);
+  const upcomingEventIds = [
+    ...new Set(
+      ((edRows ?? []) as unknown as { event_id: string }[]).map((r) => r.event_id),
+    ),
+  ];
+
   const [interestRes, skillRes, rotationResult, unassignedTasksRes] = await Promise.all([
     supabase
       .from("volunteer_interests")

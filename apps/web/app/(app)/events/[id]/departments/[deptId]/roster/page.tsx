@@ -152,6 +152,8 @@ export default async function RosterPage({
     return (
       <PageShell eventId={eventId} deptId={deptId}>
         <SuperAdminRosterView
+          eventId={eventId}
+          deptId={deptId}
           eventTitle={event.title}
           department={department}
           assignments={assignments}

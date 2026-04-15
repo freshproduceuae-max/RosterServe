@@ -10,6 +10,8 @@ import { HeadcountGapSection } from "./headcount-gap-section";
 import { TaskAssignmentSection } from "./task-assignment-section";
 
 interface SuperAdminRosterViewProps {
+  eventId: string;
+  deptId: string;
   eventTitle: string;
   department: DepartmentWithTeams;
   assignments: AssignmentWithContext[];
@@ -19,6 +21,8 @@ interface SuperAdminRosterViewProps {
 }
 
 export function SuperAdminRosterView({
+  eventId,
+  deptId,
   eventTitle,
   department,
   assignments,
@@ -51,8 +55,8 @@ export function SuperAdminRosterView({
       />
 
       <TaskAssignmentSection
-        eventId=""
-        deptId=""
+        eventId={eventId}
+        deptId={deptId}
         slots={taskSlots}
         candidatesByTask={{}}
         canAssign={false}
