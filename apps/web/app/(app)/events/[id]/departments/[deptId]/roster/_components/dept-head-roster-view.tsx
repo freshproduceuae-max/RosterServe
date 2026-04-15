@@ -16,6 +16,8 @@ import { MarkServedButton } from "./mark-served-button";
 import { CrossTeamSuggestionsPanel } from "./cross-team-suggestions-panel";
 import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
 import type { CrossTeamSuggestion } from "@/lib/assignments/queries";
+import type { EventTaskSlot, VolunteerTaskCandidate } from "@/lib/tasks/types";
+import { TaskAssignmentSection } from "./task-assignment-section";
 
 interface DeptHeadRosterViewProps {
   eventId: string;
@@ -28,6 +30,8 @@ interface DeptHeadRosterViewProps {
   headcountGaps: HeadcountGapSummary;
   substituteOptions: TeamHeadOption[];
   crossTeamSuggestions: CrossTeamSuggestion[];
+  taskSlots: EventTaskSlot[];
+  candidatesByTask: Record<string, VolunteerTaskCandidate[]>;
 }
 
 export function DeptHeadRosterView({
@@ -40,6 +44,8 @@ export function DeptHeadRosterView({
   headcountGaps,
   substituteOptions,
   crossTeamSuggestions,
+  taskSlots,
+  candidatesByTask,
 }: DeptHeadRosterViewProps) {
   const [showTeamForm, setShowTeamForm] = useState(false);
   const subTeams = department.teams.filter((t) => t.deleted_at === null);
@@ -131,6 +137,14 @@ export function DeptHeadRosterView({
         readOnly={false}
         subTeams={subTeams}
         requireSubTeam={false}
+      />
+
+      <TaskAssignmentSection
+        eventId={eventId}
+        deptId={deptId}
+        slots={taskSlots}
+        candidatesByTask={candidatesByTask}
+        canAssign={true}
       />
     </div>
   );

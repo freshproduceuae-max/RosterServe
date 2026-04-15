@@ -10,7 +10,7 @@ interface DeptHeadDashboardProps {
 }
 
 export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps) {
-  const { eventSummaries, pendingInterests, pendingSkillApprovals, rotationEntries, rotationTeamsByDept } = data;
+  const { eventSummaries, pendingInterests, pendingSkillApprovals, rotationEntries, rotationTeamsByDept, unassignedTasksCount } = data;
   const hasPending = pendingInterests > 0 || pendingSkillApprovals > 0;
 
   return (
@@ -98,6 +98,17 @@ export function DeptHeadDashboard({ data, displayName }: DeptHeadDashboardProps)
           entries={rotationEntries}
           teamsByDept={rotationTeamsByDept}
         />
+      )}
+
+      {/* Unassigned tasks notice */}
+      {unassignedTasksCount > 0 && (
+        <div className="rounded-200 border border-semantic-warning bg-semantic-warning/10 p-300">
+          <p className="text-body-sm font-semibold text-semantic-warning">
+            {unassignedTasksCount === 1
+              ? "1 task slot is unassigned across upcoming events."
+              : `${unassignedTasksCount} task slots are unassigned across upcoming events.`}
+          </p>
+        </div>
       )}
 
       {/* Pending queues */}

@@ -3,9 +3,11 @@
 import type { AssignmentWithContext } from "@/lib/assignments/types";
 import type { DepartmentWithTeams } from "@/lib/departments/types";
 import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
+import type { EventTaskSlot } from "@/lib/tasks/types";
 import { AssignmentList } from "./assignment-list";
 import { GapSummary } from "./gap-summary";
 import { HeadcountGapSection } from "./headcount-gap-section";
+import { TaskAssignmentSection } from "./task-assignment-section";
 
 interface SuperAdminRosterViewProps {
   eventTitle: string;
@@ -13,6 +15,7 @@ interface SuperAdminRosterViewProps {
   assignments: AssignmentWithContext[];
   gapSummary: RosterGapSummary;
   headcountGaps: HeadcountGapSummary;
+  taskSlots: EventTaskSlot[];
 }
 
 export function SuperAdminRosterView({
@@ -21,6 +24,7 @@ export function SuperAdminRosterView({
   assignments,
   gapSummary,
   headcountGaps,
+  taskSlots,
 }: SuperAdminRosterViewProps) {
   const subTeams = department.teams.filter((st) => st.deleted_at === null);
 
@@ -44,6 +48,14 @@ export function SuperAdminRosterView({
         readOnly={true}
         subTeams={subTeams}
         requireSubTeam={false}
+      />
+
+      <TaskAssignmentSection
+        eventId=""
+        deptId=""
+        slots={taskSlots}
+        candidatesByTask={{}}
+        canAssign={false}
       />
     </div>
   );

@@ -76,6 +76,8 @@ export type DeptHeadDashboardData = {
   rotationEntries: import("@/lib/departments/types").RotationEntry[];
   /** Plain object (JSON-safe, RSC-serialisable) — rotatable teams per dept_id. */
   rotationTeamsByDept: Record<string, import("@/lib/departments/queries").RotatableTeamRecord[]>;
+  /** Count of event_task_assignments with null volunteer_id in the 14-day window */
+  unassignedTasksCount: number;
 };
 
 export type TeamHeadDashboardData = {

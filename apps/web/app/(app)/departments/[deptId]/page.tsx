@@ -12,6 +12,9 @@ import { TeamListSection } from "./_components/team-list-section";
 import { HeadcountRequirementsSection } from "./_components/headcount-requirements-section";
 import { getDepartmentMembers } from "@/lib/memberships/queries";
 import { MembersSection } from "./_components/members-section";
+import { getTasksForDepartment } from "@/lib/tasks/queries";
+import { getDepartmentSkillsForDropdown } from "@/lib/skills/queries";
+import { TaskLibrarySection } from "./_components/task-library-section";
 
 export default async function DepartmentDetailPage({
   params,
@@ -38,9 +41,12 @@ export default async function DepartmentDetailPage({
     ...department.teams.map((t) => t.owner_id),
   ].filter((id): id is string => id !== null);
 
-  const [ownerNames, members] = await Promise.all([
+  const isDeptHeadManage = session.profile.role === "dept_head" && isDeptHeadOwner;
+  const [ownerNames, members, tasks, skills] = await Promise.all([
     getOwnerDisplayNames(ownerIds),
     canManage ? getDepartmentMembers(deptId) : Promise.resolve([]),
+    isDeptHeadManage ? getTasksForDepartment(deptId) : Promise.resolve([]),
+    isDeptHeadManage ? getDepartmentSkillsForDropdown(deptId) : Promise.resolve([]),
   ]);
 
   // team_head sees only their own team's headcount requirements
@@ -98,6 +104,13 @@ export default async function DepartmentDetailPage({
           canManage={canManage}
         />
       )}
+
+      <TaskLibrarySection
+        departmentId={deptId}
+        tasks={tasks}
+        availableSkills={skills}
+        canManage={isDeptHeadManage}
+      />
     </div>
   );
 }

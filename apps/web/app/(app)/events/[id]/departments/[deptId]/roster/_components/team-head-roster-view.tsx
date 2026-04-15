@@ -8,23 +8,33 @@ import { AssignmentList } from "./assignment-list";
 import { GapSummary } from "./gap-summary";
 import { HeadcountGapSection } from "./headcount-gap-section";
 import type { RosterGapSummary, HeadcountGapSummary } from "@/lib/skills/gap-types";
+import type { EventTaskSlot, VolunteerTaskCandidate } from "@/lib/tasks/types";
+import { TaskAssignmentSection } from "./task-assignment-section";
 
 interface TeamHeadRosterViewProps {
+  eventId: string;
+  deptId: string;
   eventTitle: string;
   profileId: string;
   subTeams: Pick<Team, "id" | "name">[];
   assignments: AssignmentWithContext[];
   gapSummary: RosterGapSummary;
   headcountGaps: HeadcountGapSummary;
+  taskSlots: EventTaskSlot[];
+  candidatesByTask: Record<string, VolunteerTaskCandidate[]>;
 }
 
 export function TeamHeadRosterView({
+  eventId,
+  deptId,
   eventTitle,
   profileId,
   subTeams,
   assignments,
   gapSummary,
   headcountGaps,
+  taskSlots,
+  candidatesByTask,
 }: TeamHeadRosterViewProps) {
   const heading = subTeams.length === 1 ? subTeams[0].name : "Your teams";
 
@@ -61,6 +71,14 @@ export function TeamHeadRosterView({
           requireSubTeam={true}
         />
       )}
+
+      <TaskAssignmentSection
+        eventId={eventId}
+        deptId={deptId}
+        slots={taskSlots}
+        candidatesByTask={candidatesByTask}
+        canAssign={true}
+      />
     </div>
   );
 }

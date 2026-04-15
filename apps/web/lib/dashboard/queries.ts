@@ -123,7 +123,7 @@ export async function getDeptHeadDashboardData(
     .is("deleted_at", null);
 
   if (!deptRows || deptRows.length === 0) {
-    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0, rotationEntries: [], rotationTeamsByDept: {} };
+    return { eventSummaries: [], pendingInterests: 0, pendingSkillApprovals: 0, rotationEntries: [], rotationTeamsByDept: {}, unassignedTasksCount: 0 };
   }
   const depts = deptRows as { id: string; name: string }[];
   const deptIds = depts.map((d) => d.id);
@@ -263,8 +263,9 @@ export async function getDeptHeadDashboardData(
     (a, b) => a.event_date.localeCompare(b.event_date),
   );
 
-  // 5. Pending queues + rotation schedule in parallel
-  const [interestRes, skillRes, rotationResult] = await Promise.all([
+  // 5. Pending queues + rotation schedule + unassigned tasks in parallel
+  const upcomingEventIds = [...eventInfoMap.keys()];
+  const [interestRes, skillRes, rotationResult, unassignedTasksRes] = await Promise.all([
     supabase
       .from("volunteer_interests")
       .select("id", { count: "exact", head: true })
@@ -276,6 +277,15 @@ export async function getDeptHeadDashboardData(
       .eq("status", "pending")
       .is("deleted_at", null),
     getRotationSchedule(deptIds),
+    upcomingEventIds.length > 0
+      ? supabase
+          .from("event_task_assignments")
+          .select("id", { count: "exact", head: true })
+          .in("department_id", deptIds)
+          .in("event_id", upcomingEventIds)
+          .is("volunteer_id", null)
+          .is("deleted_at", null)
+      : Promise.resolve({ count: 0 }),
   ]);
 
   return {
@@ -284,6 +294,7 @@ export async function getDeptHeadDashboardData(
     pendingSkillApprovals: skillRes.count ?? 0,
     rotationEntries: rotationResult.entries,
     rotationTeamsByDept: rotationResult.teamsByDept,
+    unassignedTasksCount: unassignedTasksRes.count ?? 0,
   };
 }
 
