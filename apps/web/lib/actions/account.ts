@@ -29,10 +29,17 @@ export async function requestAccountDeletion(): Promise<{ error?: string }> {
 
   if (requestError && requestError.code !== "23505") {
     // Roll back the soft-delete on genuine errors only
-    await supabase
+    const { error: rollbackError } = await supabase
       .from("profiles")
       .update({ deleted_at: null })
       .eq("id", userId);
+
+    if (rollbackError) {
+      // Profile is soft-deleted but no request was recorded — admin intervention needed
+      console.error("requestAccountDeletion: rollback failed", rollbackError);
+      return { error: "Deletion request failed and profile state could not be restored. Please contact support." };
+    }
+
     return { error: "Failed to process deletion request. Please try again." };
   }
 
