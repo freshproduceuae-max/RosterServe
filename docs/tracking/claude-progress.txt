@@ -1,7 +1,7 @@
 ROSTERSERVE SESSION HANDOFF
-Last updated: 2026-04-08 (session 16)
-Project phase: Active revision cycle — RS-F001 + RS-F002 passed; RS-F003 revision next
-Repo baseline: main is clean and up to date; 23 migrations apply cleanly
+Last updated: 2026-04-15 (session 17)
+Project phase: Post-v1 production hardening — Phase 2 in progress
+Repo baseline: main is clean and up to date; 34 migrations apply cleanly
 
 HANDOFF RULE
 - Replace this file with the latest durable handoff state.
@@ -10,95 +10,75 @@ HANDOFF RULE
 
 LATEST COMPLETED WORK
 
-RS-F002 revision — event lifecycle management
-  PR #20 (implementation): event creation grants
-    - can_create_events boolean NOT NULL DEFAULT false added to profiles (migration 00021)
-    - all_depts_leader events SELECT policy added (migration 00021)
-    - events INSERT and UPDATE RLS policies expanded to cover all_depts_leader by default
-      and granted dept_head / team_head (migration 00021)
-    - canManageEvents(profile) + canManageThisEvent(profile, event) helpers in lib/auth/roles.ts
-    - grantEventCreation / revokeEventCreation server actions in lib/events/grants.ts
-    - /events/grants page (super_admin only) with GrantList toggle component
-    - All four event actions (createEvent, updateEvent, transitionEventStatus, softDeleteEvent)
-      updated to use canManageEvents check
-    - events/page.tsx, events/new/page.tsx, events/[id]/page.tsx, events/[id]/edit/page.tsx updated
-    - EventDetailCard isSuperAdmin prop renamed to canManage; sourced from canManageThisEvent
+Phase 2-A + 2-B (nav/routing fixes + mobile nav) — committed directly to main (2026-04-15)
+  - app-nav.tsx: Interests hidden from supporter; mobile hamburger drawer added (< md); "Service requests" label for team_head and supporter
+  - availability/page.tsx, skills/page.tsx: supporter routed to volunteer views
+  - interests/page.tsx: all_depts_leader routed to SuperAdminInterestsView
+  - leader-availability-view.tsx: "in your teams" subtitle for team_head
+  - department-empty-state.tsx: actionable guidance for dept_head with no departments
 
-  PR #21 (validation fixes):
-    - Migration 00022: super_admin UPDATE policy on profiles (dept_head / team_head rows)
-      Root cause: grantEventCreation / revokeEventCreation silently wrote 0 rows because no
-      RLS UPDATE policy allowed super_admin to update another user's profile row
-    - Migration 00023: "Granted users can read events they created" SELECT policy on events
-      Root cause: createEvent's .select("id").single() failed after INSERT because the new event
-      has no departments yet and the dept_head SELECT policy is scoped to owned-dept events only
-    - EventDetailCard dialog crash fixed: transitionAction and deleteAction wrapped in
-      startTransition(); immediate setTransitionTarget(null) / setShowDelete(false) calls removed
-      Root cause: useActionState dispatch called imperatively without startTransition + modal
-      unmounted before async action resolved → React removeChild null crash
+Phase 2-C (dashboard UX polish) — committed directly to main (2026-04-15)
+  - Role subtitles added to all 5 role dashboards (all_depts_leader, dept_head, team_head, supporter, volunteer)
+  - Supporter "no leader assigned" warning styled as callout card (warning tint)
+  - Quick-action links added to all leader dashboards (Dept Head → /departments, Team Head → /assignments, All Depts Leader → /events)
 
-VALIDATION RESULTS (checks 5–16 confirmed 2026-04-08)
-  - Check 5: super_admin creates event → appears in list ✓
-  - Check 6: all_depts_leader creates event → appears in list ✓
-  - Check 7: dept_head (no grant) → no Create CTA at /events ✓
-  - Check 8: dept_head (no grant) → /events/new redirects to /events ✓
-  - Check 9: super_admin grants dept_head at /events/grants → button flips to Revoke ✓
-  - Check 10: granted dept_head → CTA visible, event creation succeeds ✓
-  - Check 11: granted dept_head → Edit/action on own event; absent on super_admin's event ✓
-  - Check 12: revoke grant → CTA gone, /events/new blocks again ✓
-  - Check 13: draft→published→completed chain valid; published→draft rejected by DB trigger ✓
-  - Check 14: can_create_events NOT NULL DEFAULT false confirmed at schema level ✓
-  - Check 15: all_depts_leader sees all active events regardless of department ownership ✓
-  - Check 16: /events/[id]/edit accessible for own event; redirects for non-owned event ✓
-  - npm run typecheck: PASS ✓
-  - npm run lint: PASS ✓
+Phase 2-D (security fixes) — PR #37, reviewed and merged to main (2026-04-15)
+  - 00034_tighten_storage_rls.sql: drops 3 permissive any-auth policies on instruction-media bucket; replaces with 4 role-scoped policies using public.get_my_role(). Volunteer/supporter SELECT requires non-declined assignment in the relevant event+department (join via event_instructions.attachment_path = storage.objects.name).
+  - memberships/actions.ts: placeInTeam and removeMembership now enforce dept_head ownership via single JOIN query (.eq("departments.owner_id", profile.id) with !inner join + maybeSingle). Returns { error: "Unauthorized" } if check fails. super_admin/all_depts_leader bypass unchanged.
+  - middleware.ts: replaced silent NextResponse.next() fallthrough on missing env vars with try/catch around getPublicEnv(); returns new Response("Server misconfiguration...", { status: 500 }) on failure.
+  - docs/plans/plan-phase2-production-readiness.md: corrected migration numbers (00034 storage RLS, 00035 account deletion); explicit new Response() constructor in middleware step.
+
+SESSION WORKFLOW
+- Coder (Claude main session) + Independent Review Agent (spawned via Agent tool)
+- Plan reviewed by independent agent before implementation; NEEDS_DISCUSSION → iterated to APPROVED WITH SUGGESTIONS
+- Code reviewed by independent agent after PR creation; returned APPROVED
+- All approvals by reviewer agents; user is not a gate in this session
 
 CODEBASE STATUS
-- 23 migrations applied cleanly on db reset
-- sub_leader enum value: deprecated dead value; no row carries sub_leader; do not use in new code
-- supporter_of column on profiles (nullable FK) — wired by RS-F018, not yet active
-- all_depts_leader and supporter dashboard stubs are placeholders; full content is RS-F010's responsibility
-- isLeaderRole() excludes supporter (access is derived from supporter_of FK, not structural scope)
-- canManageEvents(profile) gates event creation; canManageThisEvent(profile, event) gates edit/action surface
+- 34 migrations applied cleanly
+- instruction-media bucket: now role-scoped; volunteers/supporters access gated by assignment
+- Middleware: fails hard (500) on missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
+- dept_head membership mutations: ownership-verified at action layer in addition to RLS
 
-FEATURE STATUS SUMMARY
-- RS-F001: passed ✅
-- RS-F005: passed ✅
-- RS-F002: passed ✅
-- RS-F003–RS-F004, RS-F006–RS-F010: revision_required
-- RS-F011–RS-F018: not_started
+PHASE 2 STATUS SUMMARY
+- Phase 2-A (nav/routing fixes): complete ✅
+- Phase 2-B (mobile nav): complete ✅
+- Phase 2-C (dashboard polish): complete ✅
+- Phase 2-D (security fixes): complete ✅ — PR #37 merged
+- Phase 2-E (GDPR foundations): not started
+- Phase 2-F (production hardening): not started
 
 BLOCKERS
 - None
 
 NEXT REQUIRED ACTION
-1. RS-F003 revision: department and team structure
-   - Write plan → Codex advisory review → implement → Codex blocking review → user approval → validate
-   - Likely scope: department/sub-team CRUD scoped to dept_head ownership, team_head assignment
-   - Plan file path: docs/plans/plan-rs-f003-<slug>.md (to be created)
+Phase 2-E (GDPR foundations) — next in sequence (2-D must land before 2-E per plan dependency)
+  - New migration: 00035_account_deletion_request.sql (account_deletion_requests table)
+  - New files: apps/web/app/(app)/settings/account/page.tsx, apps/web/lib/actions/account.ts, apps/web/app/(public)/privacy/page.tsx
+  - Modified: apps/web/app/(auth)/sign-up/ (privacy notice link), apps/web/app/(app)/app-nav.tsx (Account nav item)
+  - Plan file: docs/plans/plan-phase2-production-readiness.md (Phase 2-E section, lines ~240–285)
+
+Phase 2-F (production hardening) — can run in parallel with 2-E
+  - New: apps/web/instrumentation.ts, docs/ops/new-org-setup.md
+  - Modified: apps/web/next.config.js (instrumentationHook: true)
+  - Package: @vercel/otel
 
 BRANCH CONVENTION
-- Use feat/<feature-id>-<short-slug>
-- Last merged branches: feat/rs-f002-event-lifecycle-revision (PR #21)
-- Next branch: feat/rs-f003-<slug>
-
-PLAN STATUS
-- docs/plans/plan-rs-f001-role-hierarchy-revision.md: implemented and validated ✓
-- docs/plans/plan-rs-f002-event-lifecycle-revision.md: implemented and validated ✓ (two RLS deviations documented)
-- All other pre-revision plans (RS-F003 through RS-F010) are outdated — write new revision plans
+- Use fix/ or feat/ prefix per plan phase naming
+- Last merged: fix/rs-security (PR #37, Phase 2-D)
+- Next branches: feat/rs-gdpr-foundations (2-E), fix/rs-production-hardening (2-F)
 
 CARRY-OVER EXECUTION NOTES
-- Follow the canonical design system for all UI work
-- Permanent membership persists across events — never reset by event-level actions
-- Team Head is optional; Dept Head is always required for a volunteer
-- Auto-suggestions never auto-assign — Dept Head confirmation always required
-- Do not commit directly to main; use a clean branch per feature
-- The sub_leader enum value is deprecated dead; do not introduce it into new code or policies
-- canManageEvents / canManageThisEvent are the canonical event-access helpers — do not revert to raw role checks
-- DepartmentListSection still uses isSuperAdmin (not canManageEvent) — department management is RS-F003 scope
+- GDPR scope note: privacy notice is structural minimum, not legal compliance
+- account deletion is soft-delete + admin review queue (super_admin hard-deletes via existing /admin oversight)
+- exportMyData assembles profile + assignments + skills + interests rows as JSON download
+- Signed URL access for instruction-media: the SELECT RLS fires at createSignedUrl time (server-side), not at URL consumption time — acceptance tests must test URL generation, not URL fetch
+- Phase 2-D plan doc now accurate; do not re-correct migration numbers
 
 CANONICAL DOCS
-- Vision: VisionDocument_ChurchRosterApp.md (revised 2026-04-07)
-- PRD: docs/prd/prd.md (revised 2026-04-07)
-- Feature registry: docs/features/feature-list.json (v2; RS-F001 + RS-F002 passed)
+- Vision: VisionDocument_ChurchRosterApp.md
+- PRD: docs/prd/prd.md
+- Feature registry: docs/features/feature-list.json (all 18 features passes=true)
+- Phase 2 plan: docs/plans/plan-phase2-production-readiness.md
 - Progress tracker: docs/tracking/progress.md
 - Session handoff: docs/tracking/claude-progress.txt

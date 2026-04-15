@@ -115,10 +115,14 @@ For this repo state:
 - RS-F017 marked passes=true (2026-04-09)
 - RS-F018 implemented (2026-04-09): migration 00032 (super_admin UPDATE policy on supporter profiles, closing gap left by 00022); assignSupporter and removeSupporter server actions; getSupporterAssignments and getLeaderProfiles queries; SupporterAssignmentsSection client component with per-row pending state; admin oversight page loads all three data sets in parallel and renders new section
 - RS-F018 marked passes=true (2026-04-09)
+- Phase 2-A + 2-B implemented (2026-04-15): nav/routing fixes for supporter + all_depts_leader + team_head; mobile hamburger nav; "Service requests" label; dept_head empty state guidance — PR merged to main
+- Phase 2-C implemented (2026-04-15): role subtitles on all 5 role dashboards; supporter callout card; quick-action links on all leader dashboards — PR merged to main
+- Phase 2-D implemented (2026-04-15): migration 00034_tighten_storage_rls.sql (role-scoped storage policies replacing permissive any-auth policies); dept_head membership ownership guard in placeInTeam/removeMembership (single JOIN query); middleware env hardening (getPublicEnv() hard-fail replaces silent NextResponse.next()) — PR #37 reviewed (plan review + code review by independent agent), approved, and merged to main
 
 ## Next Up
 
-- All 18 features passed
+- Phase 2-E (GDPR foundations): privacy notice page, account deletion flow, data export, sign-up link — requires migration 00035_account_deletion_request.sql
+- Phase 2-F (production hardening): @vercel/otel instrumentation, new-org ops guide — can run in parallel with 2-E
 
 ## Status Legend
 
