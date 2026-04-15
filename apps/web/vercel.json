@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/event-alerts",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/stub-rollover",
+      "schedule": "0 1 * * *"
     }
   ]
 }

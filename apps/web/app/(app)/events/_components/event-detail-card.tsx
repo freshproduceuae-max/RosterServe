@@ -3,10 +3,12 @@
 import { useActionState, useState, startTransition } from "react";
 import Link from "next/link";
 import { EventStatusBadge } from "./event-status-badge";
+import { RecurringBadge } from "./recurring-badge";
 import { StatusTransitionModal, DeleteEventModal } from "./status-transition-modal";
 import {
   transitionEventStatus,
   softDeleteEvent,
+  copyEvent,
   type EventActionResult,
 } from "@/lib/events/actions";
 import {
@@ -47,6 +49,11 @@ export function EventDetailCard({
     FormData
   >(softDeleteEvent, undefined);
 
+  const [copyState, copyAction, copyPending] = useActionState<
+    EventActionResult,
+    FormData
+  >(copyEvent, undefined);
+
   const nextStatuses = VALID_STATUS_TRANSITIONS[event.status];
   const canEdit = canManage && event.status !== "completed";
 
@@ -56,6 +63,8 @@ export function EventDetailCard({
       : null;
   const deleteError =
     deleteState && "error" in deleteState ? deleteState.error : null;
+  const copyError =
+    copyState && "error" in copyState ? copyState.error : null;
 
   function handleTransitionConfirm() {
     if (!transitionTarget) return;
@@ -129,6 +138,29 @@ export function EventDetailCard({
               {formatTimestamp(event.created_at)}
             </p>
           </div>
+          {event.is_recurring && event.recurrence_rule && (
+            <div>
+              <p className="font-mono text-mono uppercase text-neutral-600">
+                Recurrence
+              </p>
+              <div className="mt-100">
+                <RecurringBadge rule={event.recurrence_rule} />
+              </div>
+            </div>
+          )}
+          {event.is_stub && event.parent_event_id && (
+            <div>
+              <p className="font-mono text-mono uppercase text-neutral-600">
+                Series
+              </p>
+              <Link
+                href={`/events/${event.parent_event_id}`}
+                className="mt-100 inline-block text-body text-brand-calm-600 hover:underline"
+              >
+                View parent event
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Errors */}
@@ -137,6 +169,9 @@ export function EventDetailCard({
         )}
         {deleteError && (
           <p className="text-body-sm text-semantic-error">{deleteError}</p>
+        )}
+        {copyError && (
+          <p className="text-body-sm text-semantic-error">{copyError}</p>
         )}
 
         {/* Actions */}
@@ -163,6 +198,18 @@ export function EventDetailCard({
                 Delete event
               </button>
             )}
+            <button
+              type="button"
+              disabled={copyPending}
+              onClick={() => {
+                const fd = new FormData();
+                fd.set("sourceEventId", event.id);
+                startTransition(() => copyAction(fd));
+              }}
+              className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-200 text-body-sm text-neutral-600 transition-colors duration-fast hover:bg-neutral-100 hover:text-neutral-950 disabled:opacity-60"
+            >
+              {copyPending ? "Copying\u2026" : "Copy this event"}
+            </button>
           </div>
         )}
       </div>

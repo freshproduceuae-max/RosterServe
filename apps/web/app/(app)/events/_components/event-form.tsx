@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   createEvent,
   updateEvent,
@@ -9,6 +9,8 @@ import {
 import {
   EVENT_TYPES,
   EVENT_TYPE_LABELS,
+  RECURRENCE_RULES,
+  RECURRENCE_RULE_LABELS,
   type Event,
 } from "@/lib/events/types";
 
@@ -23,6 +25,8 @@ export function EventForm({ event }: { event?: Event }) {
     EventActionResult,
     FormData
   >(action, undefined);
+
+  const [isRecurring, setIsRecurring] = useState(event?.is_recurring ?? false);
 
   const errorMessage = state && "error" in state ? state.error : null;
 
@@ -90,6 +94,58 @@ export function EventForm({ event }: { event?: Event }) {
           className={INPUT_CLASS}
         />
       </div>
+
+      {/* Hidden input carries boolean as string for FormData compatibility */}
+      <input type="hidden" name="isRecurring" value={isRecurring ? "true" : "false"} />
+
+      <div className="flex items-center gap-200">
+        <input
+          id="isRecurring"
+          type="checkbox"
+          checked={isRecurring}
+          onChange={(e) => setIsRecurring(e.target.checked)}
+          disabled={isEdit && !!event?.is_recurring}
+          className="h-400 w-400 rounded-100 border-neutral-300 accent-brand-calm-600 disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <label htmlFor="isRecurring" className="text-body-sm font-semibold text-neutral-800">
+          Recurring event
+        </label>
+      </div>
+
+      {isRecurring && (
+        <div className="flex flex-col gap-100">
+          <label htmlFor="recurrenceRule" className="text-body-sm font-semibold text-neutral-800">
+            Recurrence pattern
+          </label>
+          {isEdit && event?.recurrence_rule ? (
+            <>
+              {/* Read-only display when stubs already exist — changing rule is non-goal for RS-F020 */}
+              <input type="hidden" name="recurrenceRule" value={event.recurrence_rule} />
+              <p className="rounded-200 border border-neutral-300 bg-neutral-100 px-300 py-200 text-body text-neutral-600">
+                {RECURRENCE_RULE_LABELS[event.recurrence_rule]}
+              </p>
+              <p className="text-body-sm text-neutral-500">
+                Recurrence pattern cannot be changed after stubs have been generated.
+              </p>
+            </>
+          ) : (
+            <select
+              id="recurrenceRule"
+              name="recurrenceRule"
+              required
+              defaultValue={event?.recurrence_rule ?? ""}
+              className={INPUT_CLASS}
+            >
+              <option value="" disabled>Select pattern</option>
+              {RECURRENCE_RULES.map((rule) => (
+                <option key={rule} value={rule}>
+                  {RECURRENCE_RULE_LABELS[rule]}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {errorMessage && (
         <p className="text-body-sm text-semantic-error">{errorMessage}</p>
