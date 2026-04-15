@@ -260,14 +260,29 @@ None.
 
 ### Implementation Steps
 
-1. Create migration `00032_account_deletion_request.sql` with the `account_deletion_requests` table and RLS: owner can `INSERT`; `super_admin` can `SELECT/UPDATE`.
-2. Create `apps/web/lib/actions/account.ts`:
-   - `exportMyData(userId)` — queries `profiles`, `service_requests`, `skill_claims`, `interest_requests` for the user, returns a `Response` with `Content-Disposition: attachment; filename="my-rosterserve-data.json"`.
-   - `requestAccountDeletion()` — sets `profiles.deleted_at = now()` for the calling user, inserts into `account_deletion_requests`, signs the user out.
-3. Create `apps/web/app/(app)/settings/account/page.tsx` with two action buttons using the existing destructive button style. Add a confirmation step (inline confirm text, not a modal) before deletion.
-4. Create `apps/web/app/(public)/privacy/page.tsx` as a static page with a minimal notice: what data is collected, why, who can see it, and how to delete it. Link it from the footer and sign-up page.
-5. In the sign-up flow, add the privacy notice link below the submit button.
-6. Add an "Account" link to `app-nav.tsx` for all roles (bottom of the nav or separate from the main nav group).
+1. Create migration `00035_account_deletion_request.sql` with the `account_deletion_requests` table:
+   - `id uuid PRIMARY KEY DEFAULT gen_random_uuid()`
+   - `user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE`
+   - `requested_at timestamptz NOT NULL DEFAULT now()`
+   - `reviewed_at timestamptz`
+   - `reviewed_by uuid REFERENCES profiles(id) ON DELETE SET NULL`
+   - `status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected'))`
+   - RLS: owner can INSERT; `super_admin` can SELECT/UPDATE via `get_my_role()`.
+2. Create `apps/web/app/api/export/my-data/route.ts` (Route Handler inside the `app/` directory, not a server action):
+   - `GET` handler verifies session via `getSessionWithProfile()`. Returns 401 if not authenticated.
+   - Queries `profiles`, `assignments`, `skill_claims`, `interest_requests` for `auth.uid()` using existing per-user RLS (no service role needed).
+   - Returns `new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="my-rosterserve-data.json"' }})`.
+   - The "Download my data" button in the Account page is a plain `<a href="/api/export/my-data" download>` link.
+3. Create `apps/web/lib/actions/account.ts`:
+   - `requestAccountDeletion()` server action — sets `profiles.deleted_at = now()` for the calling user, inserts into `account_deletion_requests`. `await supabase.auth.signOut()` (must be awaited before redirect). Then call `redirect('/sign-in')` outside any try/catch block (redirect throws internally).
+   - `approveAccountDeletion(userId)` server action (super_admin only) — hard-deletes the profile row, then calls `createSupabaseAdminClient().auth.admin.deleteUser(userId)` to remove the auth record. If adminClient is null (service key not set), return `{ error: "Service role key not configured" }` rather than silently failing.
+4. Create `apps/web/app/(app)/settings/account/page.tsx` with two sections:
+   - "Download my data" — plain `<a href="/api/export/my-data" download>` styled as a secondary button.
+   - "Delete my account" — client component with inline text confirmation ("Type DELETE to confirm", no modal). Calls `requestAccountDeletion()` on submit.
+5. Create `apps/web/app/(public)/privacy/page.tsx` — new `(public)` route group, no auth required. Static prose page.
+6. In the sign-up flow, add privacy consent line between submit button and "Already have an account?" paragraph.
+7. Add `{ label: "Account", href: "/settings/account", show: true }` to `app-nav.tsx` navItems.
+8. Add `getAccountDeletionRequests()` as 4th entry in the admin page `Promise.all`. Render a new `AccountDeletionRequestsSection` below existing sections. Approve calls `approveAccountDeletion(userId)`; reject calls an `updateDeletionRequestStatus(id, 'rejected')` action.
 
 ### Acceptance Criteria
 
@@ -297,8 +312,8 @@ None.
 
 | File | Change |
 |------|--------|
-| `apps/web/instrumentation.ts` (new or extend) | Enable Vercel-native logging via `@vercel/otel` — register at app startup |
-| `apps/web/next.config.js` | Enable `instrumentationHook: true` if not already set |
+| `apps/web/instrumentation.ts` (new) | Enable Vercel-native logging via `@vercel/otel` — register at app startup |
+| `apps/web/next.config.mjs` | No change needed — Next.js 15 enables instrumentation by default (flag was promoted to stable) |
 | `docs/ops/new-org-setup.md` (new) | Step-by-step guide for deploying a fresh org instance |
 
 ### Rollout / Migration / Access Impact
@@ -315,7 +330,7 @@ None — Vercel observability is additive. `instrumentation.ts` runs server-side
      registerOTel({ serviceName: 'rosterserve' });
    }
    ```
-3. In `next.config.js`, confirm `experimental.instrumentationHook` is `true` (required for Next.js 14).
+3. No `next.config.mjs` change needed — the project is on Next.js 15, where `instrumentation.ts` is supported by default. The `experimental.instrumentationHook` flag was promoted to stable and removed in Next.js 15.
 4. Create `docs/ops/new-org-setup.md` covering:
    - Fork/clone the repo
    - Create a new Supabase project and run migrations

@@ -4,19 +4,22 @@ import {
   getSoftDeletedRecords,
   getSupporterAssignments,
   getLeaderProfiles,
+  getAccountDeletionRequests,
 } from "@/lib/admin/queries";
 import { DeleteApprovalTable } from "./_components/delete-approval-table";
 import { SupporterAssignmentsSection } from "./_components/supporter-assignments-section";
+import { AccountDeletionRequestsSection } from "./_components/account-deletion-requests-section";
 
 export default async function AdminOversightPage() {
   const session = await getSessionWithProfile();
   if (!session) redirect("/sign-in");
   if (session.profile.role !== "super_admin") redirect("/dashboard");
 
-  const [records, supporters, leaders] = await Promise.all([
+  const [records, supporters, leaders, deletionRequests] = await Promise.all([
     getSoftDeletedRecords(),
     getSupporterAssignments(),
     getLeaderProfiles(),
+    getAccountDeletionRequests(),
   ]);
 
   return (
@@ -56,6 +59,8 @@ export default async function AdminOversightPage() {
         supporters={supporters}
         leaders={leaders}
       />
+
+      <AccountDeletionRequestsSection requests={deletionRequests} />
     </div>
   );
 }

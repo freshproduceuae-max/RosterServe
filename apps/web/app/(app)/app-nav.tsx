@@ -19,6 +19,7 @@ export function AppNav({ role }: { role: AppRole }) {
     { label: "Join Requests", href: "/interests", show: role !== "team_head" && role !== "supporter" },
     { label: "Skills", href: "/skills", show: role !== "team_head" },
     { label: "Admin", href: "/admin", show: role === "super_admin" },
+    { label: "Account", href: "/settings/account", show: true },
   ] satisfies { label: string; href: string; show: boolean }[];
 
   const visibleItems = navItems.filter((item) => item.show);
