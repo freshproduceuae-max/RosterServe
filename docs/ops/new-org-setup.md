@@ -41,7 +41,7 @@ supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
-Verify all 35 migrations applied without error. If any fail, check the Supabase dashboard logs.
+Verify the migration output shows no errors. If any fail, check the Supabase dashboard logs.
 
 ---
 
