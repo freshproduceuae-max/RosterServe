@@ -13,8 +13,9 @@ CREATE TABLE public.account_deletion_requests (
                             CHECK (status IN ('pending', 'approved', 'rejected'))
 );
 
-CREATE INDEX idx_account_deletion_requests_status
-  ON public.account_deletion_requests(status)
+-- Only one pending request per user at a time (idempotency guard)
+CREATE UNIQUE INDEX idx_account_deletion_requests_one_pending_per_user
+  ON public.account_deletion_requests(user_id)
   WHERE status = 'pending';
 
 ALTER TABLE public.account_deletion_requests ENABLE ROW LEVEL SECURITY;
@@ -30,6 +31,12 @@ CREATE POLICY "super_admin_read_deletion_requests"
   ON public.account_deletion_requests FOR SELECT
   TO authenticated
   USING (public.get_my_role() = 'super_admin');
+
+-- Owner can read their own request (to confirm submission / check status)
+CREATE POLICY "owner_select_own_deletion_request"
+  ON public.account_deletion_requests FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
 
 -- super_admin can update status (approve / reject)
 CREATE POLICY "super_admin_update_deletion_requests"

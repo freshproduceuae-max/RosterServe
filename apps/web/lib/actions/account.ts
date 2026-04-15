@@ -20,10 +20,10 @@ export async function requestAccountDeletion(): Promise<{ error?: string }> {
 
   if (profileError) return { error: "Failed to process deletion request. Please try again." };
 
-  // Record the deletion request for super_admin review
+  // Record the deletion request — upsert to prevent duplicate pending rows on retry
   const { error: requestError } = await supabase
     .from("account_deletion_requests")
-    .insert({ user_id: userId });
+    .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
 
   if (requestError) {
     // Roll back the soft-delete if request insert fails
@@ -56,7 +56,19 @@ export async function approveAccountDeletion(
 
   const supabase = await createSupabaseServerClient();
 
-  // Hard-delete the profile row
+  // Stamp the audit record FIRST — profile CASCADE will delete it if we delete profile first
+  const { error: updateError } = await supabase
+    .from("account_deletion_requests")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: session.profile.id,
+    })
+    .eq("id", requestId);
+
+  if (updateError) return { error: "Failed to record approval. No data has been deleted." };
+
+  // Hard-delete the profile row (CASCADE deletes the now-stamped request row)
   const { error: profileError } = await supabase
     .from("profiles")
     .delete()
@@ -67,18 +79,6 @@ export async function approveAccountDeletion(
   // Hard-delete the Supabase Auth user
   const { error: authError } = await adminClient.auth.admin.deleteUser(userId);
   if (authError) return { error: "Profile deleted but auth user removal failed." };
-
-  // Mark the request as approved
-  const { error: updateError } = await supabase
-    .from("account_deletion_requests")
-    .update({
-      status: "approved",
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: session.profile.id,
-    })
-    .eq("id", requestId);
-
-  if (updateError) return { error: "Deletion completed but request status not updated." };
 
   return { success: true };
 }
