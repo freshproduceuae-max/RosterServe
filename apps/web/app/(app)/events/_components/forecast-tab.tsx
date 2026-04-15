@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RecurringBadge } from "./recurring-badge";
+import { EventStatusBadge } from "./event-status-badge";
 import { formatEventDate } from "@/lib/format-date";
 import { EVENT_TYPE_LABELS } from "@/lib/events/types";
 import type { ForecastEvent } from "@/lib/events/queries";
@@ -26,9 +27,7 @@ export function ForecastTab({ events }: { events: ForecastEvent[] }) {
         >
           <div className="flex flex-wrap items-center justify-between gap-200">
             <span className="text-body font-semibold text-neutral-950">{event.title}</span>
-            <span className="rounded-100 border border-neutral-300 px-200 py-50 font-mono text-mono text-neutral-600 uppercase">
-              Draft stub
-            </span>
+            <EventStatusBadge status={event.status} />
           </div>
           <div className="flex flex-wrap gap-300 text-body-sm text-neutral-600">
             <span>{formatEventDate(event.event_date)}</span>

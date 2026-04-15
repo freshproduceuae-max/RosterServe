@@ -11,7 +11,7 @@ import type { RecurrenceRule } from "@/lib/events/types";
  * active stub is within 14 days of today. If so, appends one new stub to
  * keep the 12-occurrence horizon rolling forward.
  *
- * Returns JSON: { extended: number, skipped: number, errors: number }
+ * Returns JSON: { created: number, skipped: number, errors: number }
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const cronSecret = process.env.CRON_SECRET;
@@ -30,7 +30,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
   const horizon = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   // Find recurring parent events that have stubs whose max date <= horizon
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Parent query failed" }, { status: 500 });
   }
 
-  let extended = 0, skipped = 0, errors = 0;
+  let created = 0, skipped = 0, errors = 0;
 
   for (const parent of (parents ?? []) as {
     id: string; title: string; event_type: string;
@@ -108,15 +107,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         );
       }
 
-      extended++;
+      created++;
     } catch (err) {
       console.error("[cron/stub-rollover] error for parent", parent.id, err);
       errors++;
     }
   }
 
-  // suppress unused variable warning
-  void today;
-
-  return NextResponse.json({ extended, skipped, errors });
+  return NextResponse.json({ created, skipped, errors });
 }

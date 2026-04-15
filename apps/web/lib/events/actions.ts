@@ -359,6 +359,28 @@ export async function addEventDepartment(
     return { error: "Invalid input." };
   }
 
+  // Verify the event is visible to this user (respects RLS — confirms existence + access)
+  const supabase = await createSupabaseServerClient();
+  const { data: eventCheck } = await supabase
+    .from("events")
+    .select("id, created_by")
+    .eq("id", eventId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!eventCheck) return { error: "Event not found or access denied." };
+
+  // For dept_head: also verify they own the department they're linking
+  if (session.profile.role === "dept_head") {
+    const { data: deptCheck } = await supabase
+      .from("departments")
+      .select("id")
+      .eq("id", departmentId)
+      .eq("owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!deptCheck) return { error: "You do not own this department." };
+  }
+
   // Use admin client to insert into event_departments (bypasses RLS for stubs)
   const adminClient = createSupabaseAdminClient();
   if (!adminClient) return { error: "Service unavailable." };
