@@ -20,13 +20,15 @@ export async function requestAccountDeletion(): Promise<{ error?: string }> {
 
   if (profileError) return { error: "Failed to process deletion request. Please try again." };
 
-  // Record the deletion request — upsert to prevent duplicate pending rows on retry
+  // Record the deletion request. The partial unique index (WHERE status='pending')
+  // enforces at most one pending request per user. On retry, the insert hits the
+  // conflict and returns error code 23505 — treat that as success (idempotent).
   const { error: requestError } = await supabase
     .from("account_deletion_requests")
-    .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
+    .insert({ user_id: userId });
 
-  if (requestError) {
-    // Roll back the soft-delete if request insert fails
+  if (requestError && requestError.code !== "23505") {
+    // Roll back the soft-delete on genuine errors only
     await supabase
       .from("profiles")
       .update({ deleted_at: null })
