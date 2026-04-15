@@ -34,6 +34,26 @@ export default async function AvailabilityPage() {
     );
   }
 
+  if (profile.role === "supporter") {
+    const supabase = await createSupabaseServerClient();
+    const [blockouts, preferencesRes] = await Promise.all([
+      getMyBlockouts(profile.id),
+      supabase
+        .from("availability_preferences")
+        .select("*")
+        .eq("volunteer_id", profile.id)
+        .maybeSingle<AvailabilityPreferences>(),
+    ]);
+    return (
+      <div className="mx-auto max-w-prose">
+        <VolunteerAvailabilityView
+          blockouts={blockouts}
+          preferences={preferencesRes.data ?? null}
+        />
+      </div>
+    );
+  }
+
   if (isLeaderRole(profile.role)) {
     const [volunteersInScope, blockouts] = await Promise.all([
       getVolunteersInScope(),
@@ -44,6 +64,7 @@ export default async function AvailabilityPage() {
       <LeaderAvailabilityView
         volunteersInScope={volunteersInScope}
         blockouts={blockouts}
+        role={profile.role}
       />
     );
   }

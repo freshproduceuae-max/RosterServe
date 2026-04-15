@@ -17,6 +17,7 @@ export function VolunteerDashboard({ data, displayName }: VolunteerDashboardProp
       {/* Greeting band */}
       <div className="rounded-300 bg-surface-warm px-400 py-400">
         <h1 className="font-display text-h1 text-neutral-950">Hi, {firstName}</h1>
+        <p className="mt-50 text-body-sm text-neutral-600">Volunteer</p>
       </div>
 
       {/* Upcoming assignments */}

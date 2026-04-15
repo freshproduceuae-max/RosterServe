@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { SupporterDashboardData } from "@/lib/dashboard/types";
 import { ROLE_LABELS } from "@/lib/auth/roles";
 import { AssignmentCard } from "./assignment-card";
@@ -17,6 +18,7 @@ export function SupporterDashboard({ data, displayName }: SupporterDashboardProp
         <h1 className="font-display text-h1 text-neutral-950">
           Hi, {displayName.split(" ")[0]}
         </h1>
+        <p className="mt-50 text-body-sm text-neutral-600">Supporter</p>
         {leaderName && leaderRole && (
           <p className="mt-100 text-body-sm text-neutral-600">
             Supporting{" "}
@@ -24,11 +26,32 @@ export function SupporterDashboard({ data, displayName }: SupporterDashboardProp
             {" "}({ROLE_LABELS[leaderRole]})
           </p>
         )}
-        {!leaderName && (
-          <p className="mt-100 text-body-sm text-neutral-500">
-            No leader assigned yet. Contact a Super Admin to set up your supporter assignment.
+      </div>
+
+      {/* No leader callout */}
+      {!leaderName && (
+        <div className="rounded-200 border border-semantic-warning/40 bg-semantic-warning/5 px-300 py-250">
+          <p className="text-body-sm font-medium text-semantic-warning">No leader assigned yet</p>
+          <p className="mt-50 text-body-sm text-neutral-600">
+            Contact a Super Admin to set up your supporter assignment.
           </p>
-        )}
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-200">
+        <Link
+          href="/assignments"
+          className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100"
+        >
+          View service requests
+        </Link>
+        <Link
+          href="/availability"
+          className="rounded-200 border border-neutral-300 bg-neutral-0 px-300 py-150 text-body-sm font-semibold text-neutral-950 transition-colors duration-fast hover:bg-neutral-100"
+        >
+          My availability
+        </Link>
       </div>
 
       {/* Own service requests */}

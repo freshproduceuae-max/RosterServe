@@ -14,11 +14,11 @@ export function SuperAdminInterestsView({
         <div>
           <h1 className="text-h1 text-neutral-950">All department interests</h1>
           <p className="mt-100 text-body-sm text-neutral-600">
-            Read-only overview of all interest requests across all departments.
+            Read-only overview of all join requests across all departments.
           </p>
         </div>
         <div className="rounded-300 border border-neutral-300 bg-neutral-0 p-500 text-center">
-          <p className="text-h3 text-neutral-950">No interest requests found.</p>
+          <p className="text-h3 text-neutral-950">No join requests found.</p>
         </div>
       </div>
     );
@@ -36,7 +36,7 @@ export function SuperAdminInterestsView({
       <div>
         <h1 className="text-h1 text-neutral-950">All department interests</h1>
         <p className="mt-100 text-body-sm text-neutral-600">
-          Read-only overview of all interest requests across all departments.
+          Read-only overview of all join requests across all departments.
         </p>
       </div>
       <div className="flex flex-col gap-600">

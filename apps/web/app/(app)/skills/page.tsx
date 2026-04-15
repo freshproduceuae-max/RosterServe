@@ -31,6 +31,18 @@ export default async function SkillsPage() {
     );
   }
 
+  if (profile.role === "supporter") {
+    const [claims, catalogSkills] = await Promise.all([
+      getMySkillClaims(profile.id),
+      getDepartmentSkillsForVolunteer(profile.id),
+    ]);
+    return (
+      <div className="mx-auto max-w-prose">
+        <VolunteerSkillsView claims={claims} catalogSkills={catalogSkills} />
+      </div>
+    );
+  }
+
   if (profile.role === "dept_head") {
     const [catalogSkills, claims] = await Promise.all([
       getDepartmentSkillsForLeader(),

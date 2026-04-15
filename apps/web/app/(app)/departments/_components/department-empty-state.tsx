@@ -4,8 +4,9 @@ export function DepartmentEmptyState({ canCreate }: { canCreate: boolean }) {
   return (
     <div className="rounded-200 border border-neutral-300 bg-neutral-0 p-500 text-center">
       <p className="text-body text-neutral-600">
-        No departments yet.
-        {canCreate && " Add a department to begin structuring your organisation."}
+        {canCreate
+          ? "No departments yet. Add a department to begin structuring your organisation."
+          : "You have not been assigned to any department yet. Contact a Super Admin to set this up."}
       </p>
       {canCreate && (
         <Link

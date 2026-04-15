@@ -42,6 +42,11 @@ export default async function InterestsPage() {
     return <LeaderInterestsView interests={interests} departmentTeams={departmentTeams} />;
   }
 
+  if (profile.role === "all_depts_leader") {
+    const interests = await getAllInterests();
+    return <SuperAdminInterestsView interests={interests} />;
+  }
+
   if (profile.role === "super_admin") {
     const interests = await getAllInterests();
     return <SuperAdminInterestsView interests={interests} />;
