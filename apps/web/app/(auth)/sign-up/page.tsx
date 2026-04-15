@@ -129,6 +129,14 @@ export default function SignUpPage() {
       </form>
 
       <p className="text-center text-body-sm text-neutral-600">
+        By creating an account you agree to our{" "}
+        <Link href="/privacy" className="text-brand-calm-600 hover:underline">
+          Privacy Notice
+        </Link>
+        .
+      </p>
+
+      <p className="text-center text-body-sm text-neutral-600">
         Already have an account?{" "}
         <Link
           href="/sign-in"

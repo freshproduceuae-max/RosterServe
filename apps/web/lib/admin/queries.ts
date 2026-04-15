@@ -137,6 +137,36 @@ export async function getSupporterAssignments(): Promise<SupporterAssignment[]> 
   );
 }
 
+export type AccountDeletionRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  requestedAt: string;
+  status: string;
+};
+
+export async function getAccountDeletionRequests(): Promise<AccountDeletionRequest[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("account_deletion_requests")
+    .select("id, user_id, requested_at, status, profiles!inner(display_name)")
+    .eq("status", "pending")
+    .order("requested_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map(
+    (r: { id: string; user_id: string; requested_at: string; status: string; profiles: { display_name: string }[] }) => ({
+      id: r.id,
+      userId: r.user_id,
+      userName: r.profiles[0]?.display_name ?? "Unknown",
+      requestedAt: r.requested_at,
+      status: r.status,
+    }),
+  );
+}
+
 export async function getLeaderProfiles(): Promise<LeaderOption[]> {
   const supabase = await createSupabaseServerClient();
 
