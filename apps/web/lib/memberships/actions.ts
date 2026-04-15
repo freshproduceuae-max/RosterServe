@@ -23,6 +23,19 @@ export async function placeInTeam(
   }
 
   const supabase = await createSupabaseServerClient();
+
+  if (session.profile.role === "dept_head") {
+    const { data: owned } = await supabase
+      .from("department_members")
+      .select("id, departments!inner(owner_id)")
+      .eq("id", memberId)
+      .eq("departments.owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (!owned) return { error: "Unauthorized" };
+  }
+
   const { error } = await supabase
     .from("department_members")
     .update({ team_id: teamId })
@@ -51,6 +64,19 @@ export async function removeMembership(
   }
 
   const supabase = await createSupabaseServerClient();
+
+  if (session.profile.role === "dept_head") {
+    const { data: owned } = await supabase
+      .from("department_members")
+      .select("id, departments!inner(owner_id)")
+      .eq("id", memberId)
+      .eq("departments.owner_id", session.profile.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (!owned) return { error: "Unauthorized" };
+  }
+
   const { error } = await supabase
     .from("department_members")
     .update({ deleted_at: new Date().toISOString() })

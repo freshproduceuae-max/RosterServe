@@ -1,14 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { getPublicEnv } from "@/lib/env";
 
 const PUBLIC_AUTH_PATHS = ["/sign-in", "/sign-up", "/auth/callback"];
 
 export async function middleware(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.next({ request });
+  let supabaseUrl: string;
+  let supabaseAnonKey: string;
+  try {
+    const env = getPublicEnv();
+    supabaseUrl = env.supabaseUrl;
+    supabaseAnonKey = env.supabaseAnonKey;
+  } catch {
+    return new Response(
+      "Server misconfiguration: missing required environment variables.",
+      { status: 500 }
+    );
   }
 
   let response = NextResponse.next({ request });
